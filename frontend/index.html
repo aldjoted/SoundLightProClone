@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoundLightPro - Professional Audio and Lighting</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="container">
+            <a href="index.html" class="logo">SoundLightPro</a>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="cart.html">Cart (<span id="cart-item-count">0</span>)</a></li>
+                </ul>
+            </nav>
+            <div class="user-actions">
+                <!-- User-specific links will be dynamically inserted here by JS -->
+                <div id="auth-links">
+                    <a href="login.html">Login</a>
+                    <a href="register.html">Register</a>
+                </div>
+                <div id="user-info" class="hidden">
+                    <span id="username-display"></span>
+                    <button id="logout-button">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <h1>Professional Sound & Lighting Equipment</h1>
+            <p>Your one-stop shop for stage, studio, and event production gear.</p>
+        </section>
+
+        <section class="search-section">
+            <form id="search-form">
+                <input type="search" id="search-input" placeholder="Search for products...">
+                <button type="submit">Search</button>
+            </form>
+        </section>
+
+        <section class="product-listing">
+            <h2>Our Products</h2>
+            <div id="product-grid" class="product-grid">
+                <!-- Product cards will be dynamically inserted here by JS -->
+                <div class="loader">Loading...</div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="main-footer">
+        <div class="container">
+            <p>&copy; 2024 SoundLightPro. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript files -->
+    <!-- type="module" allows us to use import/export syntax -->
+    <script src="js/apiService.js" type="module"></script>
+    <script src="js/cart.js" type="module"></script>
+    <script src="js/ui.js" type="module"></script>
+    <script src="js/main.js" type="module"></script>
+</body>
+</html>

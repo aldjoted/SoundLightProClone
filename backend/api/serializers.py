@@ -1,0 +1,110 @@
+from rest_framework import serializers
+from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from .models import Category, Product, Order, OrderItem
+
+# --- Product Catalog Serializers ---
+
+class CategorySerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Category model.
+    Includes nested serialization for child categories to represent the hierarchy.
+    """
+    # 'children' is the related_name we set in the Category model's parent field
+    children = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'slug', 'parent', 'children']
+
+    def get_children(self, obj):
+        # Recursively serialize children categories
+        return CategorySerializer(obj.children.all(), many=True).data
+
+class ProductSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Product model.
+    Displays the category name instead of just its ID for better readability.
+    """
+    # Use SlugRelatedField to show category name in the API response
+    category = serializers.SlugRelatedField(
+        slug_field='name',
+        queryset=Category.objects.all()
+    )
+
+    class Meta:
+        model = Product
+        fields = [
+            'id', 'category', 'name', 'description', 
+            'price', 'image', 'stock', 'available'
+        ]
+
+# --- User Authentication Serializers ---
+
+class RegisterSerializer(serializers.ModelSerializer):
+    """
+    Serializer for user registration.
+    Includes password confirmation and validation.
+    """
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password2 = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name')
+    
+    def validate(self, attrs):
+        # Check that the two password fields match
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError({"password": "Password fields didn't match."})
+        return attrs
+
+    def create(self, validated_data):
+        # Create a new user with a hashed password
+        user = User.objects.create(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name']
+        )
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
+
+class UserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for retrieving user information.
+    """
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'first_name', 'last_name')
+
+# --- Order and Checkout Serializers ---
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    """
+
+    Serializer for OrderItem model. Used as a nested serializer within OrderSerializer.
+    """
+    # We want to show product details, not just the product ID.
+    product = ProductSerializer(read_only=True)
+
+    class Meta:
+        model = OrderItem
+        fields = ('product', 'price', 'quantity')
+
+class OrderSerializer(serializers.ModelSerializer):
+    """
+    Serializer for displaying a customer's orders.
+    This is primarily for reading existing orders.
+    """
+    # Nest the OrderItemSerializer to show all items in the order
+    items = OrderItemSerializer(many=True, read_only=True)
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            'id', 'user', 'first_name', 'last_name', 'email', 'address',
+            'postal_code', 'city', 'created_at', 'paid', 'stripe_id', 'total_paid', 'items'
+        ]

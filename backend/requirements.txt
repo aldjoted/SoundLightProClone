@@ -1,0 +1,19 @@
+# Django and Django REST Framework
+django
+djangorestframework
+django-cors-headers
+
+# Database driver
+psycopg2-binary
+
+# Authentication and JWT
+djangorestframework-simplejwt
+
+# Environment variables
+python-dotenv
+
+# Image handling
+Pillow
+
+# Production server
+gunicorn
