@@ -11,7 +11,7 @@ import * as cart from './cart.js';
 import * as ui from './ui.js';
 
 // Add your Stripe Publishable Key here
-const STRIPE_PUBLISHABLE_KEY = 'YOUR_STRIPE_PUBLISHABLE_KEY'; 
+const STRIPE_PUBLISHABLE_KEY = 'pk_test_51S2oQBFVZncPKiqnc8eCAGLTI2jJ11fu0L6CAciKfVVSGWnvGL0aC2C4xtPn0J0deDUtpDltnKSSLWA5hXxbMoIZ00hILr9HLe'; 
 
 /**
  * The main router function. It checks the current page path and calls
