@@ -17,3 +17,6 @@ Pillow
 
 # Production server
 gunicorn
+
+#
+stripe
