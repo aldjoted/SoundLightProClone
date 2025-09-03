@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Services offered by SoundLightPro, including consultation and system design.">
+    <title>Services - SoundLightPro</title>
+    
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header class="main-header" role="banner">
+        <div class="container">
+            <div class="header-wrapper">
+                <a href="index.html" class="logo" aria-label="SoundLightPro Home">
+                    <svg class="logo-icon" width="32" height="32" viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M22.0156 14.5312C23.2344 14.5312 24.2188 15.5156 24.2188 16.7344C24.2188 17.9531 23.2344 18.9375 22.0156 18.9375H10.0156C8.79688 18.9375 7.8125 17.9531 7.8125 16.7344C7.8125 15.5156 8.79688 14.5312 10.0156 14.5312H22.0156Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M16 0C7.16406 0 0 7.16406 0 16C0 24.8359 7.16406 32 16 32C24.8359 32 32 24.8359 32 16C32 7.16406 24.8359 0 16 0ZM16 28.125C9.30469 28.125 3.875 22.6953 3.875 16C3.875 9.30469 9.30469 3.875 16 3.875C22.6953 3.875 28.125 9.30469 28.125 16C28.125 22.6953 22.6953 28.125 16 28.125Z"/></svg>
+                    <span class="logo-text">SoundLightPro</span>
+                </a>
+                
+                <nav class="main-nav" role="navigation" aria-label="Main navigation">
+                    <ul>
+                        <li><a href="index.html" class="nav-link">Home</a></li>
+                        <li class="nav-item mega-menu-container">
+                            <a href="index.html#products" class="nav-link dropdown-toggle">Products</a>
+                            <div class="mega-menu" id="products-mega-menu">
+                                <!-- Mega menu content will be loaded by JS -->
+                            </div>
+                        </li>
+                        <li><a href="about.html" class="nav-link">About Us</a></li>
+                        <li><a href="services.html" class="nav-link active">Services</a></li>
+                        <li>
+                            <a href="cart.html" class="nav-link cart-link">
+                                <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+                                <span class="cart-label">Cart</span>
+                                <span class="cart-badge" id="cart-item-count" aria-live="polite">0</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                
+                <div class="header-actions">
+                    <!-- Search and User Actions remain the same -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main id="main-content" class="container">
+        <div class="page-header">
+            <h1>Our Services</h1>
+        </div>
+        <section class="text-content" style="max-width: 800px; margin: 0 auto; padding-bottom: 3rem;">
+            <div class="feature-card" style="margin-bottom: 2rem; text-align: left; padding: 2rem;">
+                <i class="fas fa-headset feature-icon"></i>
+                <h3>Expert Consultation</h3>
+                <p>Not sure what you need? Our team of audio and lighting experts is here to help. We provide personalized consultations to help you select the perfect equipment for your specific needs, whether you're outfitting a new venue or upgrading your touring rig.</p>
+            </div>
+            <div class="feature-card" style="margin-bottom: 2rem; text-align: left; padding: 2rem;">
+                <i class="fas fa-drafting-compass feature-icon"></i>
+                <h3>System Design & Integration</h3>
+                <p>We offer comprehensive system design services for permanent installations. From concert halls and theaters to houses of worship and conference centers, we can design a fully integrated audio and lighting system that delivers exceptional performance and reliability.</p>
+            </div>
+             <div class="feature-card" style="margin-bottom: 2rem; text-align: left; padding: 2rem;">
+                <i class="fas fa-tools feature-icon"></i>
+                <h3>Technical Support & Repair</h3>
+                <p>Our commitment to you doesn't end after the sale. We provide lifetime technical support for all our products. Our certified technicians also offer repair and maintenance services to keep your gear in peak condition for years to come.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer" role="contentinfo">
+        <!-- Footer remains the same -->
+    </footer>
+
+    <div id="toast-container" class="toast-container" aria-live="assertive" aria-atomic="true"></div>
+    <script src="js/apiService.js" type="module"></script>
+    <script src="js/cart.js" type="module"></script>
+    <script src="js/ui.js" type="module"></script>
+    <script src="js/main.js" type="module"></script>
+</body>
+</html>
