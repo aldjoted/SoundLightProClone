@@ -9,8 +9,9 @@ class CategoryAdmin(admin.ModelAdmin):
     Admin configuration for the Category model.
     """
     list_display = ['name', 'slug', 'parent']
-    # Prepopulating the slug field automatically from the name field
     prepopulated_fields = {'slug': ('name',)}
+    search_fields = ['name'] 
+    raw_id_fields = ['parent']
 
 
 @admin.register(Product)

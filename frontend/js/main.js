@@ -1,54 +1,54 @@
 /**
  * main.js
  *
- * This is the main entry point for the frontend application.
- * It initializes the app, sets up event listeners, and routes
- * logic based on the current page.
+ * Main application controller. Initializes the app, handles routing,
+ * event listeners, and orchestrates UI updates.
  */
 
 import * as apiService from './apiService.js';
 import * as cart from './cart.js';
 import * as ui from './ui.js';
 
-// Add your Stripe Publishable Key here
-const STRIPE_PUBLISHABLE_KEY = 'pk_test_51S2oQBFVZncPKiqnc8eCAGLTI2jJ11fu0L6CAciKfVVSGWnvGL0aC2C4xtPn0J0deDUtpDltnKSSLWA5hXxbMoIZ00hILr9HLe'; 
+// Global state for homepage products to enable filtering
+let allProducts = [];
+let allCategories = [];
 
 /**
- * The main router function. It checks the current page path and calls
- * the appropriate initialization function.
+ * Main router to initialize page-specific logic.
  */
 function router() {
     const path = window.location.pathname;
+    // Normalize path for default file
+    const page = path.split("/").pop() || 'index.html';
 
-    if (path === '/' || path.endsWith('/index.html')) {
-        initHomePage();
-    } else if (path.endsWith('/product.html')) {
-        initProductDetailPage();
-    } else if (path.endsWith('/cart.html')) {
-        initCartPage(); // <<< UPDATED
-    } else if (path.endsWith('/login.html')) {
-        initLoginPage();
-    } else if (path.endsWith('/register.html')) {
-        initRegisterPage();
+    switch (page) {
+        case 'index.html':
+            initHomePage();
+            break;
+        case 'product.html':
+            // initProductDetailPage();
+            break;
+        case 'cart.html':
+            // initCartPage();
+            break;
+        case 'login.html':
+            // initLoginPage();
+            break;
+        case 'register.html':
+            // initRegisterPage();
+            break;
     }
 }
 
 /**
  * Initializes common application state on every page load.
- * - Checks user authentication status.
- * - Updates the cart count in the header.
- * - Sets up global event listeners (logout, cart updates).
  */
 async function initApp() {
-    // Update cart count on initial load
     ui.updateCartCount(cart.getCartItemCount());
-
-    // Listen for custom 'cartUpdated' event to update count in header
     document.addEventListener('cartUpdated', () => {
         ui.updateCartCount(cart.getCartItemCount());
     });
 
-    // Check if user is logged in and update header UI
     try {
         const user = await apiService.getUserProfile();
         ui.updateUserAuthUI(user);
@@ -56,270 +56,181 @@ async function initApp() {
         ui.updateUserAuthUI(null);
     }
 
-    // Add logout functionality
+    setupGlobalEventListeners();
+}
+
+/**
+ * Sets up event listeners that are present on all pages.
+ */
+function setupGlobalEventListeners() {
+    // Logout
     const logoutButton = document.getElementById('logout-button');
     if (logoutButton) {
         logoutButton.addEventListener('click', () => {
             apiService.logoutUser();
             ui.updateUserAuthUI(null);
-            window.location.href = 'index.html';
+            ui.showToast('You have been logged out.', 'info');
+            if (window.location.pathname.endsWith('cart.html')) {
+                window.location.href = 'index.html';
+            }
         });
     }
-}
 
-// --- Page Initializers ---
-
-async function initHomePage() {
-    const productGrid = document.getElementById('product-grid');
-    if (!productGrid) return;
-    ui.showLoader(productGrid);
-    try {
-        const products = await apiService.getProducts();
-        ui.renderProductGrid(products);
-    } catch (error) {
-        ui.showErrorMessage(productGrid, `Error loading products: ${error.message}`);
-    }
-
-    const searchForm = document.getElementById('search-form');
-    const searchInput = document.getElementById('search-input');
-    if (searchForm && searchInput) {
-        searchForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const query = searchInput.value.trim();
-            ui.showLoader(productGrid);
-            try {
-                const products = await apiService.getProducts(query);
-                ui.renderProductGrid(products);
-            } catch (error) {
-                ui.showErrorMessage(productGrid, `Error searching products: ${error.message}`);
+    // User dropdown menu toggle
+    const userMenuToggle = document.querySelector('.user-menu-toggle');
+    if (userMenuToggle) {
+        userMenuToggle.addEventListener('click', () => {
+            const isExpanded = userMenuToggle.getAttribute('aria-expanded') === 'true';
+            userMenuToggle.setAttribute('aria-expanded', !isExpanded);
+        });
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!userMenuToggle.parentElement.contains(e.target)) {
+                 userMenuToggle.setAttribute('aria-expanded', 'false');
             }
         });
     }
 }
 
-async function initProductDetailPage() {
-    const container = document.getElementById('product-detail-container');
-    if (!container) return;
-    const urlParams = new URLSearchParams(window.location.search);
-    const productId = urlParams.get('id');
+/**
+ * Initializes the Home page (index.html).
+ */
+async function initHomePage() {
+    const productGrid = document.getElementById('product-grid');
+    const featuredGrid = document.getElementById('featured-grid');
 
-    if (!productId) {
-        ui.showErrorMessage(container, 'Product not found. No ID provided.');
+    if (!productGrid || !featuredGrid) return;
+
+    ui.showSkeletonLoader(productGrid, 8);
+    ui.showSkeletonLoader(featuredGrid, 3);
+
+    try {
+        // Fetch products and categories in parallel
+        [allProducts, allCategories] = await Promise.all([
+            apiService.getProducts(),
+            apiService.getCategories()
+        ]);
+        
+        // --- Populate UI components ---
+        const sliderProducts = allProducts.slice(0, 3);
+        const featuredProducts = allProducts.slice(3, 6);
+        
+        ui.renderHeroSlider(sliderProducts);
+        initSlider();
+        
+        ui.renderFeaturedGrid(featuredProducts);
+        ui.renderCategoryFilters(allCategories.filter(c => !c.parent)); // Only top-level categories
+        ui.renderProductGrid(allProducts, productGrid);
+        
+        setupHomepageEventListeners();
+    } catch (error) {
+        console.error("Error initializing homepage:", error);
+        productGrid.innerHTML = `<p class="error-message">Failed to load products. Please try again later.</p>`;
+    }
+}
+
+/**
+ * Sets up event listeners specific to the homepage (filters, add to cart).
+ */
+function setupHomepageEventListeners() {
+    // Product category filtering
+    const filterContainer = document.querySelector('.filter-controls');
+    if (filterContainer) {
+        filterContainer.addEventListener('click', (e) => {
+            const filterBtn = e.target.closest('.filter-btn');
+            if (!filterBtn) return;
+            
+            // Update active button style
+            filterContainer.querySelector('.active').classList.remove('active');
+            filterBtn.classList.add('active');
+            
+            const category = filterBtn.dataset.category;
+            filterProducts(category);
+        });
+    }
+
+    // Add to cart from product grid (event delegation)
+    const productGrid = document.getElementById('product-grid');
+    productGrid.addEventListener('click', async e => {
+        const cartBtn = e.target.closest('.add-to-cart-btn');
+        if(!cartBtn) return;
+
+        const productId = cartBtn.dataset.productId;
+        const product = allProducts.find(p => p.id == productId);
+        if(product) {
+            cart.addToCart(product, 1);
+            ui.showToast(`${product.name} added to cart!`, 'success');
+        }
+    });
+}
+
+/**
+ * Filters products by category and re-renders the grid.
+ * @param {string} categorySlug - The slug of the category to filter by.
+ */
+function filterProducts(categorySlug) {
+    const productGrid = document.getElementById('product-grid');
+    let filteredProducts;
+
+    if (categorySlug === 'all') {
+        filteredProducts = allProducts;
+    } else {
+        // This simple filter works for top-level categories.
+        // For nested categories, a more complex recursive function would be needed.
+        filteredProducts = allProducts.filter(p => {
+            // Normalize category name from API to match slug
+            return p.category.toLowerCase().replace(/\s+/g, '-') === categorySlug;
+        });
+    }
+    ui.renderProductGrid(filteredProducts, productGrid);
+}
+
+/**
+ * Initializes and controls the hero slider functionality.
+ */
+function initSlider() {
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.dot');
+    const nextBtn = document.querySelector('.slider-control.next');
+    const prevBtn = document.querySelector('.slider-control.prev');
+
+    if (slides.length <= 1) {
+        if(nextBtn) nextBtn.style.display = 'none';
+        if(prevBtn) prevBtn.style.display = 'none';
+        if(dots.length > 0) dots[0].parentElement.style.display = 'none';
         return;
     }
 
-    ui.showLoader(container);
+    let currentSlide = 0;
+    let slideInterval = setInterval(nextSlide, 7000);
 
-    try {
-        const product = await apiService.getProductById(productId);
-        ui.renderProductDetails(product);
-
-        const addToCartForm = document.getElementById('add-to-cart-form');
-        if (addToCartForm) {
-            addToCartForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const quantityInput = document.getElementById('quantity-input');
-                const quantity = parseInt(quantityInput.value, 10);
-                
-                if (quantity > 0) {
-                    cart.addToCart(product, quantity);
-                    alert(`${quantity} x ${product.name} added to cart!`);
-                }
-            });
-        }
-    } catch (error) {
-        ui.showErrorMessage(container, `Error loading product details: ${error.message}`);
+    function goToSlide(n) {
+        slides[currentSlide].classList.remove('active');
+        dots[currentSlide].classList.remove('active');
+        dots[currentSlide].setAttribute('aria-selected', 'false');
+        
+        currentSlide = (n + slides.length) % slides.length;
+        
+        slides[currentSlide].classList.add('active');
+        dots[currentSlide].classList.add('active');
+        dots[currentSlide].setAttribute('aria-selected', 'true');
     }
-}
 
-// ===================================================================
-// ========================== NEW SECTION ============================
-// ===================================================================
+    function nextSlide() { goToSlide(currentSlide + 1); }
+    function prevSlide() { goToSlide(currentSlide - 1); }
 
-/**
- * Initializes the Cart page.
- * - Renders cart items.
- * - Sets up event listeners for quantity changes, item removal, and checkout.
- * - Initializes Stripe Elements for payment processing.
- */
-function initCartPage() {
-    const cartContainer = document.getElementById('cart-container');
-    if (!cartContainer) return;
+    function resetInterval() {
+        clearInterval(slideInterval);
+        slideInterval = setInterval(nextSlide, 7000);
+    }
 
-    // Function to render and re-render the cart
-    const displayCart = () => {
-        const cartItems = cart.getCart();
-        const cartTotal = cart.getCartTotal();
-        ui.renderCart(cartItems, cartTotal);
-        addCartEventListeners(); // Re-add listeners after every render
-    };
-
-    // Initial render
-    displayCart();
-
-    // Re-render the cart UI whenever the cart data changes
-    document.addEventListener('cartUpdated', displayCart);
-
-    // Stripe integration
-    const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
-    const elements = stripe.elements();
-    const cardElement = elements.create('card');
-    cardElement.mount('#card-element');
-
-    const checkoutForm = document.getElementById('checkout-form');
-    checkoutForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-
-        const submitBtn = document.getElementById('submit-payment-btn');
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Processing...';
-
-        try {
-            // 1. Create a payment method token from the card details
-            const { token, error } = await stripe.createToken(cardElement);
-
-            if (error) {
-                ui.showFormMessage('card-errors', error.message, true);
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Pay Now';
-                return;
-            }
-
-            // 2. Gather shipping information
-            const shipping_info = {
-                first_name: document.getElementById('first_name').value,
-                last_name: document.getElementById('last_name').value,
-                email: document.getElementById('email').value,
-                address: document.getElementById('address').value,
-                postal_code: document.getElementById('postal_code').value,
-                city: document.getElementById('city').value,
-            };
-
-            // 3. Prepare order data for the backend
-            const orderData = {
-                items: cart.getCart(),
-                shipping_info: shipping_info,
-                stripe_token: token.id,
-            };
-
-            // 4. Send the order to the backend
-            const createdOrder = await apiService.createOrder(orderData);
-
-            // 5. Handle success
-            cart.clearCart();
-            alert('Payment successful! Your order has been placed.');
-            // Redirect to a 'thank you' page or homepage
-            window.location.href = '/index.html';
-
-        } catch (apiError) {
-            ui.showFormMessage('checkout-message', `Order failed: ${apiError.message}`, true);
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Pay Now';
-        }
+    nextBtn.addEventListener('click', () => { nextSlide(); resetInterval(); });
+    prevBtn.addEventListener('click', () => { prevSlide(); resetInterval(); });
+    dots.forEach(dot => {
+        dot.addEventListener('click', () => { goToSlide(parseInt(dot.dataset.index)); resetInterval(); });
     });
 }
 
-/**
- * Adds event listeners to the cart items after they have been rendered.
- */
-function addCartEventListeners() {
-    const cartContainer = document.getElementById('cart-container');
-    if (!cartContainer) return;
-
-    // Event delegation for remove and quantity update buttons
-    cartContainer.addEventListener('click', (e) => {
-        const target = e.target;
-        const cartItem = target.closest('.cart-item');
-        if (!cartItem) return;
-
-        const productId = parseInt(cartItem.dataset.productId, 10);
-
-        if (target.classList.contains('remove-item-btn')) {
-            cart.removeFromCart(productId);
-        }
-    });
-
-    cartContainer.addEventListener('change', (e) => {
-        const target = e.target;
-        if (target.classList.contains('quantity-update-input')) {
-            const cartItem = target.closest('.cart-item');
-            const productId = parseInt(cartItem.dataset.productId, 10);
-            const newQuantity = parseInt(target.value, 10);
-            if (newQuantity > 0) {
-                cart.updateCartItemQuantity(productId, newQuantity);
-            }
-        }
-    });
-
-    // "Proceed to Checkout" button
-    const checkoutBtn = document.getElementById('checkout-btn');
-    if (checkoutBtn) {
-        checkoutBtn.addEventListener('click', async () => {
-             // Check if user is logged in before showing checkout
-            try {
-                await apiService.getUserProfile();
-                // If successful, show checkout form
-                document.getElementById('checkout-section').classList.remove('hidden');
-                checkoutBtn.classList.add('hidden'); // Hide the button
-            } catch (error) {
-                // If not logged in, redirect to login page
-                alert('You must be logged in to proceed to checkout.');
-                window.location.href = `/login.html?next=cart.html`;
-            }
-        });
-    }
-}
-
-// ===================================================================
-// ======================== END NEW SECTION ==========================
-// ===================================================================
-
-function initLoginPage() {
-    const loginForm = document.getElementById('login-form');
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const messageEl = document.getElementById('form-message');
-            messageEl.classList.add('hidden');
-
-            const username = loginForm.username.value;
-            const password = loginForm.password.value;
-
-            try {
-                await apiService.loginUser(username, password);
-                // Check for a 'next' URL parameter to redirect back after login
-                const nextUrl = new URLSearchParams(window.location.search).get('next');
-                window.location.href = nextUrl || 'index.html'; 
-            } catch (error) {
-                ui.showFormMessage('form-message', `Login failed: ${error.message}`, true);
-            }
-        });
-    }
-}
-
-function initRegisterPage() {
-    const registerForm = document.getElementById('register-form');
-    if (registerForm) {
-        registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const messageEl = document.getElementById('form-message');
-            messageEl.classList.add('hidden');
-
-            const userData = {
-                username: registerForm.username.value, password: registerForm.password.value,
-                password2: registerForm.password2.value, email: registerForm.email.value,
-                first_name: registerForm.first_name.value, last_name: registerForm.last_name.value,
-            };
-
-            try {
-                await apiService.registerUser(userData);
-                window.location.href = 'login.html?registered=true';
-            } catch (error) {
-                ui.showFormMessage('form-message', `Registration failed: ${error.message}`, true);
-            }
-        });
-    }
-}
 
 // --- App Entry Point ---
 document.addEventListener('DOMContentLoaded', () => {
