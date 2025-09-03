@@ -3,65 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SoundLightPro - Professional Audio and Lighting</title>
+    <meta name="description" content="SoundLightPro - Professional audio and lighting equipment for events, concerts, and venues">
+    <title>SoundLightPro - Professional Audio and Lighting Equipment</title>
+    
+    <!-- Preconnect to external resources -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Main Stylesheet -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <header class="main-header">
+    <!-- Header -->
+    <header class="main-header" role="banner">
         <div class="container">
-            <a href="index.html" class="logo">SoundLightPro</a>
-            <nav class="main-nav">
-                <ul>
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="cart.html">Cart (<span id="cart-item-count">0</span>)</a></li>
-                </ul>
-            </nav>
-            <div class="user-actions">
-                <!-- User-specific links will be dynamically inserted here by JS -->
-                <div id="auth-links">
-                    <a href="login.html">Login</a>
-                    <a href="register.html">Register</a>
-                </div>
-                <div id="user-info" class="hidden">
-                    <span id="username-display"></span>
-                    <button id="logout-button">Logout</button>
+            <div class="header-wrapper">
+                <a href="index.html" class="logo" aria-label="SoundLightPro Home">
+                    <svg class="logo-icon" width="32" height="32" viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22.0156 14.5312C23.2344 14.5312 24.2188 15.5156 24.2188 16.7344C24.2188 17.9531 23.2344 18.9375 22.0156 18.9375H10.0156C8.79688 18.9375 7.8125 17.9531 7.8125 16.7344C7.8125 15.5156 8.79688 14.5312 10.0156 14.5312H22.0156Z"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M16 0C7.16406 0 0 7.16406 0 16C0 24.8359 7.16406 32 16 32C24.8359 32 32 24.8359 32 16C32 7.16406 24.8359 0 16 0ZM16 28.125C9.30469 28.125 3.875 22.6953 3.875 16C3.875 9.30469 9.30469 3.875 16 3.875C22.6953 3.875 28.125 9.30469 28.125 16C28.125 22.6953 22.6953 28.125 16 28.125Z"/>
+                    </svg>
+                    <span class="logo-text">SoundLightPro</span>
+                </a>
+                
+                <nav class="main-nav" role="navigation" aria-label="Main navigation">
+                    <ul>
+                        <li><a href="index.html" class="nav-link active">Home</a></li>
+                        <li><a href="#products" class="nav-link">Products</a></li>
+                        <li>
+                            <a href="cart.html" class="nav-link cart-link">
+                                <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+                                <span class="cart-label">Cart</span>
+                                <span class="cart-badge" id="cart-item-count" aria-live="polite">0</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                
+                <div class="header-actions">
+                    <div class="search-container">
+                        <form id="search-form" role="search">
+                            <input type="search" id="search-input" placeholder="Search products..." aria-label="Search products" autocomplete="off">
+                            <button type="submit" class="search-btn" aria-label="Submit search"><i class="fas fa-search"></i></button>
+                        </form>
+                    </div>
+                    
+                    <div class="user-actions">
+                        <div id="auth-links" class="auth-links">
+                            <a href="login.html" class="btn btn-secondary"><i class="fas fa-sign-in-alt"></i><span>Login</span></a>
+                            <a href="register.html" class="btn btn-primary"><i class="fas fa-user-plus"></i><span>Register</span></a>
+                        </div>
+                        <div id="user-info" class="user-info hidden">
+                            <div class="user-menu">
+                                <button class="user-menu-toggle" aria-expanded="false" aria-controls="user-dropdown-menu" aria-label="User menu">
+                                    <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div id="user-dropdown-menu" class="user-dropdown">
+                                    <a href="#"><i class="fas fa-user"></i> Profile</a>
+                                    <a href="#"><i class="fas fa-box"></i> Orders</a>
+                                    <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </header>
 
-    <main class="container">
-        <section class="hero">
-            <h1>Professional Sound & Lighting Equipment</h1>
-            <p>Your one-stop shop for stage, studio, and event production gear.</p>
+    <main id="main-content">
+        <section id="hero-slider" class="hero-slider" aria-roledescription="carousel" aria-label="Featured products">
+            <div class="slider-container">
+                <div class="slide-placeholder">
+                    <div class="skeleton-loader"><div class="skeleton-shimmer"></div></div>
+                </div>
+            </div>
+            <button class="slider-control prev" aria-label="Previous slide"><i class="fas fa-chevron-left"></i></button>
+            <button class="slider-control next" aria-label="Next slide"><i class="fas fa-chevron-right"></i></button>
+            <div class="slider-dots" role="tablist"></div>
         </section>
-
-        <section class="search-section">
-            <form id="search-form">
-                <input type="search" id="search-input" placeholder="Search for products...">
-                <button type="submit">Search</button>
-            </form>
-        </section>
-
-        <section class="product-listing">
-            <h2>Our Products</h2>
-            <div id="product-grid" class="product-grid">
-                <!-- Product cards will be dynamically inserted here by JS -->
-                <div class="loader">Loading...</div>
+        
+        <section class="featured-focus container" aria-labelledby="featured-title">
+            <div class="section-header">
+                <h2 id="featured-title" class="section-title">
+                    <span class="title-accent">A New Perspective</span>
+                    <span class="title-main">in Sound & Light</span>
+                </h2>
+                <p class="section-subtitle">Discover our cutting-edge professional equipment</p>
+            </div>
+            <div id="featured-grid" class="featured-grid">
+                <div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>
             </div>
         </section>
 
+        <section id="products" class="product-listing container" aria-labelledby="products-title">
+            <div class="section-header">
+                <h2 id="products-title" class="section-title">Our Products</h2>
+                <div class="filter-controls" role="group" aria-label="Product categories">
+                    <!-- Category buttons will be dynamically inserted here by JS -->
+                </div>
+            </div>
+            <div id="product-grid" class="product-grid">
+                <div class="loading-spinner"><div class="spinner"></div><p>Loading products...</p></div>
+            </div>
+        </section>
+
+        <section class="features-section container">
+            <div class="features-grid">
+                <div class="feature-card"><i class="fas fa-truck feature-icon"></i><h3>Fast Shipping</h3><p>Free delivery on orders over $500</p></div>
+                <div class="feature-card"><i class="fas fa-shield-alt feature-icon"></i><h3>Warranty Protection</h3><p>2-year warranty on all products</p></div>
+                <div class="feature-card"><i class="fas fa-headset feature-icon"></i><h3>Expert Support</h3><p>24/7 technical assistance</p></div>
+                <div class="feature-card"><i class="fas fa-undo feature-icon"></i><h3>Easy Returns</h3><p>30-day return policy</p></div>
+            </div>
+        </section>
+
+        <section class="video-promo container" aria-labelledby="video-title">
+             <div class="section-header">
+                <h2 id="video-title" class="section-title">See Our Equipment in Action</h2>
+                <p class="section-subtitle">Professional setups for world-class events</p>
+            </div>
+            <div class="video-wrapper">
+                <div class="responsive-video">
+                    <iframe src="https://www.youtube.com/embed/OEZhDF4HItI" title="SoundLightPro Equipment Showcase" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                </div>
+            </div>
+        </section>
+
+        <section class="newsletter-section">
+            <div class="container">
+                <div class="newsletter-content">
+                    <h2>Stay Updated</h2><p>Get the latest news about new products and exclusive offers</p>
+                    <form class="newsletter-form" id="newsletter-form">
+                        <input type="email" placeholder="Enter your email" required aria-label="Email for newsletter"><button type="submit" class="btn btn-primary">Subscribe</button>
+                    </form>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <footer class="main-footer">
+    <footer class="main-footer" role="contentinfo">
         <div class="container">
-            <p>&copy; 2024 SoundLightPro. All rights reserved.</p>
+            <div class="footer-grid">
+                <div class="footer-column"><h3 class="footer-title">SoundLightPro</h3><p class="footer-text">Professional audio and lighting solutions for events, concerts, and venues worldwide.</p><div class="social-icons"><a href="#" aria-label="Facebook" class="social-link"><i class="fab fa-facebook-f"></i></a><a href="https://youtu.be/OEZhDF4HItI" aria-label="YouTube" target="_blank" rel="noopener" class="social-link"><i class="fab fa-youtube"></i></a><a href="#" aria-label="Instagram" class="social-link"><i class="fab fa-instagram"></i></a><a href="#" aria-label="Twitter" class="social-link"><i class="fab fa-twitter"></i></a></div></div>
+                <div class="footer-column"><h4 class="footer-subtitle">Quick Links</h4><ul class="footer-links"><li><a href="#">About Us</a></li><li><a href="#products">Products</a></li><li><a href="#">Services</a></li><li><a href="#">Contact</a></li></ul></div>
+                <div class="footer-column"><h4 class="footer-subtitle">Customer Service</h4><ul class="footer-links"><li><a href="#">Support Center</a></li><li><a href="#">Shipping Info</a></li><li><a href="#">Returns</a></li><li><a href="#">Warranty</a></li></ul></div>
+                <div class="footer-column"><h4 class="footer-subtitle">Contact Info</h4><address class="footer-contact"><p><i class="fas fa-map-marker-alt"></i> Via Paolo Soprani 1<br>62019 Recanati (MC), Italy</p><p><i class="fas fa-phone"></i> +39 071 750591</p><p><i class="fas fa-envelope"></i> info@soundlightpro.com</p></address></div>
+            </div>
+            <div class="footer-bottom"><p>&copy; 2024 SoundLightPro. All rights reserved.</p><div class="footer-bottom-links"><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Cookie Policy</a></div></div>
         </div>
     </footer>
 
-    <!-- JavaScript files -->
-    <!-- type="module" allows us to use import/export syntax -->
+    <div id="toast-container" class="toast-container" aria-live="assertive" aria-atomic="true"></div>
+
     <script src="js/apiService.js" type="module"></script>
     <script src="js/cart.js" type="module"></script>
     <script src="js/ui.js" type="module"></script>

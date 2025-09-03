@@ -1,77 +1,168 @@
 /**
  * ui.js
  * 
- * This module contains all functions related to DOM manipulation.
- * It's responsible for rendering products, updating the cart display,
- * showing messages, and managing the UI state based on user authentication.
+ * This module contains all functions related to DOM manipulation, including
+ * rendering components, handling UI states (loading, errors), and managing notifications.
  */
 
-// --- Product Rendering ---
+// ============= Toast Notification Utility =============
+const toastContainer = document.getElementById('toast-container');
 
 /**
- * Renders a grid of product cards on the homepage.
- * @param {Array<Object>} products - An array of product objects from the API.
+ * Displays a toast notification.
+ * @param {string} message - The message to display.
+ * @param {string} type - 'success', 'error', or 'info'.
  */
-export function renderProductGrid(products) {
-    const grid = document.getElementById('product-grid');
+export function showToast(message, type = 'info') {
+    if (!toastContainer) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    let iconClass = 'fa-info-circle';
+    if (type === 'success') iconClass = 'fa-check-circle';
+    if (type === 'error') iconClass = 'fa-exclamation-circle';
+
+    toast.innerHTML = `<i class="fas ${iconClass}"></i><span>${message}</span>`;
+    toastContainer.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 5000);
+}
+
+// ============= Loading State Utilities =============
+/**
+ * Renders skeleton placeholder cards for a better loading experience.
+ * @param {HTMLElement} container - The grid container to fill.
+ * @param {number} count - The number of skeleton cards to create.
+ */
+export function showSkeletonLoader(container, count = 8) {
+    if (!container) return;
+    let skeletons = '';
+    for (let i = 0; i < count; i++) {
+        skeletons += '<div class="skeleton-card"><div class="skeleton-shimmer"></div></div>';
+    }
+    container.innerHTML = skeletons;
+}
+
+// ============= Component Rendering =============
+
+/**
+ * Renders the hero slider on the homepage using static banner images.
+ * The original products parameter is preserved for backward compatibility but ignored.
+ * @param {Array<Object>} _unused
+ */
+export function renderHeroSlider(_unused = []) {
+    const sliderContainer = document.querySelector('#hero-slider .slider-container');
+    const dotsContainer = document.querySelector('#hero-slider .slider-dots');
+    if (!sliderContainer || !dotsContainer) return;
+
+    const images = [
+        'images/hero/soundlightpro-banner-home1.jpg',
+        'images/hero/soundlightpro-banner-home2.jpg',
+        'images/hero/soundlightpro-banner-home22.jpg',
+        'images/hero/soundlightpro-banner-home2222.jpg',
+        'images/hero/soundlightpro-banner-home3.jpg',
+        'images/hero/soundlightpro-banner-home4.jpg',
+        'images/hero/soundlightpro-banner-home6.jpg',
+        'images/hero/MYO-ACOUSTIC-SOUNDLIGHTPRO.png'
+    ];
+
+    sliderContainer.innerHTML = '';
+    dotsContainer.innerHTML = '';
+
+    images.forEach((src, index) => {
+        const slide = document.createElement('div');
+        slide.className = `slide ${index === 0 ? 'active' : ''}`;
+        slide.dataset.index = index;
+        slide.innerHTML = `
+            <img src="${src}" alt="Hero banner ${index + 1}" class="slide-bg" loading="lazy" />
+            <div class="slide-overlay"></div>
+        `;
+        sliderContainer.appendChild(slide);
+
+        const dot = document.createElement('button');
+        dot.className = `dot ${index === 0 ? 'active' : ''}`;
+        dot.dataset.index = index;
+        dot.type = 'button';
+        dot.setAttribute('role', 'tab');
+        dot.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
+        dot.setAttribute('aria-label', `Go to slide ${index + 1}`);
+        dotsContainer.appendChild(dot);
+    });
+}
+
+/**
+ * Renders the featured focus grid on the homepage.
+ * @param {Array<Object>} products - An array of product objects to feature.
+ */
+export function renderFeaturedGrid(products) {
+    const grid = document.getElementById('featured-grid');
     if (!grid) return;
 
+    grid.innerHTML = products.map(product => `
+        <a href="product.html?id=${product.id}" class="focus-card">
+            <img src="${product.image || 'https://via.placeholder.com/600x400'}" alt="${product.name}" loading="lazy">
+            <div class="focus-card-content">
+                <h3>${product.name}</h3>
+                <p>${product.category}</p>
+            </div>
+        </a>
+    `).join('');
+}
+
+/**
+ * Renders category filter buttons.
+ * @param {Array<Object>} categories - Array of category objects.
+ */
+export function renderCategoryFilters(categories) {
+    const filterContainer = document.querySelector('.filter-controls');
+    if(!filterContainer) return;
+
+    let buttonsHTML = '<button class="filter-btn active" data-category="all">All</button>';
+    categories.forEach(category => {
+        buttonsHTML += `<button class="filter-btn" data-category="${category.slug}">${category.name}</button>`;
+    });
+    filterContainer.innerHTML = buttonsHTML;
+}
+
+/**
+ * Renders a grid of product cards.
+ * @param {Array<Object>} products - An array of product objects from the API.
+ * @param {HTMLElement} container - The element to render the grid into.
+ */
+export function renderProductGrid(products, container) {
+    if (!container) return;
+
     if (products.length === 0) {
-        grid.innerHTML = '<p class="info-message">No products found.</p>';
+        container.innerHTML = '<p class="info-message">No products found matching your criteria.</p>';
         return;
     }
 
-    grid.innerHTML = products.map(product => `
+    container.innerHTML = products.map(product => `
         <div class="product-card">
-            <a href="product.html?id=${product.id}" class="product-card-image-link">
-                <img src="${product.image ? product.image : 'https://via.placeholder.com/300'}" alt="${product.name}">
+            <a href="product.html?id=${product.id}" class="product-card-image" aria-label="View details for ${product.name}">
+                <img src="${product.image ? product.image : 'https://via.placeholder.com/300'}" alt="${product.name}" loading="lazy">
             </a>
             <div class="product-card-content">
-                <h3 class="product-card-title">${product.name}</h3>
-                <p class="product-card-price">$${parseFloat(product.price).toFixed(2)}</p>
-                <a href="product.html?id=${product.id}" class="button">View Details</a>
+                <div>
+                    <p class="product-card-category">${product.category}</p>
+                    <h3 class="product-card-title"><a href="product.html?id=${product.id}">${product.name}</a></h3>
+                </div>
+                <div class="product-card-footer">
+                    <p class="product-card-price">$${parseFloat(product.price).toFixed(2)}</p>
+                    <button class="btn btn-secondary add-to-cart-btn" data-product-id="${product.id}">
+                        <i class="fas fa-shopping-cart"></i> Add
+                    </button>
+                </div>
             </div>
         </div>
     `).join('');
 }
 
-/**
- * Renders the details for a single product on the product detail page.
- * @param {Object} product - The product object from the API.
- */
-export function renderProductDetails(product) {
-    const container = document.getElementById('product-detail-container');
-    if (!container) return;
 
-    container.innerHTML = `
-        <div class="product-detail-layout">
-            <div class="product-detail-image">
-                <img src="${product.image ? product.image : 'https://via.placeholder.com/600'}" alt="${product.name}">
-            </div>
-            <div class="product-detail-info">
-                <h1>${product.name}</h1>
-                <p class="product-detail-price">$${parseFloat(product.price).toFixed(2)}</p>
-                <p class="product-detail-stock">
-                    <span class="${product.stock > 0 ? 'in-stock' : 'out-of-stock'}">
-                        ${product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
-                    </span>
-                </p>
-                <p class="product-detail-description">${product.description || ''}</p>
-                
-                <form id="add-to-cart-form" data-product-id="${product.id}">
-                    <div class="product-detail-actions">
-                        <input type="number" id="quantity-input" value="1" min="1" max="${product.stock}" ${product.stock === 0 ? 'disabled' : ''}>
-                        <button type="submit" class="button" ${product.stock === 0 ? 'disabled' : ''}>
-                            Add to Cart
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    `;
-}
-
-// --- Cart UI ---
+// ============= UI State Management =============
 
 /**
  * Updates the cart item count displayed in the header.
@@ -81,69 +172,9 @@ export function updateCartCount(count) {
     const cartCountElement = document.getElementById('cart-item-count');
     if (cartCountElement) {
         cartCountElement.textContent = count;
+        cartCountElement.classList.toggle('hidden', count === 0);
     }
 }
-
-// ===================================================================
-// ========================== NEW SECTION ============================
-// ===================================================================
-
-/**
- * Renders the entire cart page, including items and summary.
- * @param {Array<Object>} cartItems - The array of items from the cart module.
- * @param {number} cartTotal - The calculated total price of the cart.
- */
-export function renderCart(cartItems, cartTotal) {
-    const container = document.getElementById('cart-container');
-    if (!container) return;
-
-    if (cartItems.length === 0) {
-        container.innerHTML = '<p class="info-message">Your cart is empty.</p>';
-        document.getElementById('checkout-section').classList.add('hidden');
-        return;
-    }
-
-    const itemsHTML = cartItems.map(item => `
-        <div class="cart-item" data-product-id="${item.id}">
-            <img src="${item.image || 'https://via.placeholder.com/100'}" alt="${item.name}">
-            <div class="cart-item-info">
-                <h3>${item.name}</h3>
-                <p>$${item.price.toFixed(2)}</p>
-            </div>
-            <div class="cart-item-quantity">
-                <input type="number" class="quantity-update-input" value="${item.quantity}" min="1">
-            </div>
-            <p class="cart-item-subtotal">$${(item.price * item.quantity).toFixed(2)}</p>
-            <div class="cart-item-actions">
-                <button class="remove-item-btn">Remove</button>
-            </div>
-        </div>
-    `).join('');
-
-    const summaryHTML = `
-        <div class="cart-summary">
-            <h2>Cart Summary</h2>
-            <div class="cart-total">
-                <span>Total:</span>
-                <strong>$${cartTotal.toFixed(2)}</strong>
-            </div>
-            <button id="checkout-btn" class="button">Proceed to Checkout</button>
-        </div>
-    `;
-
-    container.innerHTML = `
-        <div class="cart-items-container">
-            ${itemsHTML}
-        </div>
-        ${summaryHTML}
-    `;
-}
-// ===================================================================
-// ======================== END NEW SECTION ==========================
-// ===================================================================
-
-
-// --- Authentication UI ---
 
 /**
  * Updates the header UI based on the user's login status.
@@ -153,56 +184,17 @@ export function updateUserAuthUI(user) {
     const authLinks = document.getElementById('auth-links');
     const userInfo = document.getElementById('user-info');
     const usernameDisplay = document.getElementById('username-display');
+    const userMenuToggle = document.querySelector('.user-menu-toggle');
 
     if (authLinks && userInfo && usernameDisplay) {
         if (user) {
-            // User is logged in
             authLinks.classList.add('hidden');
             userInfo.classList.remove('hidden');
-            usernameDisplay.textContent = `Welcome, ${user.username}`;
+            usernameDisplay.textContent = user.username;
+            userMenuToggle.setAttribute('aria-expanded', 'false');
         } else {
-            // User is logged out
             authLinks.classList.remove('hidden');
             userInfo.classList.add('hidden');
-            usernameDisplay.textContent = '';
         }
-    }
-}
-
-// --- General UI Helpers ---
-
-/**
- * Shows a loading indicator in a specified container.
- * @param {HTMLElement} container - The element to show the loader in.
- */
-export function showLoader(container) {
-    if (container) {
-        container.innerHTML = '<div class="loader">Loading...</div>';
-    }
-}
-
-/**
- * Displays an error message in a specified container.
- * @param {HTMLElement} container - The element to show the error in.
- * @param {string} message - The error message to display.
- */
-export function showErrorMessage(container, message) {
-    if (container) {
-        container.innerHTML = `<p class="error-message">${message}</p>`;
-    }
-}
-
-/**
- * Displays a generic message in a form or container.
- * @param {string} elementId - The ID of the element where the message should be displayed.
- * @param {string} message - The message text.
- * @param {boolean} isError - If true, styles the message as an error.
- */
-export function showFormMessage(elementId, message, isError = false) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        element.textContent = message;
-        element.className = isError ? 'error-message' : 'info-message';
-        element.classList.remove('hidden');
     }
 }
