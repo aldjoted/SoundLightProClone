@@ -51,13 +51,12 @@ export function showSkeletonLoader(container, count = 8) {
 // in js/ui.js
 
 /**
- * Renders the hero slider on the homepage using static banner images.
+ * Renders the hero slider slides for Swiper.js using static banner images.
  * @param {Array<Object>} _unused
  */
 export function renderHeroSlider(_unused = []) {
-    const sliderContainer = document.querySelector('#hero-slider .slider-container');
-    const dotsContainer = document.querySelector('#hero-slider .slider-dots');
-    if (!sliderContainer || !dotsContainer) return;
+    const swiperWrapper = document.querySelector('.swiper-wrapper');
+    if (!swiperWrapper) return;
 
     // List of images from your folder structure
     const images = [
@@ -71,31 +70,21 @@ export function renderHeroSlider(_unused = []) {
         'images/hero/MYO-ACOUSTIC-SOUNDLIGHTPRO.png'
     ];
 
-    sliderContainer.innerHTML = '';
-    dotsContainer.innerHTML = '';
+    swiperWrapper.innerHTML = ''; // Clear existing content (like skeletons)
 
     images.forEach((src, index) => {
         const slide = document.createElement('div');
-        slide.className = `slide ${index === 0 ? 'active' : ''}`;
-        slide.dataset.index = index;
+        slide.className = 'swiper-slide';
         // Performance: Don't lazy load the first image as it's above the fold.
         const loadingAttr = index === 0 ? '' : 'loading="lazy"';
         slide.innerHTML = `
             <img src="${src}" alt="Promotional banner ${index + 1}" class="slide-bg" ${loadingAttr} />
             <div class="slide-overlay"></div>
         `;
-        sliderContainer.appendChild(slide);
-
-        const dot = document.createElement('button');
-        dot.className = `dot ${index === 0 ? 'active' : ''}`;
-        dot.dataset.index = index;
-        dot.type = 'button';
-        dot.setAttribute('role', 'tab');
-        dot.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
-        dot.setAttribute('aria-label', `Go to slide ${index + 1}`);
-        dotsContainer.appendChild(dot);
+        swiperWrapper.appendChild(slide);
     });
 }
+
 
 /**
  * Renders the featured focus grid on the homepage.

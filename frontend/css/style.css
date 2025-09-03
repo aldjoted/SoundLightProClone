@@ -68,85 +68,78 @@ a:hover { color: var(--primary-dark); }
 .user-dropdown a, .user-dropdown button { display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-sm) var(--spacing-md); width: 100%; text-align: left; background: transparent; border: none; color: var(--text-primary); cursor: pointer; transition: background var(--transition-fast); font-size: 0.875rem; }
 .user-dropdown a:hover, .user-dropdown button:hover { background: var(--gray-50); }
 
+
 /* ============= Hero Slider ============= */
+/* 
+    .slide, .slider-container, .slide.active, .slider-control, .slider-dots, .dot
+    All these old rules can now be removed from your stylesheet.
+*/
+
+/* ============= Swiper Hero Slider (NEW styles) ============= */
 .hero-slider {
     position: relative;
-    height: 60vh; /* Adjust height as needed */
+    height: 60vh;
     min-height: 450px;
     max-height: 700px;
     overflow: hidden;
     background: var(--bg-dark);
 }
-.slider-container {
+
+.swiper-slide {
     width: 100%;
     height: 100%;
 }
-.slide {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    transition: opacity 0.8s ease-in-out;
-    visibility: hidden;
-}
-.slide.active {
-    opacity: 1;
-    visibility: visible;
-}
+
 .slide-bg {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
 }
+
 .slide-overlay {
     position: absolute;
     inset: 0;
     background: linear-gradient(135deg, rgba(17, 24, 39, 0.6) 0%, rgba(17, 24, 39, 0.1) 100%);
 }
-.slider-control {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
+
+/* Customizing Swiper Navigation and Pagination */
+:root {
+    /* Swiper theme colors */
+    --swiper-navigation-color: #ffffff;
+    --swiper-pagination-color: #ffffff;
+    --swiper-pagination-bullet-inactive-color: rgba(255, 255, 255, 0.4);
+    --swiper-navigation-size: 22px; /* Font size for arrows */
+}
+
+.swiper-button-prev,
+.swiper-button-next {
     width: 44px;
     height: 44px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: var(--radius-full);
-    display: grid;
-    place-items: center;
-    cursor: pointer;
     transition: all var(--transition-base);
-    z-index: 3;
 }
-.slider-control:hover {
+
+.swiper-button-prev:hover,
+.swiper-button-next:hover {
     background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-50%) scale(1.1);
+    transform: scale(1.1);
 }
-.slider-control.prev { left: var(--spacing-lg); }
-.slider-control.next { right: var(--spacing-lg); }
-.slider-dots {
-    position: absolute;
-    bottom: var(--spacing-lg);
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: var(--spacing-sm);
-    z-index: 3;
-}
-.dot {
+
+.swiper-pagination-bullet {
     width: 10px;
     height: 10px;
-    border-radius: var(--radius-full);
-    background: rgba(255, 255, 255, 0.4);
-    cursor: pointer;
+    background-color: var(--swiper-pagination-bullet-inactive-color);
+    opacity: 1;
     transition: all var(--transition-base);
-    border: none;
-    padding: 0;
 }
-.dot.active {
-    background: white;
+
+.swiper-pagination-bullet-active {
+    background-color: var(--swiper-pagination-color);
     transform: scale(1.2);
 }
 
