@@ -48,9 +48,10 @@ export function showSkeletonLoader(container, count = 8) {
 
 // ============= Component Rendering =============
 
+// in js/ui.js
+
 /**
  * Renders the hero slider on the homepage using static banner images.
- * The original products parameter is preserved for backward compatibility but ignored.
  * @param {Array<Object>} _unused
  */
 export function renderHeroSlider(_unused = []) {
@@ -58,6 +59,7 @@ export function renderHeroSlider(_unused = []) {
     const dotsContainer = document.querySelector('#hero-slider .slider-dots');
     if (!sliderContainer || !dotsContainer) return;
 
+    // List of images from your folder structure
     const images = [
         'images/hero/soundlightpro-banner-home1.jpg',
         'images/hero/soundlightpro-banner-home2.jpg',
@@ -76,8 +78,10 @@ export function renderHeroSlider(_unused = []) {
         const slide = document.createElement('div');
         slide.className = `slide ${index === 0 ? 'active' : ''}`;
         slide.dataset.index = index;
+        // Performance: Don't lazy load the first image as it's above the fold.
+        const loadingAttr = index === 0 ? '' : 'loading="lazy"';
         slide.innerHTML = `
-            <img src="${src}" alt="Hero banner ${index + 1}" class="slide-bg" loading="lazy" />
+            <img src="${src}" alt="Promotional banner ${index + 1}" class="slide-bg" ${loadingAttr} />
             <div class="slide-overlay"></div>
         `;
         sliderContainer.appendChild(slide);
