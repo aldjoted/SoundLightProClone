@@ -111,6 +111,10 @@ export const getProductById = (productId) => {
     return apiFetch(`/products/${productId}/`);
 };
 
+export const getCategories = () => {
+    return apiFetch('/categories/');
+};
+
 // --- Authentication ---
 export const loginUser = async (username, password) => {
     const response = await apiFetch('/token/', {
