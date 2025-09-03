@@ -194,6 +194,7 @@ function initSlider() {
     const nextBtn = document.querySelector('.slider-control.next');
     const prevBtn = document.querySelector('.slider-control.prev');
 
+    // Guard clause: If there's 1 or 0 slides, hide controls and stop.
     if (slides.length <= 1) {
         if(nextBtn) nextBtn.style.display = 'none';
         if(prevBtn) prevBtn.style.display = 'none';
@@ -202,32 +203,53 @@ function initSlider() {
     }
 
     let currentSlide = 0;
-    let slideInterval = setInterval(nextSlide, 7000);
+    let slideInterval = setInterval(nextSlide, 7000); // Auto-play every 7 seconds
 
     function goToSlide(n) {
+        // Deactivate current slide and dot
         slides[currentSlide].classList.remove('active');
         dots[currentSlide].classList.remove('active');
         dots[currentSlide].setAttribute('aria-selected', 'false');
         
+        // Calculate next slide index, wrapping around if necessary
         currentSlide = (n + slides.length) % slides.length;
         
+        // Activate new slide and dot
         slides[currentSlide].classList.add('active');
         dots[currentSlide].classList.add('active');
         dots[currentSlide].setAttribute('aria-selected', 'true');
     }
 
-    function nextSlide() { goToSlide(currentSlide + 1); }
-    function prevSlide() { goToSlide(currentSlide - 1); }
+    function nextSlide() {
+        goToSlide(currentSlide + 1);
+    }
 
+    function prevSlide() {
+        goToSlide(currentSlide - 1);
+    }
+
+    // Resets the auto-play timer whenever the user interacts with the slider
     function resetInterval() {
         clearInterval(slideInterval);
         slideInterval = setInterval(nextSlide, 7000);
     }
 
-    nextBtn.addEventListener('click', () => { nextSlide(); resetInterval(); });
-    prevBtn.addEventListener('click', () => { prevSlide(); resetInterval(); });
+    // Event Listeners
+    nextBtn.addEventListener('click', () => {
+        nextSlide();
+        resetInterval();
+    });
+
+    prevBtn.addEventListener('click', () => {
+        prevSlide();
+        resetInterval();
+    });
+
     dots.forEach(dot => {
-        dot.addEventListener('click', () => { goToSlide(parseInt(dot.dataset.index)); resetInterval(); });
+        dot.addEventListener('click', () => {
+            goToSlide(parseInt(dot.dataset.index));
+            resetInterval();
+        });
     });
 }
 
