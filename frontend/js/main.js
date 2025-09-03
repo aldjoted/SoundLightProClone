@@ -44,6 +44,13 @@ function router() {
  * Initializes common application state on every page load.
  */
 async function initApp() {
+    // Initialize Animate on Scroll library
+    AOS.init({
+        duration: 800,
+        easing: 'ease-in-out',
+        once: true, // Only animate elements once
+    });
+
     ui.updateCartCount(cart.getCartItemCount());
     document.addEventListener('cartUpdated', () => {
         ui.updateCartCount(cart.getCartItemCount());
@@ -112,11 +119,27 @@ async function initHomePage() {
         ]);
         
         // --- Populate UI components ---
-        const sliderProducts = allProducts.slice(0, 3);
         const featuredProducts = allProducts.slice(3, 6);
         
-        ui.renderHeroSlider(sliderProducts);
-        initSlider();
+        ui.renderHeroSlider(); // Renders the slides into the .swiper-wrapper
+        
+        // Initialize Swiper after slides are rendered
+        new Swiper('.hero-slider', {
+            loop: true,
+            effect: 'fade',
+            autoplay: {
+                delay: 7000,
+                disableOnInteraction: false,
+            },
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+        });
         
         ui.renderFeaturedGrid(featuredProducts);
         ui.renderCategoryFilters(allCategories.filter(c => !c.parent)); // Only top-level categories
@@ -183,74 +206,6 @@ function filterProducts(categorySlug) {
         });
     }
     ui.renderProductGrid(filteredProducts, productGrid);
-}
-
-/**
- * Initializes and controls the hero slider functionality.
- */
-function initSlider() {
-    const slides = document.querySelectorAll('.slide');
-    const dots = document.querySelectorAll('.dot');
-    const nextBtn = document.querySelector('.slider-control.next');
-    const prevBtn = document.querySelector('.slider-control.prev');
-
-    // Guard clause: If there's 1 or 0 slides, hide controls and stop.
-    if (slides.length <= 1) {
-        if(nextBtn) nextBtn.style.display = 'none';
-        if(prevBtn) prevBtn.style.display = 'none';
-        if(dots.length > 0) dots[0].parentElement.style.display = 'none';
-        return;
-    }
-
-    let currentSlide = 0;
-    let slideInterval = setInterval(nextSlide, 7000); // Auto-play every 7 seconds
-
-    function goToSlide(n) {
-        // Deactivate current slide and dot
-        slides[currentSlide].classList.remove('active');
-        dots[currentSlide].classList.remove('active');
-        dots[currentSlide].setAttribute('aria-selected', 'false');
-        
-        // Calculate next slide index, wrapping around if necessary
-        currentSlide = (n + slides.length) % slides.length;
-        
-        // Activate new slide and dot
-        slides[currentSlide].classList.add('active');
-        dots[currentSlide].classList.add('active');
-        dots[currentSlide].setAttribute('aria-selected', 'true');
-    }
-
-    function nextSlide() {
-        goToSlide(currentSlide + 1);
-    }
-
-    function prevSlide() {
-        goToSlide(currentSlide - 1);
-    }
-
-    // Resets the auto-play timer whenever the user interacts with the slider
-    function resetInterval() {
-        clearInterval(slideInterval);
-        slideInterval = setInterval(nextSlide, 7000);
-    }
-
-    // Event Listeners
-    nextBtn.addEventListener('click', () => {
-        nextSlide();
-        resetInterval();
-    });
-
-    prevBtn.addEventListener('click', () => {
-        prevSlide();
-        resetInterval();
-    });
-
-    dots.forEach(dot => {
-        dot.addEventListener('click', () => {
-            goToSlide(parseInt(dot.dataset.index));
-            resetInterval();
-        });
-    });
 }
 
 
