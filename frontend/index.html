@@ -46,7 +46,25 @@
                 <nav class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
                         <li><a href="index.html" class="nav-link active">Home</a></li>
-                        <li><a href="#products" class="nav-link">Products</a></li>
+                        <!-- Products Mega Menu -->
+                        <li class="nav-item mega-menu-container">
+                            <a href="#products" class="nav-link dropdown-toggle">Products</a>
+                            <div class="mega-menu" id="products-mega-menu">
+                                <div class="mega-menu-header">
+                                    <button class="mega-menu-tab-btn active" data-target="mega-menu-family-content">By Family</button>
+                                    <button class="mega-menu-tab-btn" data-target="mega-menu-features-content">By Features</button>
+                                </div>
+                                <div class="mega-menu-content">
+                                    <div class="mega-menu-pane active" id="mega-menu-family-content">
+                                        <!-- Content rendered by ui.js -->
+                                        <div class="loading-spinner"><div class="spinner"></div></div>
+                                    </div>
+                                    <div class="mega-menu-pane" id="mega-menu-features-content">
+                                        <!-- Content rendered by ui.js -->
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
                         <li>
                             <a href="cart.html" class="nav-link cart-link">
                                 <i class="fas fa-shopping-cart" aria-hidden="true"></i>

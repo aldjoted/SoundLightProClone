@@ -48,8 +48,6 @@ export function showSkeletonLoader(container, count = 8) {
 
 // ============= Component Rendering =============
 
-// in js/ui.js
-
 /**
  * Renders the hero slider slides for Swiper.js using static banner images.
  * @param {Array<Object>} _unused
@@ -83,6 +81,44 @@ export function renderHeroSlider(_unused = []) {
         `;
         swiperWrapper.appendChild(slide);
     });
+}
+
+/**
+ * Renders the content for the products mega menu.
+ * @param {Array<Object>} categories - An array of category objects from the API.
+ */
+export function renderMegaMenu(categories) {
+    const familyContainer = document.getElementById('mega-menu-family-content');
+    const featuresContainer = document.getElementById('mega-menu-features-content');
+    if (!familyContainer || !featuresContainer) return;
+
+    // --- Render "By Family" View ---
+    const parentCategories = categories.filter(c => c.parent === null);
+    let familyHTML = '';
+    parentCategories.forEach(parent => {
+        const childCategories = categories.filter(c => c.parent === parent.id);
+        familyHTML += `
+            <div class="mega-menu-column">
+                <h4>${parent.name}</h4>
+                <ul>
+                    ${childCategories.map(child => `<li><a href="index.html#products?category=${child.slug}">${child.name}</a></li>`).join('')}
+                </ul>
+            </div>
+        `;
+    });
+    familyContainer.innerHTML = familyHTML || '<p>No categories found.</p>';
+
+    // --- Render "By Features" View ---
+    // This view displays the main parent categories as clickable items
+    let featuresHTML = parentCategories.map(parent => `
+        <div class="mega-menu-column">
+            <a href="index.html#products?category=${parent.slug}">
+                <h4>${parent.name}</h4>
+                <!-- Optionally add an image here -->
+            </a>
+        </div>
+    `).join('');
+    featuresContainer.innerHTML = featuresHTML || '<p>No features found.</p>';
 }
 
 

@@ -92,9 +92,29 @@ function setupGlobalEventListeners() {
         });
         // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
-            if (!userMenuToggle.parentElement.contains(e.target)) {
+            if (userMenuToggle.parentElement && !userMenuToggle.parentElement.contains(e.target)) {
                  userMenuToggle.setAttribute('aria-expanded', 'false');
             }
+        });
+    }
+
+    // Mega Menu Tab Switching
+    const megaMenu = document.getElementById('products-mega-menu');
+    if (megaMenu) {
+        const tabButtons = megaMenu.querySelectorAll('.mega-menu-tab-btn');
+        const tabPanes = megaMenu.querySelectorAll('.mega-menu-pane');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Deactivate all
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabPanes.forEach(pane => pane.classList.remove('active'));
+
+                // Activate clicked
+                button.classList.add('active');
+                const targetPaneId = button.dataset.target;
+                document.getElementById(targetPaneId)?.classList.add('active');
+            });
         });
     }
 }
@@ -122,6 +142,7 @@ async function initHomePage() {
         const featuredProducts = allProducts.slice(3, 6);
         
         ui.renderHeroSlider(); // Renders the slides into the .swiper-wrapper
+        ui.renderMegaMenu(allCategories); // Render the new mega menu
         
         // Initialize Swiper after slides are rendered
         new Swiper('.hero-slider', {
