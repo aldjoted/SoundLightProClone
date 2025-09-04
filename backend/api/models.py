@@ -54,8 +54,7 @@ class Product(models.Model):
     description = models.TextField(blank=True)
     # Use DecimalField for price to avoid floating point rounding errors
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    # Pillow library is required for ImageField
-    image = models.ImageField(upload_to='products/', blank=True, null=True)
+    # The single image field has been REMOVED from here.
     stock = models.PositiveIntegerField(default=0)
     available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -66,6 +65,20 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+class ProductImage(models.Model):
+    """
+    Model for storing multiple images for a single product.
+    """
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='products/')
+    alt_text = models.CharField(max_length=255, blank=True, help_text="Descriptive text for SEO and accessibility.")
+    
+    class Meta:
+        ordering = ['id'] # Order images by when they were added
+
+    def __str__(self):
+        return f"Image for {self.product.name}"
 
 
 class Order(models.Model):

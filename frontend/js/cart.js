@@ -37,8 +37,12 @@ function saveCart(cart) {
  */
 export function addToCart(product, quantity) {
     const cart = getCart();
-    // Find if the product already exists in the cart
     const existingItemIndex = cart.findIndex(item => item.id === product.id);
+
+    // Determine the image to store in the cart
+    const imageUrl = (product.images && product.images.length > 0) 
+        ? product.images[0].image 
+        : null;
 
     if (existingItemIndex > -1) {
         // Product exists, update quantity
@@ -49,13 +53,12 @@ export function addToCart(product, quantity) {
             id: product.id,
             name: product.name,
             price: parseFloat(product.price),
-            image: product.image,
+            image: imageUrl, // Use the determined image URL
             quantity: quantity,
         });
     }
 
     saveCart(cart);
-    // Dispatch a custom event to notify other parts of the app (like the header) that the cart has changed.
     document.dispatchEvent(new CustomEvent('cartUpdated'));
 }
 
@@ -81,7 +84,6 @@ export function updateCartItemQuantity(productId, quantity) {
  */
 export function removeFromCart(productId) {
     let cart = getCart();
-    // Filter out the item to be removed
     cart = cart.filter(item => item.id !== productId);
     saveCart(cart);
     document.dispatchEvent(new CustomEvent('cartUpdated'));

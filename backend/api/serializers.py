@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-from .models import Category, Brand, Product, Order, OrderItem
+from .models import Category, Brand, Product, ProductImage, Order, OrderItem
 
 # --- Product Catalog Serializers ---
 
@@ -10,7 +10,6 @@ class CategorySerializer(serializers.ModelSerializer):
     Serializer for the Category model.
     Includes nested serialization for child categories to represent the hierarchy.
     """
-    # 'children' is the related_name we set in the Category model's parent field
     children = serializers.SerializerMethodField()
 
     class Meta:
@@ -20,7 +19,7 @@ class CategorySerializer(serializers.ModelSerializer):
     def get_children(self, obj):
         # Recursively serialize children categories
         return CategorySerializer(obj.children.all(), many=True).data
-    
+
 class BrandSerializer(serializers.ModelSerializer):
     """
     Serializer for the Brand model.
@@ -29,24 +28,32 @@ class BrandSerializer(serializers.ModelSerializer):
         model = Brand
         fields = ['name', 'slug', 'image', 'description']
 
+class ProductImageSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the ProductImage model.
+    """
+    class Meta:
+        model = ProductImage
+        fields = ['image', 'alt_text']
+
 class ProductSerializer(serializers.ModelSerializer):
     """
     Serializer for the Product model.
-    Displays the category name and brand object for better readability.
+    Displays the category name, brand object, and a list of all product images.
     """
-    # Use SlugRelatedField to show category name in the API response
     category = serializers.SlugRelatedField(
         slug_field='name',
         queryset=Category.objects.all()
     )
-    # Nest the BrandSerializer to show the full brand object
     brand = BrandSerializer(read_only=True)
+    # Use the new ProductImageSerializer to nest all related images
+    images = ProductImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Product
         fields = [
             'id', 'category', 'brand', 'name', 'description', 
-            'price', 'image', 'stock', 'available'
+            'price', 'images', 'stock', 'available'
         ]
 
 # --- User Authentication Serializers ---
@@ -93,10 +100,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 class OrderItemSerializer(serializers.ModelSerializer):
     """
-
     Serializer for OrderItem model. Used as a nested serializer within OrderSerializer.
     """
-    # We want to show product details, not just the product ID.
     product = ProductSerializer(read_only=True)
 
     class Meta:
@@ -108,7 +113,6 @@ class OrderSerializer(serializers.ModelSerializer):
     Serializer for displaying a customer's orders.
     This is primarily for reading existing orders.
     """
-    # Nest the OrderItemSerializer to show all items in the order
     items = OrderItemSerializer(many=True, read_only=True)
     user = UserSerializer(read_only=True)
 
