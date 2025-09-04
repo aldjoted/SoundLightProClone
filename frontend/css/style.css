@@ -288,3 +288,17 @@ max-height: 700px; overflow: hidden; background: var(--bg-dark); }
 .contact-form input, .contact-form textarea { width: 100%; padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-secondary); transition: all var(--transition-base); }
 .contact-form input:focus, .contact-form textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px var(--primary-light); }
 .contact-form button { align-self: flex-start; /* Align button to the left */ }
+
+/* ============= Product Detail Page - Gallery Styles ============= */
+.product-detail-layout { display: grid; grid-template-columns: 1fr; gap: var(--spacing-2xl); margin-top: var(--spacing-xl); }
+@media (min-width: 768px) { .product-detail-layout { grid-template-columns: 1fr 1fr; align-items: flex-start; } }
+.product-gallery { display: flex; flex-direction: column; gap: var(--spacing-md); }
+.main-image-container { background: var(--bg-card); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); padding: var(--spacing-lg); border: 1px solid var(--border-color); overflow: hidden; }
+#main-product-image { width: 100%; height: auto; max-height: 500px; object-fit: contain; display: block; border-radius: var(--radius-lg); }
+.product-thumbnails { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--spacing-md); }
+.thumbnail-img { width: 100%; height: auto; aspect-ratio: 1 / 1; object-fit: cover; border-radius: var(--radius-md); border: 2px solid var(--border-color); cursor: pointer; transition: all var(--transition-base); opacity: 0.7; }
+.thumbnail-img:hover { border-color: var(--primary-light); opacity: 1; }
+.thumbnail-img.active { border-color: var(--primary-color); box-shadow: 0 0 0 2px var(--primary-color); opacity: 1; }
+.product-detail-info .brand { font-size: 0.875rem; color: var(--text-secondary); margin-bottom: var(--spacing-lg); }
+.product-detail-info .stock-info { font-size: 0.875rem; color: var(--text-secondary); margin-top: var(--spacing-md); }
+.add-to-cart-form button:disabled { background-color: var(--gray-400); cursor: not-allowed; }

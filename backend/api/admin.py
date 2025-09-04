@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Brand, Product, Order, OrderItem
+from .models import Category, Brand, Product, ProductImage, Order, OrderItem
 
 # Register your models here.
 
@@ -22,15 +22,24 @@ class BrandAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ['name']
 
+class ProductImageInline(admin.TabularInline):
+    """
+    Allows adding and editing ProductImages directly within the Product admin page.
+    """
+    model = ProductImage
+    extra = 1 # Show one extra blank form for a new image by default
+    fields = ['image', 'alt_text']
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     """
     Admin configuration for the Product model.
     """
-    list_display = ['name', 'category', 'price', 'stock', 'available', 'created_at']
-    list_filter = ['available', 'created_at', 'updated_at', 'category']
+    list_display = ['name', 'brand', 'category', 'price', 'stock', 'available', 'created_at']
+    list_filter = ['available', 'created_at', 'updated_at', 'category', 'brand']
     list_editable = ['price', 'stock', 'available']
+    search_fields = ['name', 'description']
+    inlines = [ProductImageInline] # Add the inline here
 
 
 class OrderItemInline(admin.TabularInline):

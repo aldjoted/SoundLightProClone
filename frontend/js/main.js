@@ -26,7 +26,7 @@ function router() {
             initHomePage();
             break;
         case 'product.html':
-            // initProductDetailPage();
+            initProductDetailPage(); // <-- UNCOMMENT THIS LINE
             break;
         case 'cart.html':
             // initCartPage();
@@ -97,25 +97,13 @@ function setupGlobalEventListeners() {
             }
         });
     }
-
-    // Mega Menu Tab Switching
-    const megaMenu = document.getElementById('products-mega-menu');
-    if (megaMenu) {
-        const tabButtons = megaMenu.querySelectorAll('.mega-menu-tab-btn');
-        const tabPanes = megaMenu.querySelectorAll('.mega-menu-pane');
-
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                // Deactivate all
-                tabButtons.forEach(btn => btn.classList.remove('active'));
-                tabPanes.forEach(pane => pane.classList.remove('active'));
-
-                // Activate clicked
-                button.classList.add('active');
-                const targetPaneId = button.dataset.target;
-                document.getElementById(targetPaneId)?.classList.add('active');
-            });
-        });
+    
+    // Mega Menu (simplified for global use)
+    const megaMenuContainer = document.querySelector('.mega-menu-container');
+    if (megaMenuContainer) {
+        apiService.getCategories().then(categories => {
+            ui.renderMegaMenu(categories);
+        }).catch(err => console.error("Failed to load categories for mega menu:", err));
     }
 }
 
@@ -132,19 +120,13 @@ async function initHomePage() {
     ui.showSkeletonLoader(featuredGrid, 3);
 
     try {
-        // Fetch products and categories in parallel
-        [allProducts, allCategories] = await Promise.all([
-            apiService.getProducts(),
-            apiService.getCategories()
-        ]);
+        allProducts = await apiService.getProducts();
+        allCategories = await apiService.getCategories(); // Already fetched globally, but good to have here
         
-        // --- Populate UI components ---
         const featuredProducts = allProducts.slice(3, 6);
         
-        ui.renderHeroSlider(); // Renders the slides into the .swiper-wrapper
-        ui.renderMegaMenu(allCategories); // Render the new mega menu
+        ui.renderHeroSlider(); 
         
-        // Initialize Swiper after slides are rendered
         new Swiper('.hero-slider', {
             loop: true,
             effect: 'fade',
@@ -163,7 +145,7 @@ async function initHomePage() {
         });
         
         ui.renderFeaturedGrid(featuredProducts);
-        ui.renderCategoryFilters(allCategories.filter(c => !c.parent)); // Only top-level categories
+        ui.renderCategoryFilters(allCategories.filter(c => !c.parent));
         ui.renderProductGrid(allProducts, productGrid);
         
         setupHomepageEventListeners();
@@ -174,17 +156,46 @@ async function initHomePage() {
 }
 
 /**
+ * Initializes the Product Detail page (product.html).
+ */
+async function initProductDetailPage() {
+    const container = document.getElementById('product-detail-container');
+    if (!container) return;
+
+    // 1. Get product ID from the URL query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+
+    if (!productId) {
+        container.innerHTML = `<p class="error-message">No product ID specified. Please go back to the products page.</p>`;
+        return;
+    }
+
+    try {
+        // 2. Fetch the product data from the API
+        const product = await apiService.getProductById(productId);
+        
+        // 3. Render the product details using the ui module
+        ui.renderProductDetail(product, container);
+        
+        // 4. Set up event listeners for this page
+        setupProductDetailPageEventListeners(product);
+    } catch (error) {
+        console.error("Error fetching product details:", error);
+        container.innerHTML = `<p class="error-message">Could not load product details. It might not exist or there was a server error.</p>`;
+    }
+}
+
+/**
  * Sets up event listeners specific to the homepage (filters, add to cart).
  */
 function setupHomepageEventListeners() {
-    // Product category filtering
     const filterContainer = document.querySelector('.filter-controls');
     if (filterContainer) {
         filterContainer.addEventListener('click', (e) => {
             const filterBtn = e.target.closest('.filter-btn');
             if (!filterBtn) return;
             
-            // Update active button style
             filterContainer.querySelector('.active').classList.remove('active');
             filterBtn.classList.add('active');
             
@@ -193,7 +204,6 @@ function setupHomepageEventListeners() {
         });
     }
 
-    // Add to cart from product grid (event delegation)
     const productGrid = document.getElementById('product-grid');
     productGrid.addEventListener('click', async e => {
         const cartBtn = e.target.closest('.add-to-cart-btn');
@@ -209,6 +219,43 @@ function setupHomepageEventListeners() {
 }
 
 /**
+ * Sets up event listeners for the product detail page (image gallery, add to cart).
+ * @param {object} product - The product data object.
+ */
+function setupProductDetailPageEventListeners(product) {
+    // Image gallery thumbnail clicks
+    const thumbnails = document.querySelectorAll('.thumbnail-img');
+    const mainImage = document.getElementById('main-product-image');
+    if (thumbnails.length > 0 && mainImage) {
+        thumbnails.forEach(thumb => {
+            thumb.addEventListener('click', () => {
+                // Set the main image src to the clicked thumbnail's src
+                mainImage.src = thumb.src;
+                // Update active state
+                document.querySelector('.thumbnail-img.active').classList.remove('active');
+                thumb.classList.add('active');
+            });
+        });
+    }
+
+    // Add to cart form submission
+    const addToCartForm = document.getElementById('add-to-cart-form');
+    if (addToCartForm) {
+        addToCartForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const quantityInput = document.getElementById('quantity');
+            const quantity = parseInt(quantityInput.value, 10);
+            
+            if (quantity > 0) {
+                cart.addToCart(product, quantity);
+                ui.showToast(`${product.name} (x${quantity}) added to cart!`, 'success');
+            }
+        });
+    }
+}
+
+
+/**
  * Filters products by category and re-renders the grid.
  * @param {string} categorySlug - The slug of the category to filter by.
  */
@@ -219,10 +266,7 @@ function filterProducts(categorySlug) {
     if (categorySlug === 'all') {
         filteredProducts = allProducts;
     } else {
-        // This simple filter works for top-level categories.
-        // For nested categories, a more complex recursive function would be needed.
         filteredProducts = allProducts.filter(p => {
-            // Normalize category name from API to match slug
             return p.category.toLowerCase().replace(/\s+/g, '-') === categorySlug;
         });
     }

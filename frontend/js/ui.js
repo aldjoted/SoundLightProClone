@@ -56,7 +56,6 @@ export function renderHeroSlider(_unused = []) {
     const swiperWrapper = document.querySelector('.swiper-wrapper');
     if (!swiperWrapper) return;
 
-    // List of images from your folder structure
     const images = [
         'images/hero/soundlightpro-banner-home1.jpg',
         'images/hero/soundlightpro-banner-home2.jpg',
@@ -68,12 +67,11 @@ export function renderHeroSlider(_unused = []) {
         'images/hero/MYO-ACOUSTIC-SOUNDLIGHTPRO.png'
     ];
 
-    swiperWrapper.innerHTML = ''; // Clear existing content (like skeletons)
+    swiperWrapper.innerHTML = ''; 
 
     images.forEach((src, index) => {
         const slide = document.createElement('div');
         slide.className = 'swiper-slide';
-        // Performance: Don't lazy load the first image as it's above the fold.
         const loadingAttr = index === 0 ? '' : 'loading="lazy"';
         slide.innerHTML = `
             <img src="${src}" alt="Promotional banner ${index + 1}" class="slide-bg" ${loadingAttr} />
@@ -85,42 +83,51 @@ export function renderHeroSlider(_unused = []) {
 
 /**
  * Renders the content for the products mega menu.
+ * This is a corrected and simplified version.
  * @param {Array<Object>} categories - An array of category objects from the API.
  */
 export function renderMegaMenu(categories) {
-    const familyContainer = document.getElementById('mega-menu-family-content');
-    const featuresContainer = document.getElementById('mega-menu-features-content');
-    if (!familyContainer || !featuresContainer) return;
+    const megaMenuContainer = document.getElementById('products-mega-menu');
+    if (!megaMenuContainer) return;
 
-    // --- Render "By Family" View ---
     const parentCategories = categories.filter(c => c.parent === null);
-    let familyHTML = '';
+    
+    let contentHTML = `
+        <div class="mega-menu-content">
+            <div class="mega-menu-pane active">
+    `;
+
     parentCategories.forEach(parent => {
-        const childCategories = categories.filter(c => c.parent === parent.id);
-        familyHTML += `
+        contentHTML += `
             <div class="mega-menu-column">
                 <h4>${parent.name}</h4>
                 <ul>
-                    ${childCategories.map(child => `<li><a href="index.html#products?category=${child.slug}">${child.name}</a></li>`).join('')}
+                    ${parent.children.map(child => `<li><a href="index.html#products?category=${child.slug}">${child.name}</a></li>`).join('')}
                 </ul>
             </div>
         `;
     });
-    familyContainer.innerHTML = familyHTML || '<p>No categories found.</p>';
-
-    // --- Render "By Features" View ---
-    // This view displays the main parent categories as clickable items
-    let featuresHTML = parentCategories.map(parent => `
-        <div class="mega-menu-column">
-            <a href="index.html#products?category=${parent.slug}">
-                <h4>${parent.name}</h4>
-                <!-- Optionally add an image here -->
-            </a>
+    
+    contentHTML += `
+            </div>
         </div>
-    `).join('');
-    featuresContainer.innerHTML = featuresHTML || '<p>No features found.</p>';
+    `;
+
+    megaMenuContainer.innerHTML = contentHTML;
 }
 
+/**
+ * Helper to get the primary image URL from a product object.
+ * @param {Object} product - The product object.
+ * @returns {string} The URL of the first image or a placeholder.
+ */
+function getProductImage(product) {
+    const placeholder = 'https://via.placeholder.com/400x300.png?text=No+Image';
+    if (product.images && product.images.length > 0) {
+        return product.images[0].image;
+    }
+    return placeholder;
+}
 
 /**
  * Renders the featured focus grid on the homepage.
@@ -132,7 +139,7 @@ export function renderFeaturedGrid(products) {
 
     grid.innerHTML = products.map(product => `
         <a href="product.html?id=${product.id}" class="focus-card">
-            <img src="${product.image || 'https://via.placeholder.com/600x400'}" alt="${product.name}" loading="lazy">
+            <img src="${getProductImage(product)}" alt="${product.name}" loading="lazy">
             <div class="focus-card-content">
                 <h3>${product.name}</h3>
                 <p>${product.category}</p>
@@ -140,6 +147,7 @@ export function renderFeaturedGrid(products) {
         </a>
     `).join('');
 }
+
 
 /**
  * Renders category filter buttons.
@@ -172,7 +180,7 @@ export function renderProductGrid(products, container) {
     container.innerHTML = products.map(product => `
         <div class="product-card">
             <a href="product.html?id=${product.id}" class="product-card-image" aria-label="View details for ${product.name}">
-                <img src="${product.image ? product.image : 'https://via.placeholder.com/300'}" alt="${product.name}" loading="lazy">
+                <img src="${getProductImage(product)}" alt="${product.name}" loading="lazy">
             </a>
             <div class="product-card-content">
                 <div>
@@ -188,6 +196,64 @@ export function renderProductGrid(products, container) {
             </div>
         </div>
     `).join('');
+}
+
+/**
+ * Renders the full product detail page.
+ * @param {Object} product - The product object from the API.
+ * @param {HTMLElement} container - The element to render the details into.
+ */
+export function renderProductDetail(product, container) {
+    if (!container || !product) return;
+
+    // Set the browser tab title
+    document.title = `${product.name} - SoundLightPro`;
+
+    const hasImages = product.images && product.images.length > 0;
+    const mainImageSrc = hasImages ? product.images[0].image : 'https://via.placeholder.com/600x400.png?text=No+Image';
+    
+    let thumbnailsHTML = '';
+    if (hasImages && product.images.length > 1) {
+        thumbnailsHTML = `
+            <div class="product-thumbnails">
+                ${product.images.map((img, index) => `
+                    <img src="${img.image}" alt="${img.alt_text || product.name}" class="thumbnail-img ${index === 0 ? 'active' : ''}" />
+                `).join('')}
+            </div>
+        `;
+    }
+
+    const productHTML = `
+        <div class="product-detail-layout">
+            <div class="product-gallery">
+                <div class="main-image-container">
+                    <img id="main-product-image" src="${mainImageSrc}" alt="${product.name}">
+                </div>
+                ${thumbnailsHTML}
+            </div>
+            <div class="product-detail-info">
+                <p class="category">${product.category}</p>
+                <h1>${product.name}</h1>
+                <p class="brand">Brand: <strong>${product.brand ? product.brand.name : 'N/A'}</strong></p>
+                <p class="price">$${parseFloat(product.price).toFixed(2)}</p>
+                <div class="description">
+                    <p>${product.description || 'No description available.'}</p>
+                </div>
+                <form id="add-to-cart-form" class="add-to-cart-form">
+                    <input type="number" id="quantity" value="1" min="1" max="${product.stock}" aria-label="Quantity">
+                    <button type="submit" class="btn btn-primary" ${product.stock === 0 ? 'disabled' : ''}>
+                        <i class="fas fa-shopping-cart"></i> 
+                        ${product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                    </button>
+                </form>
+                <p class="stock-info">
+                    ${product.stock > 0 ? `${product.stock} units available` : 'Currently out of stock'}
+                </p>
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = productHTML;
 }
 
 
