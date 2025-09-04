@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-from .models import Category, Product, Order, OrderItem
+from .models import Category, Brand, Product, Order, OrderItem
 
 # --- Product Catalog Serializers ---
 
@@ -20,22 +20,32 @@ class CategorySerializer(serializers.ModelSerializer):
     def get_children(self, obj):
         # Recursively serialize children categories
         return CategorySerializer(obj.children.all(), many=True).data
+    
+class BrandSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Brand model.
+    """
+    class Meta:
+        model = Brand
+        fields = ['name', 'slug', 'image', 'description']
 
 class ProductSerializer(serializers.ModelSerializer):
     """
     Serializer for the Product model.
-    Displays the category name instead of just its ID for better readability.
+    Displays the category name and brand object for better readability.
     """
     # Use SlugRelatedField to show category name in the API response
     category = serializers.SlugRelatedField(
         slug_field='name',
         queryset=Category.objects.all()
     )
+    # Nest the BrandSerializer to show the full brand object
+    brand = BrandSerializer(read_only=True)
 
     class Meta:
         model = Product
         fields = [
-            'id', 'category', 'name', 'description', 
+            'id', 'category', 'brand', 'name', 'description', 
             'price', 'image', 'stock', 'available'
         ]
 

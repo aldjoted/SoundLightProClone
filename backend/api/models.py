@@ -28,12 +28,28 @@ class Category(models.Model):
             k = k.parent
         return ' -> '.join(full_path[::-1])
 
+class Brand(models.Model):
+    """
+    Model for product brands.
+    """
+    name = models.CharField(max_length=255, unique=True)
+    slug = models.SlugField(unique=True)
+    description = models.TextField(blank=True)
+    image = models.ImageField(upload_to='brands/', blank=True, null=True)
+
+    class Meta:
+        ordering = ('name',)
+
+    def __str__(self):
+        return self.name
+
 
 class Product(models.Model):
     """
     Model for individual products.
     """
     category = models.ForeignKey(Category, related_name='products', on_delete=models.CASCADE)
+    brand = models.ForeignKey(Brand, related_name='products', on_delete=models.SET_NULL, null=True, blank=True)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     # Use DecimalField for price to avoid floating point rounding errors
