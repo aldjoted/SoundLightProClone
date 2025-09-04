@@ -308,3 +308,10 @@ a:hover { color: var(--primary-dark); }
 .product-detail-info .brand { font-size: 0.875rem; color: var(--text-secondary); margin-bottom: var(--spacing-lg); }
 .product-detail-info .stock-info { font-size: 0.875rem; color: var(--text-secondary); margin-top: var(--spacing-md); }
 .add-to-cart-form button:disabled { background-color: var(--gray-400); cursor: not-allowed; }
+
+/* ============= Custom Logo Style ============= */
+.logo .logo-image {
+  height: 80px; /* Sets the desired height of the logo */
+  width: 160px;  /* Automatically adjusts width to maintain aspect ratio */
+  display: block; /* Removes extra space below the image */
+}
