@@ -4,7 +4,9 @@ from dotenv import load_dotenv
 from decimal import Decimal
 from typing import Optional
 
-from django.db.models import Q
+from django.db import transaction
+from django.db.models import Q, Prefetch
+from django.db.models.query import QuerySet
 from django.contrib.auth.models import User
 from rest_framework import generics, permissions, status, filters
 from rest_framework.response import Response
@@ -51,28 +53,44 @@ class ProductList(generics.ListAPIView):
     """
     API view to list all available products.
     Includes search functionality via a 'search' query parameter.
+    Includes filtering by brand slug via a 'brand' query parameter.
     """
-    queryset = Product.objects.filter(available=True)
     serializer_class = ProductSerializer
     permission_classes = (permissions.AllowAny,)
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'description']
 
+    def get_queryset(self) -> QuerySet[Product]:  # type: ignore
+        """
+        Optimized queryset that prevents N+1 issues.
+        Optionally filters the products by a 'brand' query parameter in the URL.
+        """
+        # Note: self.request is a DRF Request object, which has .query_params
+        queryset = Product.objects.filter(available=True).select_related('brand', 'category')
+        brand_slug = self.request.query_params.get('brand') # type: ignore
+        if brand_slug is not None:
+            queryset = queryset.filter(brand__slug=brand_slug)
+        return queryset
+
+
 class ProductDetail(generics.RetrieveAPIView):
     """
     API view to retrieve a single product by its primary key (id).
+    Optimized to pre-fetch related brand and category.
     """
-    queryset = Product.objects.filter(available=True)
+    queryset = Product.objects.filter(available=True).select_related('brand', 'category')
     serializer_class = ProductSerializer
     permission_classes = (permissions.AllowAny,)
 
 class CategoryList(generics.ListAPIView):
     """
-
     API view to list all top-level categories (those with no parent).
     The serializer will handle nesting the child categories.
+    Prefetching children to mitigate N+1 query issues.
     """
-    queryset = Category.objects.filter(parent__isnull=True)
+    queryset = Category.objects.filter(parent__isnull=True).prefetch_related(
+        Prefetch('children', queryset=Category.objects.prefetch_related('children'))
+    )
     serializer_class = CategorySerializer
     permission_classes = (permissions.AllowAny,)
 
@@ -86,100 +104,94 @@ class CreateOrderView(APIView):
     - Creates Order and OrderItem records.
     - Processes payment with Stripe.
     - Updates product stock.
+    - All database operations are wrapped in a transaction for data integrity.
     """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        # Extract data from the request
         cart_items = request.data.get('items', [])
         shipping_info = request.data.get('shipping_info', {})
         stripe_token = request.data.get('stripe_token')
 
-        # Basic validation
         if not all([cart_items, shipping_info, stripe_token]):
             return Response(
                 {"error": "Missing items, shipping info, or payment token."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        order: Optional[Order] = None  # ensure always defined for Pylance
+        # N+1 Fix: Get all product IDs from the cart
+        product_ids = [item['id'] for item in cart_items]
+        # Fetch all products in a single query
+        products = Product.objects.in_bulk(product_ids)
+
         try:
-            # 1. Create the Order object
-            order = Order.objects.create(
-                user=request.user,
-                first_name=shipping_info.get('first_name'),
-                last_name=shipping_info.get('last_name'),
-                email=shipping_info.get('email'),
-                address=shipping_info.get('address'),
-                postal_code=shipping_info.get('postal_code'),
-                city=shipping_info.get('city'),
-            )
-            total_cost = Decimal('0')
-
-            # 2. Create OrderItem objects and update stock
-            for item_data in cart_items:
-                product = Product.objects.get(id=item_data['id'])
-                quantity = item_data['quantity']
-
-                if product.stock < quantity:
-                    order.delete() # clean up the created order
-                    return Response(
-                        {"error": f"Not enough stock for {product.name}. Only {product.stock} available."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-
-                OrderItem.objects.create(
-                    order=order,
-                    product=product,
-                    price=product.price,
-                    quantity=quantity
+            with transaction.atomic():
+                # 1. Create the Order object
+                order = Order.objects.create(
+                    user=request.user,
+                    first_name=shipping_info.get('first_name'),
+                    last_name=shipping_info.get('last_name'),
+                    email=shipping_info.get('email'),
+                    address=shipping_info.get('address'),
+                    postal_code=shipping_info.get('postal_code'),
+                    city=shipping_info.get('city'),
                 )
-                total_cost += product.price * quantity
+                total_cost = Decimal('0')
+                products_to_update = []
+
+                # 2. Create OrderItem objects and prepare stock updates
+                for item_data in cart_items:
+                    product = products.get(item_data['id'])
+                    if not product:
+                        # This raises an exception to trigger the transaction rollback
+                        raise Product.DoesNotExist(f"Product with ID {item_data['id']} not found.")
+                    
+                    quantity = item_data['quantity']
+                    if product.stock < quantity:
+                        # Raise exception to rollback transaction
+                        raise ValueError(f"Not enough stock for {product.name}. Only {product.stock} available.")
+
+                    OrderItem.objects.create(
+                        order=order,
+                        product=product,
+                        price=product.price,
+                        quantity=quantity
+                    )
+                    total_cost += product.price * quantity
+                    
+                    # Decrement stock and add to list for bulk update
+                    product.stock -= quantity
+                    products_to_update.append(product)
                 
-                # Update product stock
-                product.stock -= quantity
-                product.save()
-            
-            # Update the order's total paid amount
-            order.total_paid = total_cost
-            order.save()
+                # Bulk update product stock in one query for performance
+                Product.objects.bulk_update(products_to_update, ['stock'])
+                
+                order.total_paid = total_cost
+                
+                # 3. Process payment with Stripe
+                charge = stripe.Charge.create(
+                    amount=int(total_cost * 100),
+                    currency='usd',
+                    description=f'Order {order.pk} for {order.email}',
+                    source=stripe_token,
+                )
 
-            # 3. Process payment with Stripe
-            # Stripe expects the amount in cents
-            charge = stripe.Charge.create(
-                amount=int(total_cost * 100),
-                currency='usd',
-                description=f'Order {order.pk} for {order.email}',
-                source=stripe_token,
-            )
+                # 4. Finalize the order if payment is successful
+                order.paid = True
+                order.stripe_id = charge.id
+                order.save() # Save the final changes to the order
 
-            # 4. Finalize the order
-            order.paid = True
-            order.stripe_id = charge.id
-            order.save()
-
-            # 5. Serialize and return the created order
+            # 5. Serialize and return the created order (outside the transaction block)
             serializer = OrderSerializer(order)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        except Product.DoesNotExist:
-            # Clean up order if a product looked up during item processing does not exist
-            if order:
-                order.delete()
-            return Response(
-                {"error": "One or more products in the cart no longer exist."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        except Product.DoesNotExist as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError as e: # Catches our stock check error
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except StripeError as e:
-            if order:
-                # (optional) undo stock adjustments if you wrap in a transaction later
-                pass
-            return Response(
-                {"error": f"Payment failed: {str(e)}"},
-                status=status.HTTP_402_PAYMENT_REQUIRED
-            )
+            # The transaction will be rolled back automatically on this exception
+            return Response({"error": f"Payment failed: {str(e)}"}, status=status.HTTP_402_PAYMENT_REQUIRED)
         except Exception as e:
-            return Response(
-                {"error": f"An unexpected error occurred: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            # The transaction will be rolled back automatically on any other exception
+            return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

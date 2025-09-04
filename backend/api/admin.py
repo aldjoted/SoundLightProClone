@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Product, Order, OrderItem
+from .models import Category, Brand, Product, Order, OrderItem
 
 # Register your models here.
 
@@ -12,6 +12,15 @@ class CategoryAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ['name'] 
     raw_id_fields = ['parent']
+
+@admin.register(Brand)
+class BrandAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for the Brand model.
+    """
+    list_display = ['name', 'slug']
+    prepopulated_fields = {'slug': ('name',)}
+    search_fields = ['name']
 
 
 @admin.register(Product)
