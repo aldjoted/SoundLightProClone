@@ -1,9 +1,11 @@
+--- START OF FILE about.html ---
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="About SoundLightPro - Our mission and history.">
+    <meta name="description" content="About SoundLightPro - Our mission, team, and history.">
     <title>About Us - SoundLightPro</title>
     
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
@@ -23,18 +25,18 @@
                     <svg class="logo-icon" width="32" height="32" viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M22.0156 14.5312C23.2344 14.5312 24.2188 15.5156 24.2188 16.7344C24.2188 17.9531 23.2344 18.9375 22.0156 18.9375H10.0156C8.79688 18.9375 7.8125 17.9531 7.8125 16.7344C7.8125 15.5156 8.79688 14.5312 10.0156 14.5312H22.0156Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M16 0C7.16406 0 0 7.16406 0 16C0 24.8359 7.16406 32 16 32C24.8359 32 32 24.8359 32 16C32 7.16406 24.8359 0 16 0ZM16 28.125C9.30469 28.125 3.875 22.6953 3.875 16C3.875 9.30469 9.30469 3.875 16 3.875C22.6953 3.875 28.125 9.30469 28.125 16C28.125 22.6953 22.6953 28.125 16 28.125Z"/></svg>
                     <span class="logo-text">SoundLightPro</span>
                 </a>
-                
                 <nav class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
                         <li><a href="index.html" class="nav-link">Home</a></li>
                         <li class="nav-item mega-menu-container">
                             <a href="index.html#products" class="nav-link dropdown-toggle">Products</a>
                             <div class="mega-menu" id="products-mega-menu">
-                                <!-- Mega menu content will be loaded by JS -->
+                                <!-- Content is loaded by ui.js -->
                             </div>
                         </li>
-                        <li><a href="about.html" class="nav-link active">About Us</a></li>
+                        <li><a href="about.html" class="nav-link">About Us</a></li>
                         <li><a href="services.html" class="nav-link">Services</a></li>
+                        <li><a href="contact.html" class="nav-link">Contact</a></li>
                         <li>
                             <a href="cart.html" class="nav-link cart-link">
                                 <i class="fas fa-shopping-cart" aria-hidden="true"></i>
@@ -44,23 +46,73 @@
                         </li>
                     </ul>
                 </nav>
-                
                 <div class="header-actions">
-                    <!-- Search and User Actions remain the same -->
+                    <!-- Search and User Actions will be here -->
                 </div>
             </div>
         </div>
     </header>
 
-    <main id="main-content" class="container">
-        <div class="page-header">
-            <h1>About SoundLightPro</h1>
+    <main id="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1>About SoundLightPro</h1>
+            </div>
+            <section class="text-content" style="max-width: 800px; margin: 0 auto; line-height: 1.8;">
+                <p><strong>Welcome to SoundLightPro, your premier destination for professional audio and lighting solutions.</strong></p>
+                <p>Founded with a passion for pristine sound and brilliant light, we have been serving the events, concerts, and venue industry for over a decade. Our mission is to provide artists, engineers, and event organizers with the highest quality equipment that empowers them to create unforgettable experiences.</p>
+                <p>We believe in innovation, reliability, and unparalleled customer support. Our team consists of industry veterans and technical experts who meticulously curate our product catalog, ensuring every item meets our rigorous standards for performance and durability.</p>
+                <p>From massive festival stages to intimate corporate events, SoundLightPro is the trusted partner for professionals worldwide. Thank you for choosing us to be a part of your creative journey.</p>
+            </section>
         </div>
-        <section class="text-content" style="max-width: 800px; margin: 0 auto; padding-bottom: 3rem; line-height: 1.8;">
-            <p><strong>Welcome to SoundLightPro, your premier destination for professional audio and lighting solutions.</strong></p>
-            <p>Founded with a passion for pristine sound and brilliant light, we have been serving the events, concerts, and venue industry for over a decade. Our mission is to provide artists, engineers, and event organizers with the highest quality equipment that empowers them to create unforgettable experiences.</p>
-            <p>We believe in innovation, reliability, and unparalleled customer support. Our team consists of industry veterans and technical experts who meticulously curate our product catalog, ensuring every item meets our rigorous standards for performance and durability.</p>
-            <p>From massive festival stages to intimate corporate events, SoundLightPro is the trusted partner for professionals worldwide. Thank you for choosing us to be a part of your creative journey.</p>
+
+        <!-- Our Team Section -->
+        <section class="team-section container">
+            <h2 class="section-title text-center">Our Team</h2>
+            <div class="team-grid">
+                <div class="team-member">
+                    <!-- NOTE: Create a folder `images/team/` and add a placeholder.png file (180x180 pixels is ideal) -->
+                    <img src="images/team/placeholder.png" alt="Profile picture of Koumene Alain">
+                    <h3>KOUMENE ALAIN</h3>
+                    <p class="role">CEO</p>
+                    <a href="mailto:koumene.alain@soundlightpro.com" class="email-link">koumene.alain@soundlightpro.com</a>
+                </div>
+                <div class="team-member">
+                    <img src="images/team/placeholder.png" alt="Profile picture of Etundi Roland">
+                    <h3>ETUNDI ROLAND</h3>
+                    <p class="role">TECHNICAL SALES MANAGER</p>
+                    <a href="mailto:roland.etundi@soundlightpro.com" class="email-link">roland.etundi@soundlightpro.com</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Key Figures Section -->
+        <section class="key-figures-section">
+            <div class="container">
+                <h2 class="section-title text-center" style="color: var(--text-primary);">SoundLightPro in Key Figures</h2>
+                <div class="figures-grid">
+                    <div class="figure-item">
+                        <i class="fas fa-box-open figure-icon"></i>
+                        <span class="figure-number">2500+</span>
+                        <span class="figure-label">Products</span>
+                    </div>
+                    <div class="figure-item">
+                        <i class="fas fa-award figure-icon"></i>
+                        <span class="figure-number">10</span>
+                        <span class="figure-label">Years of Experience</span>
+                    </div>
+                    <div class="figure-item">
+                        <i class="fas fa-smile-beam figure-icon"></i>
+                        <span class="figure-number">500+</span>
+                        <span class="figure-label">Satisfied Clients</span>
+                    </div>
+                    <div class="figure-item">
+                        <i class="fas fa-users figure-icon"></i>
+                        <span class="figure-number">20+</span>
+                        <span class="figure-label">Collaborators</span>
+                    </div>
+                </div>
+            </div>
         </section>
     </main>
 
