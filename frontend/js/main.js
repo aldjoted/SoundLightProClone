@@ -146,6 +146,23 @@ function setupGlobalEventListeners() {
             .then(categories => ui.renderMegaMenu(categories))
             .catch(err => console.error("Failed to load categories for mega menu:", err));
     }
+
+    const megaMenu = document.getElementById('products-mega-menu');
+    if (megaMenu) {
+        megaMenu.addEventListener('click', (e) => {
+            const tabButton = e.target.closest('.mega-menu-tab-btn');
+            if (!tabButton) return;
+
+            // Désactiver l'ancien onglet et panneau actifs
+            megaMenu.querySelector('.mega-menu-tab-btn.active').classList.remove('active');
+            megaMenu.querySelector('.mega-menu-pane.active').classList.remove('active');
+
+            // Activer le nouveau
+            tabButton.classList.add('active');
+            const targetPaneId = tabButton.dataset.target;
+            document.getElementById(targetPaneId).classList.add('active');
+        });
+    }
 }
 
 /**
@@ -154,22 +171,30 @@ function setupGlobalEventListeners() {
 function setupMobileMenu() {
     const headerWrapper = document.querySelector('.header-wrapper');
     const mainNav = document.querySelector('.main-nav');
+    const authLinks = document.querySelector('#auth-links');
     if (!headerWrapper || !mainNav) return;
 
-    // Crée et injecte le bouton "burger" pour le menu mobile.
+    // 1. Cloner les liens d'authentification pour les ajouter au menu mobile
+    const mobileAuthLinks = authLinks.cloneNode(true);
+    mobileAuthLinks.classList.add('mobile-auth-links');
+    mainNav.querySelector('ul').appendChild(mobileAuthLinks);
+
+    // 2. Créer et injecter le bouton "burger"
     const menuToggle = document.createElement('button');
     menuToggle.classList.add('mobile-menu-toggle');
     menuToggle.setAttribute('aria-expanded', 'false');
     menuToggle.setAttribute('aria-controls', 'main-navigation');
     menuToggle.setAttribute('aria-label', 'Toggle navigation');
     menuToggle.innerHTML = `<i class="fas fa-bars"></i>`;
+    // Insérer le bouton avant la navigation pour un ordre logique dans le DOM
     headerWrapper.insertBefore(menuToggle, mainNav);
 
+    // 3. Ajouter l'écouteur d'événement pour ouvrir/fermer le menu
     menuToggle.addEventListener('click', () => {
         const isExpanded = mainNav.classList.toggle('is-open');
         menuToggle.setAttribute('aria-expanded', isExpanded);
         menuToggle.innerHTML = isExpanded ? `<i class="fas fa-times"></i>` : `<i class="fas fa-bars"></i>`;
-        document.body.style.overflow = isExpanded ? 'hidden' : ''; // Empêche le défilement de l'arrière-plan.
+        document.body.classList.toggle('no-scroll', isExpanded); // Empêche le défilement de l'arrière-plan.
     });
 }
 
@@ -219,6 +244,54 @@ async function initHomePage() {
         ui.renderProductGrid(products, productGrid);
         
         setupHomepageEventListeners();
+
+
+    // --- Logique de Recherche Instantanée ---
+    const searchInput = document.getElementById('search-input');
+    const suggestionsContainer = document.getElementById('search-suggestions');
+    const searchForm = document.getElementById('search-form');
+
+    // Fonction de "debounce" pour ne pas surcharger l'API
+    const debounce = (func, delay) => {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), delay);
+        };
+    };
+
+    const handleSearch = async (query) => {
+        if (query.length < 3) {
+            suggestionsContainer.innerHTML = '';
+            suggestionsContainer.style.display = 'none';
+            return;
+        }
+
+        try {
+            const products = await apiService.getProducts(query);
+            ui.renderSearchSuggestions(products, suggestionsContainer);
+            suggestionsContainer.style.display = 'block';
+        } catch (error) {
+            console.error('Search failed:', error);
+            suggestionsContainer.innerHTML = `<p class="no-results error">Error fetching results.</p>`;
+        }
+    };
+
+    searchInput.addEventListener('input', debounce(e => handleSearch(e.target.value), 300));
+    
+    // Fermer les suggestions si on clique ailleurs
+    document.addEventListener('click', (e) => {
+        if (!searchForm.contains(e.target)) {
+            suggestionsContainer.style.display = 'none';
+        }
+    });
+
+    // Gérer la soumission complète du formulaire
+    searchForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        // Ici, on pourrait rediriger vers une page de résultats de recherche complète
+        console.log(`Redirecting to full search results for: ${searchInput.value}`);
+    });
 
     } catch (error) {
         console.error("Error initializing homepage:", error);
@@ -320,6 +393,28 @@ function setupHomepageEventListeners() {
                     cartBtn.disabled = false;
                     cartBtn.innerHTML = `<i class="fas fa-shopping-cart"></i> Add`;
                 }, 2000);
+            }
+            const quickViewBtn = e.target.closest('.quick-view-btn');
+            if (quickViewBtn) {
+                e.preventDefault();
+                const productId = quickViewBtn.dataset.productId;
+                try {
+                    const product = await apiService.getProductById(productId);
+                    ui.renderQuickViewModal(product);
+
+                    // Ajouter les écouteurs pour la modale
+                    const overlay = document.getElementById('quick-view-overlay');
+                    overlay.addEventListener('click', (event) => {
+                        if (event.target === overlay || event.target.closest('.modal-close-btn')) {
+                            overlay.remove();
+                            document.body.classList.remove('no-scroll');
+                        }
+                    });
+
+                } catch (error) {
+                    console.error("Failed to load product for quick view:", error);
+                    ui.showToast('Could not load product details.', 'error');
+                }
             }
         });
     }
