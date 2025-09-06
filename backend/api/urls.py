@@ -29,4 +29,6 @@ urlpatterns = [
     # --- Checkout Endpoint ---
     # To create a new order and process payment
     path('orders/create/', views.CreateOrderView.as_view(), name='create_order'),
+
+    path('chatbot/', views.ChatbotView.as_view(), name='chatbot'),
 ]

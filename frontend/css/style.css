@@ -315,3 +315,195 @@ a:hover { color: var(--primary-dark); }
   width: 160px;  /* Automatically adjusts width to maintain aspect ratio */
   display: block; /* Removes extra space below the image */
 }
+
+/* ============= Chatbot Styles ============= */
+.chatbot-toggler {
+    position: fixed;
+    bottom: 30px;
+    right: 35px;
+    height: 50px;
+    width: 50px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    z-index: var(--z-dropdown);
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-lg);
+}
+
+.chatbot-toggler:hover {
+    background-color: var(--primary-dark);
+    transform: scale(1.1);
+}
+
+.chatbot-toggler i {
+    transition: transform var(--transition-base);
+}
+
+.show-chatbot .chatbot-toggler i {
+    transform: rotate(90deg);
+}
+
+.chatbot {
+    position: fixed;
+    right: 35px;
+    bottom: 100px;
+    width: 420px;
+    background: white;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2xl);
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.5);
+    transform-origin: bottom right;
+    transition: all var(--transition-slow);
+    z-index: var(--z-dropdown);
+}
+
+@media(max-width: 490px) {
+    .chatbot {
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+    }
+}
+
+
+.show-chatbot .chatbot {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+}
+
+.chatbot-header {
+    background: var(--primary-color);
+    color: white;
+    padding: var(--spacing-md);
+    text-align: center;
+    position: relative;
+}
+
+.chatbot-header h2 {
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.chatbot-header .close-btn {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+.chatbox {
+    height: 400px;
+    overflow-y: auto;
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+@media(max-width: 490px) {
+    .chatbox {
+        height: 90%;
+    }
+}
+
+.chat {
+    display: flex;
+    max-width: 75%;
+}
+
+.chat p {
+    margin: 0;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-lg);
+    background: var(--gray-100);
+    font-size: 0.95rem;
+    word-wrap: break-word;
+}
+.chat p strong { color: var(--primary-dark); }
+.chat p li { margin-left: 1rem; }
+
+
+.chat.outgoing {
+    justify-content: flex-end;
+}
+
+.chat.outgoing p {
+    background: var(--primary-color);
+    color: white;
+}
+
+.chat.incoming .chat-icon {
+    font-size: 1.8rem;
+    color: var(--primary-color);
+    align-self: flex-start;
+    margin-right: var(--spacing-sm);
+}
+
+.chat.typing {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chat.typing span {
+    width: 8px;
+    height: 8px;
+    background: var(--gray-400);
+    border-radius: 50%;
+    animation: bounce 1s infinite;
+}
+
+.chat.typing span:nth-child(2) { animation-delay: 0.2s; }
+.chat.typing span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+.chat-input {
+    display: flex;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+}
+
+.chat-input textarea {
+    flex-grow: 1;
+    resize: none;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 1rem;
+    font-family: var(--font-primary);
+    max-height: 180px;
+    outline: none;
+}
+.chat-input textarea:focus {
+    border-color: var(--primary-color);
+}
+
+.chat-input button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    cursor: pointer;
+}
