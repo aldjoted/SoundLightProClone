@@ -12,6 +12,8 @@ from rest_framework import generics, permissions, status, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from stripe.error import StripeError # type: ignore
+import google.generativeai as genai # type: ignore
+# from google import genai    # type: ignore
 
 from .models import Category, Product, Order, OrderItem
 from .serializers import (
@@ -195,3 +197,104 @@ class CreateOrderView(APIView):
         except Exception as e:
             # The transaction will be rolled back automatically on any other exception
             return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# --- Chatbot View ---
+
+# Configure the Gemini API client at the module level
+try:
+    genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+    generation_config = {
+        "temperature": 0.7,
+        "top_p": 1,
+        "top_k": 1,
+        "max_output_tokens": 2048,
+    }
+    gemini_model = genai.GenerativeModel(
+        model_name="gemini-2.5-flash",
+        generation_config=generation_config,
+    )
+except Exception as e:
+    print(f"Error configuring Gemini API: {e}")
+    gemini_model = None
+
+
+class ChatbotView(APIView):
+    """
+    API view to handle chatbot conversations.
+    It takes a user message, finds relevant products,
+    and uses Gemini to generate a helpful response.
+    """
+    permission_classes = [permissions.AllowAny] # Allow anyone to use the chatbot
+
+    def post(self, request, *args, **kwargs):
+        if not gemini_model:
+            return Response(
+                {"error": "Chatbot is not configured correctly."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        user_message = request.data.get('message', '').strip()
+        if not user_message:
+            return Response(
+                {"error": "Message cannot be empty."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # --- Simple RAG: Find relevant products ---
+        # A more advanced implementation would use vector embeddings.
+        # For now, we'll do a simple keyword search.
+        keywords = user_message.lower().split()
+        
+        # Build a query to search for products
+        query = Q()
+        for keyword in keywords:
+            # Avoid generic words, focus on potential product names/categories
+            if len(keyword) > 2: 
+                query |= Q(name__icontains=keyword) | Q(category__name__icontains=keyword) | Q(brand__name__icontains=keyword)
+
+        relevant_products = Product.objects.filter(query, available=True)[:5] # Limit to 5 products
+
+        # --- Format product data for the prompt ---
+        product_context = "No specific products found."
+        if relevant_products:
+            product_context = "Here is some information about products that might be relevant to the user's query:\n\n"
+            for p in relevant_products:
+                product_context += f"- **Product Name:** {p.name}\n"
+                product_context += f"  - **Category:** {p.category.name}\n"
+                product_context += f"  - **Brand:** {p.brand.name if p.brand else 'N/A'}\n"
+                product_context += f"  - **Price:** ${p.price:.2f}\n"
+                product_context += f"  - **Description:** {p.description[:150]}...\n\n"
+
+        # --- Construct the prompt for Gemini ---
+        system_instruction = (
+            "You are a friendly and helpful sales assistant for 'SoundLightPro', an e-commerce store "
+            "specializing in professional audio and lighting equipment. Your goal is to answer customer questions accurately "
+            "and encourage them to explore products. You are an expert in sound and lighting gear."
+            "\n\n**Instructions:**"
+            "\n1. Use the provided product information to answer questions about specific products. Do not make up products or prices."
+            "\n2. If no products are found, answer the question generally based on your expertise, but mention that you couldn't find a specific match in the store."
+            "\n3. Keep your answers concise and easy to read. Use Markdown for formatting (like lists and bold text)."
+            "\n4. If asked about contact details, the address is '1451, 63 Bd de la République, Douala, Cameroon' and the email is 'info@soundlightpro.com'."
+            "\n5. Never mention that you are an AI or language model. You are a human assistant."
+        )
+
+        prompt = (
+            f"**System Instructions:**\n{system_instruction}\n\n"
+            f"**Product Context:**\n{product_context}\n\n"
+            f"**Customer Question:**\n{user_message}\n\n"
+            "**Your Response:**"
+        )
+        
+        try:
+            # Send the prompt to Gemini
+            response = gemini_model.generate_content(prompt)
+            bot_response = response.text
+
+            return Response({"reply": bot_response})
+
+        except Exception as e:
+            print(f"Error calling Gemini API: {e}")
+            return Response(
+                {"error": "Sorry, I'm having trouble connecting right now. Please try again later."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
