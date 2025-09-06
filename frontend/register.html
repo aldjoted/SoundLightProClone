@@ -128,12 +128,17 @@
 
                 <div>
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required autocomplete="new-password">
+                    <input type="password" id="password" name="password" required autocomplete="new-password" aria-describedby="password-strength">
+                    <div id="password-strength" class="password-strength-meter">
+                        <div class="strength-bar"></div>
+                    </div>
+                    <small id="password-help" class="form-text"></small>
                 </div>
                 
                 <div>
                     <label for="password2">Confirm Password</label>
-                    <input type="password" id="password2" name="password2" required autocomplete="new-password">
+                    <input type="password" id="password2" name="password2" required autocomplete="new-password" aria-describedby="password-match-help">
+                    <small id="password-match-help" class="form-text"></small>
                 </div>
                 
                 <button type="submit" class="btn-primary">Register</button>
@@ -162,5 +167,9 @@
     <script src="js/ui.js" type="module"></script>
     <script src="js/main.js" type="module"></script>
     <script src="js/chatbot.js"></script>
+    <script type="module">
+    import { initRegisterPageValidation } from './js/auth.js';
+    initRegisterPageValidation();
+    </script>
 </body>
 </html>

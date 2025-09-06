@@ -82,38 +82,51 @@ export function renderHeroSlider(_unused = []) {
 }
 
 /**
- * Renders the content for the products mega menu.
- * This is a corrected and simplified version.
+ * Renders an interactive tabbed mega menu.
  * @param {Array<Object>} categories - An array of category objects from the API.
  */
 export function renderMegaMenu(categories) {
     const megaMenuContainer = document.getElementById('products-mega-menu');
     if (!megaMenuContainer) return;
 
-    const parentCategories = categories.filter(c => c.parent === null);
+    const parentCategories = categories.filter(c => c.parent === null && c.children.length > 0);
     
-    let contentHTML = `
-        <div class="mega-menu-content">
-            <div class="mega-menu-pane active">
-    `;
+    // 1. Construire les onglets
+    const tabsHTML = parentCategories.map((parent, index) => `
+        <button class="mega-menu-tab-btn ${index === 0 ? 'active' : ''}" data-target="pane-${parent.slug}">
+            ${parent.name}
+        </button>
+    `).join('');
 
-    parentCategories.forEach(parent => {
-        contentHTML += `
-            <div class="mega-menu-column">
-                <h4>${parent.name}</h4>
-                <ul>
-                    ${parent.children.map(child => `<li><a href="index.html#products?category=${child.slug}">${child.name}</a></li>`).join('')}
-                </ul>
+    // 2. Construire les panneaux de contenu
+    const panesHTML = parentCategories.map((parent, index) => `
+        <div id="pane-${parent.slug}" class="mega-menu-pane ${index === 0 ? 'active' : ''}">
+            <div class="mega-menu-column featured">
+                 <h4>${parent.name}</h4>
+                 <p>${parent.description || `Explore our full range of ${parent.name}.`}</p>
+                 <a href="index.html#products?category=${parent.slug}" class="btn btn-secondary">View All</a>
             </div>
-        `;
-    });
-    
-    contentHTML += `
-            </div>
+            ${parent.children.map(child => `
+                <div class="mega-menu-column">
+                    <a href="index.html#products?category=${child.slug}">
+                        <h5>${child.name}</h5>
+                    </a>
+                </div>
+            `).join('')}
+        </div>
+    `).join('');
+
+    // 3. Assembler le tout
+    const megaMenuHTML = `
+        <div class="mega-menu-header">
+            ${tabsHTML}
+        </div>
+        <div class="mega-menu-content">
+            ${panesHTML}
         </div>
     `;
 
-    megaMenuContainer.innerHTML = contentHTML;
+    megaMenuContainer.innerHTML = megaMenuHTML;
 }
 
 /**
@@ -181,6 +194,11 @@ export function renderProductGrid(products, container) {
         <div class="product-card">
             <a href="product.html?id=${product.id}" class="product-card-image" aria-label="View details for ${product.name}">
                 <img src="${getProductImage(product)}" alt="${product.name}" loading="lazy">
+                <div class="product-card-overlay">
+                    <button class="btn btn-secondary quick-view-btn" data-product-id="${product.id}">
+                        <i class="fas fa-eye"></i> Quick View
+                    </button>
+                </div>
             </a>
             <div class="product-card-content">
                 <div>
@@ -196,6 +214,36 @@ export function renderProductGrid(products, container) {
             </div>
         </div>
     `).join('');
+}
+
+/**
+ * Renders a quick view modal for a product.
+ * @param {Object} product - The product object to display.
+ */
+export function renderQuickViewModal(product) {
+    const modalHTML = `
+        <div class="modal-overlay" id="quick-view-overlay">
+            <div class="modal-content" id="quick-view-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+                <button class="modal-close-btn" aria-label="Close quick view">&times;</button>
+                <div class="product-detail-layout">
+                    <div class="product-gallery">
+                        <img src="${getProductImage(product)}" alt="${product.name}">
+                    </div>
+                    <div class="product-detail-info">
+                        <h2 id="modal-title">${product.name}</h2>
+                        <p class="price">$${parseFloat(product.price).toFixed(2)}</p>
+                        <p>${product.description.substring(0, 150)}...</p>
+                        <button class="btn btn-primary add-to-cart-modal-btn" data-product-id="${product.id}">
+                            <i class="fas fa-shopping-cart"></i> Add to Cart
+                        </button>
+                        <a href="product.html?id=${product.id}" class="view-full-details">View full details &rarr;</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.body.classList.add('no-scroll');
 }
 
 /**
@@ -292,4 +340,35 @@ export function updateUserAuthUI(user) {
             userInfo.classList.add('hidden');
         }
     }
+}
+
+/**
+ * Renders live search suggestions.
+ * @param {Array<Object>} products - Array of matching products.
+ * @param {HTMLElement} container - The container to render suggestions into.
+ */
+export function renderSearchSuggestions(products, container) {
+    if (!container) return;
+
+    if (products.length === 0) {
+        container.innerHTML = `<p class="no-results">No products found.</p>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <ul>
+            ${products.slice(0, 5).map(product => `
+                <li>
+                    <a href="product.html?id=${product.id}">
+                        <img src="${getProductImage(product)}" alt="${product.name}" loading="lazy">
+                        <div class="suggestion-details">
+                            <span class="name">${product.name}</span>
+                            <span class="price">$${parseFloat(product.price).toFixed(2)}</span>
+                        </div>
+                    </a>
+                </li>
+            `).join('')}
+            ${products.length > 5 ? '<li><a href="#" class="view-all-results">View all ' + products.length + ' results</a></li>' : ''}
+        </ul>
+    `;
 }
