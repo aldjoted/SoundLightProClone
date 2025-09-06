@@ -302,8 +302,97 @@ export function renderProductDetail(product, container) {
     `;
 
     container.innerHTML = productHTML;
+
+    // Sticky CTA (mobile)
+    const sticky = document.createElement('div');
+    sticky.className = 'sticky-cta';
+    sticky.id = 'sticky-cta';
+    sticky.innerHTML = `
+        <p class="price">$${parseFloat(product.price).toFixed(2)}</p>
+        <input type="number" class="qty" id="sticky-qty" value="1" min="1" max="${product.stock || 1}" aria-label="Quantity">
+        <button class="btn btn-primary" id="sticky-add" ${product.stock === 0 ? 'disabled' : ''}>
+            <i class="fas fa-shopping-cart"></i> ${product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+        </button>
+    `;
+    document.body.appendChild(sticky);
 }
 
+// ============= Mini Cart Drawer =============
+/**
+ * Render and open the mini-cart drawer.
+ * @param {Array} items - Cart items [{id,name,price,quantity,image}]
+ * @param {number} subtotal - Optional subtotal override
+ */
+export function renderMiniCart(items = [], subtotal) {
+    // Remove previous overlay if any
+    document.getElementById('mini-cart-overlay')?.remove();
+
+    const total = typeof subtotal === 'number'
+        ? subtotal
+        : items.reduce((t, i) => t + i.price * i.quantity, 0);
+
+    const overlay = document.createElement('div');
+    overlay.id = 'mini-cart-overlay';
+    overlay.className = 'mini-cart-overlay active';
+    overlay.innerHTML = `
+        <aside class="mini-cart-drawer" role="dialog" aria-label="Mini cart">
+            <div class="mini-cart-header">
+                <h3 class="mini-cart-title">Added to Cart</h3>
+                <button class="mini-cart-close" aria-label="Close mini cart"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="mini-cart-content">
+                ${items.length === 0 ? `
+                    <div class="mini-cart-empty">
+                        <i class="fas fa-shopping-cart" style="font-size:2rem;"></i>
+                        <p>Your cart is empty.</p>
+                    </div>`
+                : items.map(i => `
+                    <div class="mini-cart-item">
+                        <img class="mini-cart-thumb" src="${i.image || 'https://via.placeholder.com/64'}" alt="${i.name}">
+                        <div>
+                            <p class="mini-cart-name">${i.name}</p>
+                            <p class="mini-cart-meta">$${i.price.toFixed(2)} • <span class="mini-cart-qty">Qty: ${i.quantity}</span></p>
+                        </div>
+                        <button class="mini-cart-remove" data-id="${i.id}" title="Remove"><i class="fas fa-trash"></i></button>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="mini-cart-footer">
+                <div class="mini-cart-row">
+                    <span>Subtotal</span>
+                    <strong>$${total.toFixed(2)}</strong>
+                </div>
+                <div class="mini-cart-actions">
+                    <a href="cart.html" class="btn btn-secondary">View Cart</a>
+                    <a href="cart.html#checkout" class="btn btn-primary">Checkout</a>
+                </div>
+            </div>
+        </aside>
+    `;
+
+    // Close interactions
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeMiniCart();
+        if (e.target.closest('.mini-cart-close')) closeMiniCart();
+    });
+    // Simple remove (UI only; actual removal should be handled on cart page)
+    overlay.addEventListener('click', (e) => {
+        const btn = e.target.closest('.mini-cart-remove');
+        if (!btn) return;
+        btn.closest('.mini-cart-item')?.remove();
+    });
+
+    document.body.appendChild(overlay);
+    document.body.classList.add('no-scroll');
+}
+
+export function closeMiniCart() {
+    const overlay = document.getElementById('mini-cart-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('active');
+    setTimeout(() => overlay.remove(), 250);
+    document.body.classList.remove('no-scroll');
+}
 
 // ============= UI State Management =============
 
@@ -343,32 +432,42 @@ export function updateUserAuthUI(user) {
 }
 
 /**
- * Renders live search suggestions.
+ * Renders live search suggestions (keyboard-friendly).
  * @param {Array<Object>} products - Array of matching products.
  * @param {HTMLElement} container - The container to render suggestions into.
  */
 export function renderSearchSuggestions(products, container) {
     if (!container) return;
-
+    container.classList.add('search-suggestions-container');
     if (products.length === 0) {
-        container.innerHTML = `<p class="no-results">No products found.</p>`;
+        container.innerHTML = `<div class="search-no-results"><i class="far fa-frown"></i><p>No products found.</p></div>`;
+        container.classList.remove('hidden');
         return;
     }
-
     container.innerHTML = `
-        <ul>
-            ${products.slice(0, 5).map(product => `
-                <li>
-                    <a href="product.html?id=${product.id}">
-                        <img src="${getProductImage(product)}" alt="${product.name}" loading="lazy">
-                        <div class="suggestion-details">
-                            <span class="name">${product.name}</span>
-                            <span class="price">$${parseFloat(product.price).toFixed(2)}</span>
+        <ul role="listbox">
+            ${products.slice(0, 8).map((p, idx) => `
+                <li class="search-result-item ${idx===0?'highlighted':''}" role="option" data-index="${idx}">
+                    <a class="result-link" href="product.html?id=${p.id}">
+                        <img class="search-thumb" src="${getProductImage(p)}" alt="${p.name}" loading="lazy">
+                        <div class="result-details">
+                            <span class="search-name">${p.name}</span>
+                            <span class="search-price">$${parseFloat(p.price).toFixed(2)}</span>
                         </div>
                     </a>
+                    <div class="result-actions">
+                        <button class="quick-add-btn"
+                            aria-label="Quick add ${p.name}"
+                            data-id="${p.id}"
+                            data-name="${p.name.replace(/"/g, '&quot;')}"
+                            data-price="${parseFloat(p.price)}"
+                            data-image="${getProductImage(p)}">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
                 </li>
             `).join('')}
-            ${products.length > 5 ? '<li><a href="#" class="view-all-results">View all ' + products.length + ' results</a></li>' : ''}
         </ul>
     `;
+    container.classList.remove('hidden');
 }

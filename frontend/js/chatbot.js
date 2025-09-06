@@ -1,23 +1,28 @@
-// A simple markdown to HTML converter
+// A safer markdown to HTML converter
+function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]));
+}
+
 function simpleMarkdownToHtml(markdown) {
-    // Bold **text**
-    markdown = markdown.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    // Italic *text*
-    markdown = markdown.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    // Unordered list - item
-    markdown = markdown.replace(/^- (.*$)/g, '<li>$1</li>');
-    markdown = markdown.replace(/<\/li><li>/g, '</li>\n<li>'); // Fix spacing
-    markdown = `<ul>\n${markdown}\n</ul>`;
-    markdown = markdown.replace(/<\/ul>\n<ul>/g, ''); // Combine lists
-    
-    // Convert newlines to <br>
-    markdown = markdown.replace(/\n/g, '<br>');
-    
-    // Clean up list formatting artifacts
-    markdown = markdown.replace(/<br><ul>/g, '<ul>');
-    markdown = markdown.replace(/<\/ul><br>/g, '</ul>');
-    markdown = markdown.replace(/<br><li>/g, '<li>');
-    return markdown;
+    // Convert bold/italic
+    let text = markdown.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                       .replace(/\*(.*?)\*/g, '<em>$1</em>');
+    // Split lines and detect list items
+    const lines = text.split('\n');
+    let html = '';
+    let inList = false;
+    for (const line of lines) {
+        if (/^\s*-\s+/.test(line)) {
+            if (!inList) { html += '<ul>'; inList = true; }
+            html += `<li>${line.replace(/^\s*-\s+/, '')}</li>`;
+        } else {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += `${line}<br>`;
+        }
+    }
+    if (inList) html += '</ul>';
+    html = html.replace(/(<br>)+$/,''); // trim trailing breaks
+    return html;
 }
 
 
@@ -33,10 +38,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const createChatLi = (message, className) => {
         const chatLi = document.createElement("li");
         chatLi.classList.add("chat", className);
-        let chatContent = className === "outgoing" 
-            ? `<p>${message}</p>`
-            : `<span class="chat-icon"><i class="fas fa-robot"></i></span><p>${simpleMarkdownToHtml(message)}</p>`;
-        chatLi.innerHTML = chatContent;
+        if (className === "outgoing") {
+            const p = document.createElement('p');
+            p.textContent = message; // escape user text
+            chatLi.appendChild(p);
+        } else {
+            chatLi.innerHTML = `<span class="chat-icon"><i class="fas fa-robot"></i></span><p>${simpleMarkdownToHtml(message)}</p>`;
+        }
         return chatLi;
     }
 

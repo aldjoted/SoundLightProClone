@@ -21,29 +21,6 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 
-<!-- Chatbot Toggler -->
-<button class="chatbot-toggler">
-    <i class="fas fa-comment-dots"></i>
-</button>
-
-<!-- Chatbot Interface -->
-<div class="chatbot">
-    <header class="chatbot-header">
-        <h2>SoundLightPro Assistant</h2>
-        <span class="close-btn fas fa-times"></span>
-    </header>
-    <ul class="chatbox">
-        <li class="chat incoming">
-            <span class="chat-icon"><i class="fas fa-robot"></i></span>
-            <p>Hi there! 👋<br>How can I help you today?</p>
-        </li>
-    </ul>
-    <div class="chat-input">
-        <textarea placeholder="Ask a question..." required></textarea>
-        <button id="send-btn" class="fas fa-paper-plane"></button>
-    </div>
-</div>
-
 <body>
     <!-- Skip to main content for accessibility -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -148,6 +125,28 @@
             </p>
         </div>
     </main>
+
+    <!-- Chatbot Toggler -->
+    <button class="chatbot-toggler" aria-label="Open assistant" aria-controls="chatbot-panel">
+        <i class="fas fa-comment-dots"></i>
+    </button>
+    <!-- Chatbot Interface -->
+    <div class="chatbot" id="chatbot-panel" role="dialog" aria-modal="false" aria-label="Assistant">
+        <header class="chatbot-header">
+            <h2>SoundLightPro Assistant</h2>
+            <button class="close-btn fas fa-times" aria-label="Close assistant"></button>
+        </header>
+        <ul class="chatbox">
+            <li class="chat incoming">
+                <span class="chat-icon"><i class="fas fa-robot"></i></span>
+                <p>Hi there! 👋<br>How can I help you today?</p>
+            </li>
+        </ul>
+        <div class="chat-input">
+            <textarea placeholder="Ask a question..." required></textarea>
+            <button id="send-btn" class="fas fa-paper-plane" aria-label="Send message"></button>
+        </div>
+    </div>
 
     <footer class="main-footer" role="contentinfo">
         <div class="container">
