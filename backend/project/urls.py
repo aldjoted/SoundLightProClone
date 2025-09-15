@@ -19,6 +19,9 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+# Custom 404 handler
+handler404 = 'api.views.custom_404_view'
+
 urlpatterns = [
     # Django's built-in admin site
     path('admin/', admin.site.urls),

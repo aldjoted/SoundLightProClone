@@ -298,3 +298,28 @@ class ChatbotView(APIView):
                 {"error": "Sorry, I'm having trouble connecting right now. Please try again later."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
+
+
+# Custom 404 handler function
+def custom_404_view(request, exception=None):
+    """
+    Custom 404 handler that serves the frontend 404.html page
+    """
+    from django.http import HttpResponse
+    from django.conf import settings
+    import os
+    
+    # Path to your frontend 404.html
+    frontend_404_path = os.path.join(settings.BASE_DIR, 'frontend', '404.html')
+    
+    try:
+        with open(frontend_404_path, 'r', encoding='utf-8') as file:
+            content = file.read()
+        return HttpResponse(content, status=404, content_type='text/html')
+    except FileNotFoundError:
+        # Fallback if 404.html is not found
+        return HttpResponse(
+            '<h1>404 - Page Not Found</h1><p>The page you requested could not be found.</p>', 
+            status=404, 
+            content_type='text/html'
+        )
