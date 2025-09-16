@@ -1,0 +1,698 @@
+/* ================================================
+   LAYOUT COMPONENTS
+   Grid layouts, containers, and structural elements
+   ================================================ */
+
+/* ============= Containers ============= */
+
+.container {
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+    padding: 0 var(--container-padding);
+    width: 100%;
+    
+    /* Performance optimization for large containers */
+    contain: layout;
+}
+
+.container-fluid {
+    width: 100%;
+    padding: 0 var(--container-padding);
+    
+    /* Performance optimization */
+    contain: layout;
+}
+
+.container-narrow {
+    max-width: var(--container-narrow);
+    margin: 0 auto;
+    padding: 0 var(--container-padding);
+    
+    /* Performance optimization */
+    contain: layout;
+}
+
+/* ============= Grid Systems ============= */
+
+.row {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: var(--grid-gutter);
+    width: 100%;
+    
+    /* Performance optimization */
+    contain: layout;
+}
+
+.row-no-gutters {
+    gap: 0;
+}
+
+/* Column classes */
+.col-1 { grid-column: span 1; }
+.col-2 { grid-column: span 2; }
+.col-3 { grid-column: span 3; }
+.col-4 { grid-column: span 4; }
+.col-5 { grid-column: span 5; }
+.col-6 { grid-column: span 6; }
+.col-7 { grid-column: span 7; }
+.col-8 { grid-column: span 8; }
+.col-9 { grid-column: span 9; }
+.col-10 { grid-column: span 10; }
+.col-11 { grid-column: span 11; }
+.col-12 { grid-column: span 12; }
+
+/* Responsive column classes */
+@media (max-width: 1200px) {
+    .col-lg-1 { grid-column: span 1; }
+    .col-lg-2 { grid-column: span 2; }
+    .col-lg-3 { grid-column: span 3; }
+    .col-lg-4 { grid-column: span 4; }
+    .col-lg-5 { grid-column: span 5; }
+    .col-lg-6 { grid-column: span 6; }
+    .col-lg-7 { grid-column: span 7; }
+    .col-lg-8 { grid-column: span 8; }
+    .col-lg-9 { grid-column: span 9; }
+    .col-lg-10 { grid-column: span 10; }
+    .col-lg-11 { grid-column: span 11; }
+    .col-lg-12 { grid-column: span 12; }
+}
+
+@media (max-width: 992px) {
+    .col-md-1 { grid-column: span 1; }
+    .col-md-2 { grid-column: span 2; }
+    .col-md-3 { grid-column: span 3; }
+    .col-md-4 { grid-column: span 4; }
+    .col-md-5 { grid-column: span 5; }
+    .col-md-6 { grid-column: span 6; }
+    .col-md-7 { grid-column: span 7; }
+    .col-md-8 { grid-column: span 8; }
+    .col-md-9 { grid-column: span 9; }
+    .col-md-10 { grid-column: span 10; }
+    .col-md-11 { grid-column: span 11; }
+    .col-md-12 { grid-column: span 12; }
+}
+
+@media (max-width: 768px) {
+    .col-sm-1 { grid-column: span 1; }
+    .col-sm-2 { grid-column: span 2; }
+    .col-sm-3 { grid-column: span 3; }
+    .col-sm-4 { grid-column: span 4; }
+    .col-sm-5 { grid-column: span 5; }
+    .col-sm-6 { grid-column: span 6; }
+    .col-sm-7 { grid-column: span 7; }
+    .col-sm-8 { grid-column: span 8; }
+    .col-sm-9 { grid-column: span 9; }
+    .col-sm-10 { grid-column: span 10; }
+    .col-sm-11 { grid-column: span 11; }
+    .col-sm-12 { grid-column: span 12; }
+    
+    /* Default to full width on mobile */
+    [class*="col-"] {
+        grid-column: span 12;
+    }
+}
+
+/* ============= Flexbox Utilities ============= */
+
+.flex {
+    display: flex;
+}
+
+.flex-col {
+    flex-direction: column;
+}
+
+.flex-wrap {
+    flex-wrap: wrap;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.items-start {
+    align-items: flex-start;
+}
+
+.items-end {
+    align-items: flex-end;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.justify-around {
+    justify-content: space-around;
+}
+
+.justify-evenly {
+    justify-content: space-evenly;
+}
+
+.justify-start {
+    justify-content: flex-start;
+}
+
+.justify-end {
+    justify-content: flex-end;
+}
+
+/* ============= Section Layouts ============= */
+
+.section {
+    padding: var(--section-padding-y) 0;
+    
+    /* Performance optimization */
+    contain: layout style;
+}
+
+.section-sm {
+    padding: var(--section-padding-sm) 0;
+}
+
+.section-lg {
+    padding: var(--section-padding-lg) 0;
+}
+
+.section-hero {
+    padding: var(--section-hero-padding) 0;
+    min-height: var(--hero-min-height);
+    display: flex;
+    align-items: center;
+    
+    /* Performance optimization for hero sections */
+    contain: layout style;
+    will-change: transform;
+}
+
+/* ============= Hero Components ============= */
+
+.hero {
+    position: relative;
+    min-height: var(--hero-min-height);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    background: var(--hero-bg);
+    color: var(--hero-text);
+    
+    /* Performance optimizations */
+    contain: layout style paint;
+    will-change: transform;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 50%;
+    
+    /* Performance optimization */
+    contain: layout style;
+    
+    h1 {
+        font-size: var(--hero-title-size);
+        font-weight: var(--font-black);
+        line-height: var(--hero-title-line-height);
+        margin-bottom: var(--spacing-6);
+        
+        /* Performance: Optimize text rendering */
+        text-rendering: optimizeLegibility;
+        font-display: swap;
+    }
+    
+    p {
+        font-size: var(--hero-subtitle-size);
+        line-height: var(--hero-subtitle-line-height);
+        margin-bottom: var(--spacing-8);
+        color: var(--hero-subtitle-color);
+        
+        /* Performance: Optimize text rendering */
+        text-rendering: optimizeSpeed;
+    }
+}
+
+.hero-actions {
+    display: flex;
+    gap: var(--spacing-4);
+    flex-wrap: wrap;
+    align-items: center;
+    
+    /* Performance optimization */
+    contain: layout;
+}
+
+.hero-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+    
+    /* Performance optimizations for background images */
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--hero-overlay);
+    z-index: 1;
+    
+    /* Performance optimization */
+    will-change: opacity;
+}
+
+/* ============= Card Layouts ============= */
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--card-min-width), 1fr));
+    gap: var(--grid-gutter);
+    
+    /* Performance optimization */
+    contain: layout;
+}
+
+.card-grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(calc(50% - var(--spacing-4)), 1fr));
+}
+
+.card-grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(calc(33.333% - var(--spacing-4)), 1fr));
+}
+
+.card-grid-4 {
+    grid-template-columns: repeat(auto-fit, minmax(calc(25% - var(--spacing-4)), 1fr));
+}
+
+/* ============= Two Column Layouts ============= */
+
+.two-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-12);
+    align-items: start;
+    
+    /* Performance optimization */
+    contain: layout;
+}
+
+.two-column-reverse {
+    grid-template-columns: 1fr 1fr;
+    
+    .column-content {
+        order: 2;
+    }
+    
+    .column-media {
+        order: 1;
+    }
+}
+
+.two-column-60-40 {
+    grid-template-columns: 1.5fr 1fr;
+}
+
+.two-column-70-30 {
+    grid-template-columns: 2.33fr 1fr;
+}
+
+/* ============= Three Column Layouts ============= */
+
+.three-column {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-8);
+    
+    /* Performance optimization */
+    contain: layout;
+}
+
+.three-column-center {
+    grid-template-columns: 1fr 2fr 1fr;
+}
+
+/* ============= Sidebar Layouts ============= */
+
+.layout-sidebar {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    gap: var(--spacing-8);
+    min-height: 100vh;
+    
+    /* Performance optimization */
+    contain: layout;
+}
+
+.layout-sidebar-right {
+    grid-template-columns: 1fr var(--sidebar-width);
+}
+
+.sidebar {
+    background: var(--sidebar-bg);
+    padding: var(--spacing-6);
+    border-radius: var(--radius-lg);
+    height: fit-content;
+    position: sticky;
+    top: calc(var(--header-height) + var(--spacing-6));
+    
+    /* Performance optimization */
+    contain: layout style;
+}
+
+.main-content {
+    min-width: 0; /* Prevent flex item overflow */
+    
+    /* Performance optimization */
+    contain: layout;
+}
+
+/* ============= Stack Layouts ============= */
+
+.stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+    
+    /* Performance optimization */
+    contain: layout;
+}
+
+.stack-sm {
+    gap: var(--spacing-2);
+}
+
+.stack-lg {
+    gap: var(--spacing-8);
+}
+
+.stack-xl {
+    gap: var(--spacing-12);
+}
+
+.stack-center {
+    align-items: center;
+    text-align: center;
+}
+
+/* ============= Cluster Layouts ============= */
+
+.cluster {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-4);
+    align-items: center;
+    
+    /* Performance optimization */
+    contain: layout;
+}
+
+.cluster-start {
+    justify-content: flex-start;
+}
+
+.cluster-center {
+    justify-content: center;
+}
+
+.cluster-end {
+    justify-content: flex-end;
+}
+
+.cluster-between {
+    justify-content: space-between;
+}
+
+/* ============= Responsive Adjustments ============= */
+
+@media (max-width: 1200px) {
+    .hero-content {
+        max-width: 60%;
+        
+        h1 {
+            font-size: calc(var(--hero-title-size) * 0.9);
+        }
+    }
+    
+    .two-column,
+    .two-column-60-40,
+    .two-column-70-30 {
+        gap: var(--spacing-8);
+    }
+    
+    .three-column {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-6);
+        
+        &:nth-child(3) {
+            grid-column: span 2;
+        }
+    }
+}
+
+@media (max-width: 992px) {
+    .layout-sidebar,
+    .layout-sidebar-right {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-6);
+    }
+    
+    .sidebar {
+        position: static;
+    }
+    
+    .two-column,
+    .two-column-reverse,
+    .two-column-60-40,
+    .two-column-70-30 {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-6);
+        
+        .column-content,
+        .column-media {
+            order: unset;
+        }
+    }
+    
+    .three-column,
+    .three-column-center {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-6);
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 0 var(--spacing-4);
+    }
+    
+    .hero {
+        min-height: calc(var(--hero-min-height) * 0.8);
+        text-align: center;
+    }
+    
+    .hero-content {
+        max-width: 100%;
+        
+        h1 {
+            font-size: calc(var(--hero-title-size) * 0.7);
+            margin-bottom: var(--spacing-4);
+        }
+        
+        p {
+            font-size: calc(var(--hero-subtitle-size) * 0.9);
+            margin-bottom: var(--spacing-6);
+        }
+    }
+    
+    .hero-actions {
+        flex-direction: column;
+        width: 100%;
+        gap: var(--spacing-3);
+        
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+    
+    .section {
+        padding: var(--spacing-12) 0;
+    }
+    
+    .section-lg {
+        padding: var(--spacing-16) 0;
+    }
+    
+    .card-grid-2,
+    .card-grid-3,
+    .card-grid-4 {
+        grid-template-columns: 1fr;
+    }
+    
+    .row {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-4);
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0 var(--spacing-3);
+    }
+    
+    .hero-content {
+        h1 {
+            font-size: calc(var(--hero-title-size) * 0.6);
+            line-height: 1.2;
+        }
+        
+        p {
+            font-size: var(--text-base);
+        }
+    }
+    
+    .cluster {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .stack {
+        gap: var(--spacing-3);
+    }
+}
+
+/* ============= Print Styles ============= */
+
+@media print {
+    .hero {
+        min-height: auto;
+        page-break-inside: avoid;
+    }
+    
+    .sidebar {
+        display: none;
+    }
+    
+    .layout-sidebar,
+    .layout-sidebar-right {
+        grid-template-columns: 1fr;
+    }
+    
+    .two-column,
+    .three-column {
+        page-break-inside: avoid;
+    }
+}
+
+/* ============= Animation Utilities ============= */
+
+.animate-on-scroll {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all var(--transition-slow);
+    
+    /* Performance optimization */
+    will-change: transform, opacity;
+    
+    &.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    opacity: 0;
+    transition: opacity var(--transition-base);
+    
+    /* Performance optimization */
+    will-change: opacity;
+    
+    &.is-visible {
+        opacity: 1;
+    }
+}
+
+.animate-slide-up {
+    transform: translateY(50px);
+    transition: transform var(--transition-slow);
+    
+    /* Performance optimization */
+    will-change: transform;
+    
+    &.is-visible {
+        transform: translateY(0);
+    }
+}
+
+/* ============= Performance Optimizations ============= */
+
+/* GPU acceleration for frequently animated elements */
+.hero,
+.hero-background,
+.hero-content {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+/* Containment for layout-heavy sections */
+.section,
+.container,
+.hero,
+.card-grid {
+    contain: layout style;
+}
+
+/* ============= Accessibility Enhancements ============= */
+
+/* Focus management for layout containers */
+.section:focus-within {
+    outline: 2px solid transparent;
+}
+
+/* Skip links for better navigation */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: var(--primary-600);
+    color: var(--text-inverse);
+    padding: 8px;
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    z-index: var(--z-modal);
+    transition: top var(--transition-fast);
+    
+    &:focus {
+        top: 6px;
+    }
+}
+
+/* ============= Reduced Motion Support ============= */
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-on-scroll,
+    .animate-fade-in,
+    .animate-slide-up {
+        transition: none;
+        opacity: 1;
+        transform: none;
+    }
+    
+    .hero-background {
+        transform: none;
+    }
+}
