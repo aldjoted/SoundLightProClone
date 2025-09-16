@@ -1,569 +1,64 @@
-/* ================================================
-   BASE STYLES WITH PERFORMANCE & ACCESSIBILITY
-   Reset, typography, and foundational styles
-   ================================================ */
+/* --- Base: Resets and Global Styles --- */
 
-/* ============= Performance Optimizations ============= */
-
-/* CSS Cascade Layers for better organization */
-@layer reset, base, utilities;
-
-@layer reset {
-    /* ============= Modern CSS Reset ============= */
-    *,
-    *::before,
-    *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-    }
-
-    /* Remove default margin and padding for common elements */
-    body,
-    h1, h2, h3, h4, h5, h6,
-    p, blockquote, pre,
-    dl, dd, ol, ul, li,
-    fieldset, form, label, legend,
-    table, caption, tbody, tfoot, thead, tr, th, td,
-    article, aside, canvas, details, embed,
-    figure, figcaption, footer, header, hgroup,
-    menu, nav, output, ruby, section, summary,
-    time, mark, audio, video {
-        margin: 0;
-        padding: 0;
-    }
-
-    /* Remove list styles where a list role is present */
-    ul[role="list"],
-    ol[role="list"] {
-        list-style: none;
-    }
-
-    /* Set core root defaults */
-    html {
-        line-height: 1.5;
-        -webkit-text-size-adjust: 100%;
-        -moz-text-size-adjust: 100%;
-        text-size-adjust: 100%;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        text-rendering: optimizeSpeed;
-    }
-
-    /* Set core body defaults */
-    body {
-        min-height: 100vh;
-        scroll-behavior: smooth;
-        text-rendering: optimizeSpeed;
-        line-height: 1.6;
-    }
-
-    /* Remove default button styles */
-    button {
-        background: none;
-        border: none;
-        padding: 0;
-        font: inherit;
-        cursor: pointer;
-    }
-
-    /* Remove default link styles */
-    a {
-        color: inherit;
-        text-decoration: none;
-    }
-
-    /* Make images easier to work with */
-    img,
-    picture,
-    svg {
-        max-width: 100%;
-        height: auto;
-        display: block;
-    }
-
-    /* Remove default table styles */
-    table {
-        border-collapse: collapse;
-        border-spacing: 0;
-    }
-
-    /* Improve media defaults */
-    canvas,
-    iframe,
-    img,
-    svg,
-    video {
-        vertical-align: middle;
-    }
-
-    /* Remove default form styles */
-    input,
-    button,
-    textarea,
-    select {
-        font: inherit;
-        color: inherit;
-    }
-
-    /* Remove Safari input shadow */
-    input[type="email"],
-    input[type="number"],
-    input[type="password"],
-    input[type="search"],
-    input[type="tel"],
-    input[type="text"],
-    input[type="url"] {
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-    }
-
-    /* Fix textarea resize */
-    textarea {
-        resize: vertical;
-    }
-
-    /* Remove default fieldset styles */
-    fieldset {
-        border: none;
-    }
-
-    /* Fix summary cursor */
-    summary {
-        cursor: pointer;
-    }
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-@layer base {
-    /* ============= Performance-Optimized Base Styles ============= */
-    
-    html {
-        font-size: 16px;
-        scroll-behavior: smooth;
-        /* Performance: Enable hardware acceleration for smooth scrolling */
-        scroll-padding-top: var(--header-height, 80px);
-    }
-
-    /* Reduced motion support */
-    @media (prefers-reduced-motion: reduce) {
-        html {
-            scroll-behavior: auto;
-        }
-        
-        *,
-        *::before,
-        *::after {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-            scroll-behavior: auto !important;
-        }
-    }
-
-    body {
-        font-family: var(--font-primary);
-        font-size: var(--text-base);
-        font-weight: var(--font-normal);
-        line-height: var(--leading-normal);
-        color: var(--text-primary);
-        background-color: var(--bg-primary);
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        
-        /* Performance: Enable GPU acceleration */
-        transform: translateZ(0);
-        
-        /* Performance: Optimize rendering */
-        contain: layout style paint;
-        
-        /* Accessibility: Ensure good contrast */
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        text-rendering: optimizeSpeed;
-    }
-
-    main {
-        flex: 1;
-        /* Performance: Contain layout shifts */
-        contain: layout style;
-    }
-
-    /* ============= Enhanced Typography ============= */
-    
-    h1, h2, h3, h4, h5, h6 {
-        font-weight: var(--font-bold);
-        line-height: var(--leading-tight);
-        margin-bottom: var(--spacing-4);
-        color: var(--text-primary);
-        
-        /* Performance: Optimize text rendering */
-        text-rendering: optimizeSpeed;
-        
-        /* Accessibility: Ensure proper heading hierarchy */
-        font-feature-settings: "kern" 1;
-    }
-
-    h1 {
-        font-size: clamp(var(--text-2xl), 4vw, var(--text-5xl));
-        font-weight: var(--font-black);
-        line-height: var(--leading-none);
-        letter-spacing: var(--tracking-tight);
-    }
-
-    h2 {
-        font-size: clamp(var(--text-xl), 3vw, var(--text-4xl));
-        font-weight: var(--font-extrabold);
-        letter-spacing: var(--tracking-tight);
-    }
-
-    h3 {
-        font-size: clamp(var(--text-lg), 2.5vw, var(--text-3xl));
-        font-weight: var(--font-bold);
-    }
-
-    h4 {
-        font-size: clamp(var(--text-base), 2vw, var(--text-2xl));
-        font-weight: var(--font-bold);
-    }
-
-    h5 {
-        font-size: clamp(var(--text-sm), 1.5vw, var(--text-xl));
-        font-weight: var(--font-semibold);
-    }
-
-    h6 {
-        font-size: clamp(var(--text-xs), 1.2vw, var(--text-lg));
-        font-weight: var(--font-semibold);
-        text-transform: uppercase;
-        letter-spacing: var(--tracking-wide);
-    }
-
-    p {
-        margin-bottom: var(--spacing-4);
-        line-height: var(--leading-relaxed);
-        color: var(--text-primary);
-    }
-
-    /* ============= Enhanced Links ============= */
-    
-    a {
-        color: var(--primary-500);
-        text-decoration: none;
-        transition: color var(--transition-fast);
-        
-        /* Performance: GPU acceleration */
-        will-change: color;
-        
-        /* Accessibility: Better touch targets */
-        min-height: 44px;
-        min-width: 44px;
-        display: inline-flex;
-        align-items: center;
-        
-        &:hover {
-            color: var(--primary-600);
-        }
-        
-        &:focus-visible {
-            outline: 2px solid var(--primary-500);
-            outline-offset: 2px;
-            border-radius: var(--radius-sm);
-        }
-        
-        /* Accessibility: Skip links */
-        &.skip-link {
-            position: absolute;
-            top: -100px;
-            left: var(--spacing-4);
-            background: var(--primary-600);
-            color: var(--text-inverse);
-            padding: var(--spacing-3) var(--spacing-4);
-            z-index: var(--z-toast);
-            transition: top var(--transition-base);
-            border-radius: var(--radius-md);
-            font-weight: var(--font-semibold);
-            
-            &:focus {
-                top: var(--spacing-4);
-            }
-        }
-    }
-
-    /* ============= Lists ============= */
-    
-    ul, ol {
-        margin-bottom: var(--spacing-4);
-        padding-left: var(--spacing-6);
-    }
-
-    li {
-        margin-bottom: var(--spacing-2);
-        line-height: var(--leading-relaxed);
-    }
-
-    /* Remove list styles for navigation */
-    nav ul,
-    nav ol {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-    }
-
-    /* ============= Code & Preformatted Text ============= */
-    
-    code {
-        font-family: var(--font-mono);
-        font-size: 0.875em;
-        background: var(--bg-secondary);
-        padding: var(--spacing-1) var(--spacing-2);
-        border-radius: var(--radius-sm);
-        color: var(--text-primary);
-    }
-
-    pre {
-        font-family: var(--font-mono);
-        background: var(--bg-secondary);
-        padding: var(--spacing-4);
-        border-radius: var(--radius-lg);
-        overflow-x: auto;
-        margin-bottom: var(--spacing-4);
-        
-        code {
-            background: none;
-            padding: 0;
-        }
-    }
-
-    /* ============= Blockquotes ============= */
-    
-    blockquote {
-        border-left: 4px solid var(--primary-500);
-        padding-left: var(--spacing-4);
-        margin: var(--spacing-6) 0;
-        font-style: italic;
-        color: var(--text-secondary);
-    }
-
-    /* ============= Horizontal Rules ============= */
-    
-    hr {
-        border: none;
-        height: 1px;
-        background: var(--border-color);
-        margin: var(--spacing-8) 0;
-    }
-
-    /* ============= Media Elements ============= */
-    
-    img {
-        max-width: 100%;
-        height: auto;
-        display: block;
-        
-        /* Performance: Images will be optimized via HTML attributes loading="lazy" decoding="async" */
-    }
-
-    svg {
-        max-width: 100%;
-        height: auto;
-        display: inline-block;
-        vertical-align: middle;
-    }
-
-    /* ============= Interactive Elements ============= */
-    
-    button {
-        cursor: pointer;
-        font-family: inherit;
-        font-size: inherit;
-        line-height: inherit;
-        
-        /* Accessibility: Minimum touch target */
-        min-height: 44px;
-        min-width: 44px;
-        
-        /* Performance: GPU acceleration */
-        will-change: transform, background-color;
-        
-        &:disabled {
-            cursor: not-allowed;
-            opacity: 0.6;
-            pointer-events: none;
-        }
-    }
-
-    /* ============= Form Elements ============= */
-    
-    input,
-    textarea,
-    select {
-        font-family: inherit;
-        font-size: inherit;
-        line-height: inherit;
-        color: inherit;
-        
-        /* Accessibility: Minimum touch target */
-        min-height: 44px;
-        
-        &:focus {
-            outline: 2px solid var(--border-color-focus);
-            outline-offset: 2px;
-        }
-        
-        &:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-    }
-
-    /* ============= Tables ============= */
-    
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: var(--spacing-6);
-    }
-
-    th,
-    td {
-        padding: var(--spacing-3) var(--spacing-4);
-        text-align: left;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    th {
-        font-weight: var(--font-semibold);
-        color: var(--text-primary);
-        background: var(--bg-secondary);
-    }
-
-    /* ============= Accessibility Utilities ============= */
-    
-    /* Screen reader only content */
-    .sr-only {
-        position: absolute !important;
-        width: 1px !important;
-        height: 1px !important;
-        padding: 0 !important;
-        margin: -1px !important;
-        overflow: hidden !important;
-        clip: rect(0, 0, 0, 0) !important;
-        white-space: nowrap !important;
-        border: 0 !important;
-    }
-
-    /* Focus management */
-    .focus-trap {
-        contain: focus;
-    }
-
-    /* High contrast mode support */
-    @media (prefers-contrast: high) {
-        h1, h2, h3, h4, h5, h6 {
-            font-weight: var(--font-black);
-        }
-        
-        a {
-            text-decoration: underline;
-        }
-        
-        button {
-            border: 2px solid currentColor;
-        }
-    }
-
-    /* ============= Print Styles ============= */
-    
-    @media print {
-        * {
-            background: transparent !important;
-            color: black !important;
-            box-shadow: none !important;
-            text-shadow: none !important;
-        }
-        
-        a,
-        a:visited {
-            text-decoration: underline;
-        }
-        
-        a[href]:after {
-            content: " (" attr(href) ")";
-        }
-        
-        abbr[title]:after {
-            content: " (" attr(title) ")";
-        }
-        
-        h2,
-        h3,
-        p {
-            orphans: 3;
-            widows: 3;
-        }
-        
-        h2,
-        h3 {
-            page-break-after: avoid;
-        }
-        
-        img {
-            max-width: 100% !important;
-        }
-        
-        @page {
-            margin: 0.5in;
-        }
-    }
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* ============= Container & Layout Utilities ============= */
+body {
+    font-family: var(--font-primary);
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
 
-@layer utilities {
-    .container {
-        width: 100%;
-        max-width: 1280px;
-        margin: 0 auto;
-        padding-left: var(--spacing-4);
-        padding-right: var(--spacing-4);
-        
-        /* Performance: Contain layout */
-        contain: layout;
-        
-        @media (min-width: 640px) {
-            padding-left: var(--spacing-6);
-            padding-right: var(--spacing-6);
-        }
-        
-        @media (min-width: 1024px) {
-            padding-left: var(--spacing-8);
-            padding-right: var(--spacing-8);
-        }
-    }
+main {
+    flex: 1;
+}
 
-    .hidden {
-        display: none !important;
-    }
+h1,
+h2,
+h3,
+h4 {
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: var(--spacing-md);
+}
 
-    .visually-hidden {
-        position: absolute !important;
-        width: 1px !important;
-        height: 1px !important;
-        padding: 0 !important;
-        margin: -1px !important;
-        overflow: hidden !important;
-        clip: rect(0, 0, 0, 0) !important;
-        white-space: nowrap !important;
-        border: 0 !important;
-    }
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
 
-    /* Safe area support for notched devices */
-    @supports (padding: max(0px)) {
-        .container {
-            padding-left: max(var(--spacing-4), env(safe-area-inset-left));
-            padding-right: max(var(--spacing-4), env(safe-area-inset-right));
-        }
-    }
+a:hover {
+    color: var(--primary-dark);
+}
+
+.skip-link {
+    position: absolute;
+    top: -100px;
+    left: 0;
+    background: var(--primary-color);
+    color: white;
+    padding: var(--spacing-sm) var(--spacing-md);
+    z-index: var(--z-toast);
+    transition: top var(--transition-base);
+}
+
+.skip-link:focus {
+    top: var(--spacing-sm);
 }
