@@ -6,13 +6,20 @@
     overflow: hidden;
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
-    transition: all var(--transition-slow);
     display: block;
 }
-.focus-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-xl);
+
+@media (prefers-reduced-motion: no-preference) {
+    .focus-card {
+        /* PERFORMANCE: Transition specific properties */
+        transition: transform var(--transition-slow), box-shadow var(--transition-slow);
+    }
+    .focus-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-xl);
+    }
 }
+
 .focus-card img {
     width: 100%;
     height: 100%;
@@ -28,6 +35,7 @@
     flex-direction: column;
     justify-content: flex-end;
     padding: var(--spacing-lg);
+    /* A11Y Check: Ensure background gradient provides enough contrast for white text. */
 }
 .focus-card-content h3 {
     font-size: 1.5rem;
@@ -47,12 +55,25 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    transition: all var(--transition-slow);
 }
-.product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-xl);
+
+@media (prefers-reduced-motion: no-preference) {
+    .product-card {
+        /* PERFORMANCE: Transition specific properties */
+        transition: transform var(--transition-slow), box-shadow var(--transition-slow);
+    }
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-xl);
+    }
+    .product-card-image img {
+        transition: transform var(--transition-slow);
+    }
+    .product-card:hover .product-card-image img {
+        transform: scale(1.05);
+    }
 }
+
 .product-card-image {
     position: relative;
     overflow: hidden;
@@ -63,10 +84,6 @@
     height: 250px;
     object-fit: cover;
     display: block;
-    transition: transform var(--transition-slow);
-}
-.product-card:hover .product-card-image img {
-    transform: scale(1.05);
 }
 .product-card-content {
     padding: var(--spacing-lg);
@@ -77,6 +94,7 @@
 .product-card-category {
     font-size: 0.75rem;
     color: var(--primary-color);
+    /* A11Y Check: Contrast is 3.56:1 on white background. Consider a darker shade or bolder font-weight for AA compliance. */
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -147,10 +165,14 @@
     margin-bottom: var(--spacing-lg);
     border: 4px solid var(--border-color);
     background-color: var(--gray-200);
-    transition: transform var(--transition-base);
 }
-.team-member:hover img {
-    transform: scale(1.05);
+@media (prefers-reduced-motion: no-preference) {
+    .team-member img {
+        transition: transform var(--transition-base);
+    }
+    .team-member:hover img {
+        transform: scale(1.05);
+    }
 }
 .team-member h3 {
     font-size: 1.25rem;

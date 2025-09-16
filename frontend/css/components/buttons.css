@@ -1,8 +1,6 @@
 /* --- Component: Button Styles --- */
 
-.btn,
-.btn-primary,
-.btn-secondary {
+.btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -13,21 +11,35 @@
     border-radius: var(--radius-full);
     border: 1px solid transparent;
     cursor: pointer;
-    transition: all var(--transition-base);
     text-decoration: none;
     white-space: nowrap;
 }
 
-.btn-primary {
+@media (prefers-reduced-motion: no-preference) {
+    .btn {
+        /* PERFORMANCE: Transition specific, performant properties instead of 'all' */
+        transition: background-color var(--transition-base), color var(--transition-base), border-color var(--transition-base), transform var(--transition-fast), box-shadow var(--transition-base);
+    }
+}
+
+.btn-primary,
+.auth-form button[type="submit"] {
     background: var(--primary-color);
     color: white;
     box-shadow: var(--shadow-sm);
 }
 
-.btn-primary:hover {
+.btn-primary:hover,
+.auth-form button[type="submit"]:hover {
     background: var(--primary-dark);
-    transform: translateY(-2px);
     box-shadow: var(--shadow-md);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .btn-primary:hover,
+    .auth-form button[type="submit"]:hover {
+        transform: translateY(-2px);
+    }
 }
 
 .btn-secondary {
@@ -42,29 +54,12 @@
     color: var(--text-primary);
 }
 
-/* Auth Form Submit Button - Styled like a primary button */
+/* CODE QUALITY: Auth Form Submit Button now shares .btn base styles */
 .auth-form button[type="submit"] {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-sm);
+    /* Inherits shared styles from .btn-primary */
     padding: 0.75rem 1.5rem;
     font-size: 1rem;
-    font-weight: 600;
-    border-radius: var(--radius-full);
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: all var(--transition-base);
-    text-decoration: none;
-    white-space: nowrap;
-    background: var(--primary-color);
-    color: white;
-    box-shadow: var(--shadow-sm);
-}
-.auth-form button[type="submit"]:hover {
-    background: var(--primary-dark);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    width: 100%; /* Common for form buttons */
 }
 
 /* Specific Button Implementations */
@@ -83,11 +78,10 @@
     padding: 0.5rem 1rem;
     border-radius: var(--radius-full);
     cursor: pointer;
-    transition: all var(--transition-base);
     font-weight: 500;
+    transition: background-color var(--transition-base), color var(--transition-base), border-color var(--transition-base);
 }
 
-/* ACCESSIBILITY FIX: Changed active filter style for better color contrast. */
 .filter-btn.active,
 .filter-btn:hover {
     background: var(--primary-color);
@@ -95,7 +89,6 @@
     border-color: var(--primary-color);
 }
 
-/* UX FIX: Added styles for add-to-cart button feedback */
 .add-to-cart-btn.added {
     background-color: var(--success-color);
     color: white;
@@ -111,6 +104,8 @@
 .add-to-cart-form button:disabled {
     background-color: var(--gray-400);
     cursor: not-allowed;
+    transform: none;
+    box-shadow: var(--shadow-sm);
 }
 
 .checkout-btn {
@@ -126,5 +121,10 @@
 }
 .training-cta .btn:hover {
     background: var(--gray-100);
-    transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .training-cta .btn:hover {
+        transform: translateY(-2px);
+    }
 }

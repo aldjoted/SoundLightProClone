@@ -29,7 +29,7 @@
     background: var(--gray-100);
     border-radius: var(--radius-full);
     border: 2px solid transparent;
-    transition: all var(--transition-base);
+    transition: border-color var(--transition-base), box-shadow var(--transition-base);
     flex: 1;
 }
 #search-form:focus-within {
@@ -42,8 +42,14 @@
     padding: 0.5rem 1rem;
     width: 180px;
     outline: none;
-    transition: width var(--transition-base);
 }
+
+@media (prefers-reduced-motion: no-preference) {
+    #search-input {
+        transition: width var(--transition-base);
+    }
+}
+
 #search-input:focus {
     width: 250px;
 }
@@ -73,7 +79,8 @@
     border-radius: var(--radius-md);
     border: 1px solid var(--border-color);
     background: var(--bg-secondary);
-    transition: all var(--transition-base);
+    /* PERFORMANCE: Transition specific properties */
+    transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 .auth-form input:focus,
 .contact-form input:focus,
@@ -88,7 +95,6 @@
 .contact-form-container h3 {
     font-size: 1.75rem;
 }
-
 
 /* Other Forms */
 .newsletter-form {
@@ -182,8 +188,14 @@
 .strength-bar {
     height: 100%;
     width: 0;
-    transition: width 0.3s ease, background-color 0.3s ease;
 }
+
+@media (prefers-reduced-motion: no-preference) {
+    .strength-bar {
+        transition: width 0.3s ease, background-color 0.3s ease;
+    }
+}
+
 
 /* Responsive Search Form */
 @media (max-width: 1024px) {
