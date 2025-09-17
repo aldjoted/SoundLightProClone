@@ -1,49 +1,106 @@
 /**
  * ui.js
- * 
- * This module contains all functions related to DOM manipulation, including
- * rendering components, handling UI states (loading, errors), and managing notifications.
+ *
+ * This module contains all functions related to DOM manipulation. It follows security best practices
+ * by avoiding innerHTML with untrusted data and uses efficient rendering techniques.
  */
 
-// ============= Toast Notification Utility =============
-const toastContainer = document.getElementById('toast-container');
+// ============= Helper Functions =============
+
+/**
+ * Helper to get the primary image URL from a product object.
+ * @param {Object} product - The product object.
+ * @returns {string} The URL of the first image or a placeholder.
+ */
+function getProductImage(product) {
+    return (product.images && product.images.length > 0)
+        ? product.images[0].image
+        : 'https://via.placeholder.com/400x300.png?text=No+Image';
+}
+
+/**
+ * Creates a DOM element with given attributes and children.
+ * @param {string} tag - The HTML tag for the element.
+ * @param {object} [attributes={}] - An object of attributes to set on the element.
+ * @param {(string|Node)[]} [children=[]] - An array of child nodes or strings to append.
+ * @returns {HTMLElement} The created element.
+ */
+function isSafeUrl(url) {
+    try {
+        const u = new URL(url, window.location.origin);
+        return ['http:', 'https:', 'data:'].includes(u.protocol);
+    } catch { return false; }
+}
+
+function createElement(tag, attributes = {}, children = []) {
+    const el = document.createElement(tag);
+    for (const key in attributes) {
+        const val = attributes[key];
+        if (key === 'href' || key === 'src') {
+            if (typeof val === 'string' && isSafeUrl(val)) {
+                el.setAttribute(key, val);
+            } else {
+                // Skip unsafe URLs
+                continue;
+            }
+        } else if (key.toLowerCase().startsWith('on')) {
+            // Disallow inline event handlers
+            continue;
+        } else if (key === 'style' && typeof val === 'object') {
+            Object.assign(el.style, val);
+        } else {
+            el.setAttribute(key, val);
+        }
+    }
+    children.forEach(child => {
+        if (typeof child === 'string') {
+            el.appendChild(document.createTextNode(child));
+        } else {
+            el.appendChild(child);
+        }
+    });
+    return el;
+}
+
+// ============= Toast & Loading UI =============
 
 /**
  * Displays a toast notification.
  * @param {string} message - The message to display.
- * @param {string} type - 'success', 'error', or 'info'.
+ * @param {'success'|'error'|'info'} [type='info'] - The type of toast.
  */
 export function showToast(message, type = 'info') {
+    const toastContainer = document.getElementById('toast-container');
     if (!toastContainer) return;
 
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
+    const iconClass = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle',
+        info: 'fa-info-circle'
+    }[type];
 
-    let iconClass = 'fa-info-circle';
-    if (type === 'success') iconClass = 'fa-check-circle';
-    if (type === 'error') iconClass = 'fa-exclamation-circle';
-
-    toast.innerHTML = `<i class="fas ${iconClass}"></i><span>${message}</span>`;
+    const toast = createElement('div', { class: `toast ${type}` }, [
+        createElement('i', { class: `fas ${iconClass}` }),
+        createElement('span', {}, [message])
+    ]);
+    
     toastContainer.appendChild(toast);
-
-    setTimeout(() => {
-        toast.remove();
-    }, 5000);
+    setTimeout(() => toast.remove(), 5000);
 }
 
-// ============= Loading State Utilities =============
 /**
  * Renders skeleton placeholder cards for a better loading experience.
  * @param {HTMLElement} container - The grid container to fill.
- * @param {number} count - The number of skeleton cards to create.
+ * @param {number} [count=8] - The number of skeleton cards to create.
  */
 export function showSkeletonLoader(container, count = 8) {
     if (!container) return;
-    let skeletons = '';
+    container.innerHTML = ''; // Clear previous content
     for (let i = 0; i < count; i++) {
-        skeletons += '<div class="skeleton-card"><div class="skeleton-shimmer"></div></div>';
+        const shimmer = createElement('div', { class: 'skeleton-shimmer' });
+        const skeletonCard = createElement('div', { class: 'skeleton-card' }, [shimmer]);
+        container.appendChild(skeletonCard);
     }
-    container.innerHTML = skeletons;
 }
 
 // ============= Component Rendering =============
@@ -67,18 +124,23 @@ export function renderHeroSlider(_unused = []) {
         'images/hero/MYO-ACOUSTIC-SOUNDLIGHTPRO.png'
     ];
 
-    swiperWrapper.innerHTML = ''; 
-
+    swiperWrapper.innerHTML = '';
+    const frag = document.createDocumentFragment();
     images.forEach((src, index) => {
         const slide = document.createElement('div');
         slide.className = 'swiper-slide';
-        const loadingAttr = index === 0 ? '' : 'loading="lazy"';
-        slide.innerHTML = `
-            <img src="${src}" alt="Promotional banner ${index + 1}" class="slide-bg" ${loadingAttr} />
-            <div class="slide-overlay"></div>
-        `;
-        swiperWrapper.appendChild(slide);
+        const img = document.createElement('img');
+        img.className = 'slide-bg';
+        img.alt = `Promotional banner ${index + 1}`;
+        img.src = src;
+        if (index > 0) img.loading = 'lazy';
+        const overlay = document.createElement('div');
+        overlay.className = 'slide-overlay';
+        slide.appendChild(img);
+        slide.appendChild(overlay);
+        frag.appendChild(slide);
     });
+    swiperWrapper.appendChild(frag);
 }
 
 /**
@@ -130,19 +192,6 @@ export function renderMegaMenu(categories) {
 }
 
 /**
- * Helper to get the primary image URL from a product object.
- * @param {Object} product - The product object.
- * @returns {string} The URL of the first image or a placeholder.
- */
-function getProductImage(product) {
-    const placeholder = 'https://via.placeholder.com/400x300.png?text=No+Image';
-    if (product.images && product.images.length > 0) {
-        return product.images[0].image;
-    }
-    return placeholder;
-}
-
-/**
  * Renders the featured focus grid on the homepage.
  * @param {Array<Object>} products - An array of product objects to feature.
  */
@@ -178,42 +227,54 @@ export function renderCategoryFilters(categories) {
 }
 
 /**
- * Renders a grid of product cards.
- * @param {Array<Object>} products - An array of product objects from the API.
+ * Renders a grid of product cards using secure DOM creation methods.
+ * @param {Array<Object>} products - An array of product objects.
  * @param {HTMLElement} container - The element to render the grid into.
  */
 export function renderProductGrid(products, container) {
     if (!container) return;
+    container.innerHTML = ''; // Clear existing content or skeletons
 
     if (products.length === 0) {
-        container.innerHTML = '<p class="info-message">No products found matching your criteria.</p>';
+        container.appendChild(createElement('p', { class: 'info-message' }, ['No products found.']));
         return;
     }
-
-    container.innerHTML = products.map(product => `
-        <div class="product-card">
-            <a href="product.html?id=${product.id}" class="product-card-image" aria-label="View details for ${product.name}">
-                <img src="${getProductImage(product)}" alt="${product.name}" loading="lazy">
-                <div class="product-card-overlay">
-                    <button class="btn btn-secondary quick-view-btn" data-product-id="${product.id}">
-                        <i class="fas fa-eye"></i> Quick View
-                    </button>
-                </div>
-            </a>
-            <div class="product-card-content">
-                <div>
-                    <p class="product-card-category">${product.category}</p>
-                    <h3 class="product-card-title"><a href="product.html?id=${product.id}">${product.name}</a></h3>
-                </div>
-                <div class="product-card-footer">
-                    <p class="product-card-price">$${parseFloat(product.price).toFixed(2)}</p>
-                    <button class="btn btn-secondary add-to-cart-btn" data-product-id="${product.id}">
-                        <i class="fas fa-shopping-cart"></i> Add
-                    </button>
-                </div>
-            </div>
-        </div>
-    `).join('');
+    
+    const fragment = document.createDocumentFragment();
+    products.forEach(product => {
+        const card = createElement('div', { class: 'product-card' }, [
+            createElement('a', {
+                href: `product.html?id=${product.id}`,
+                class: 'product-card-image',
+                'aria-label': `View details for ${product.name}`
+            }, [
+                createElement('img', { src: getProductImage(product), alt: product.name, loading: 'lazy' }),
+                createElement('div', { class: 'product-card-overlay' }, [
+                    createElement('button', { class: 'btn btn-secondary quick-view-btn', 'data-product-id': product.id }, [
+                        createElement('i', { class: 'fas fa-eye' }),
+                        document.createTextNode(' Quick View')
+                    ])
+                ])
+            ]),
+            createElement('div', { class: 'product-card-content' }, [
+                createElement('div', {}, [
+                    createElement('p', { class: 'product-card-category' }, [product.category]),
+                    createElement('h3', { class: 'product-card-title' }, [
+                        createElement('a', { href: `product.html?id=${product.id}` }, [product.name])
+                    ])
+                ]),
+                createElement('div', { class: 'product-card-footer' }, [
+                    createElement('p', { class: 'product-card-price' }, [`$${parseFloat(product.price).toFixed(2)}`]),
+                    createElement('button', { class: 'btn btn-secondary add-to-cart-btn', 'data-product-id': product.id }, [
+                        createElement('i', { class: 'fas fa-shopping-cart' }),
+                        document.createTextNode(' Add')
+                    ])
+                ])
+            ])
+        ]);
+        fragment.appendChild(card);
+    });
+    container.appendChild(fragment);
 }
 
 /**
@@ -232,7 +293,7 @@ export function renderQuickViewModal(product) {
                     <div class="product-detail-info">
                         <h2 id="modal-title">${product.name}</h2>
                         <p class="price">$${parseFloat(product.price).toFixed(2)}</p>
-                        <p>${product.description.substring(0, 150)}...</p>
+                        <p>${product.description ? product.description.substring(0, 150) + (product.description.length > 150 ? '...' : '') : 'No description available.'}</p>
                         <button class="btn btn-primary add-to-cart-modal-btn" data-product-id="${product.id}">
                             <i class="fas fa-shopping-cart"></i> Add to Cart
                         </button>
@@ -244,6 +305,74 @@ export function renderQuickViewModal(product) {
     `;
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     document.body.classList.add('no-scroll');
+    
+    // Set up event listeners for the modal
+    setupQuickViewEventListeners(product);
+}
+
+/**
+ * Sets up event listeners for the quick view modal.
+ * @param {Object} product - The product object.
+ */
+function setupQuickViewEventListeners(product) {
+    const overlay = document.getElementById('quick-view-overlay');
+    const closeBtn = overlay.querySelector('.modal-close-btn');
+    const addToCartBtn = overlay.querySelector('.add-to-cart-modal-btn');
+    
+    // Close modal when clicking close button
+    closeBtn.addEventListener('click', closeQuickViewModal);
+    
+    // Close modal when clicking overlay background
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            closeQuickViewModal();
+        }
+    });
+    
+    // Close modal when pressing Escape key
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            closeQuickViewModal();
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+    
+    // Handle add to cart from modal
+    addToCartBtn.addEventListener('click', async () => {
+        try {
+            // Dynamically import cart module to avoid circular dependencies
+            const cart = await import('./cart.js');
+            cart.addToCart(product, 1);
+            showToast(`${product.name} added to cart!`, 'success');
+            
+            // Update button state temporarily
+            addToCartBtn.disabled = true;
+            addToCartBtn.innerHTML = `<i class="fas fa-check"></i> Added`;
+            setTimeout(() => {
+                addToCartBtn.disabled = false;
+                addToCartBtn.innerHTML = `<i class="fas fa-shopping-cart"></i> Add to Cart`;
+            }, 1500);
+            
+            // Update cart count and mini cart
+            updateCartCount(cart.getCartItemCount());
+            renderMiniCart(cart.getCart());
+        } catch (error) {
+            console.error('Error adding product to cart:', error);
+            showToast('Failed to add product to cart.', 'error');
+        }
+    });
+}
+
+/**
+ * Closes the quick view modal.
+ */
+function closeQuickViewModal() {
+    const overlay = document.getElementById('quick-view-overlay');
+    if (overlay) {
+        overlay.remove();
+        document.body.classList.remove('no-scroll');
+    }
 }
 
 /**
@@ -319,71 +448,73 @@ export function renderProductDetail(product, container) {
 
 // ============= Mini Cart Drawer =============
 /**
- * Render and open the mini-cart drawer.
- * @param {Array} items - Cart items [{id,name,price,quantity,image}]
- * @param {number} subtotal - Optional subtotal override
+ * Renders and opens the mini-cart drawer using secure DOM methods.
+ * @param {Array<Object>} items - Cart items.
  */
-export function renderMiniCart(items = [], subtotal) {
-    // Remove previous overlay if any
+export function renderMiniCart(items = []) {
     document.getElementById('mini-cart-overlay')?.remove();
 
-    const total = typeof subtotal === 'number'
-        ? subtotal
-        : items.reduce((t, i) => t + i.price * i.quantity, 0);
+    const total = items.reduce((t, i) => t + i.price * i.quantity, 0);
 
-    const overlay = document.createElement('div');
-    overlay.id = 'mini-cart-overlay';
-    overlay.className = 'mini-cart-overlay active';
-    overlay.innerHTML = `
-        <aside class="mini-cart-drawer" role="dialog" aria-label="Mini cart">
-            <div class="mini-cart-header">
-                <h3 class="mini-cart-title">Added to Cart</h3>
-                <button class="mini-cart-close" aria-label="Close mini cart"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="mini-cart-content">
-                ${items.length === 0 ? `
-                    <div class="mini-cart-empty">
-                        <i class="fas fa-shopping-cart" style="font-size:2rem;"></i>
-                        <p>Your cart is empty.</p>
-                    </div>`
-                : items.map(i => `
-                    <div class="mini-cart-item">
-                        <img class="mini-cart-thumb" src="${i.image || 'https://via.placeholder.com/64'}" alt="${i.name}">
-                        <div>
-                            <p class="mini-cart-name">${i.name}</p>
-                            <p class="mini-cart-meta">$${i.price.toFixed(2)} • <span class="mini-cart-qty">Qty: ${i.quantity}</span></p>
-                        </div>
-                        <button class="mini-cart-remove" data-id="${i.id}" title="Remove"><i class="fas fa-trash"></i></button>
-                    </div>
-                `).join('')}
-            </div>
-            <div class="mini-cart-footer">
-                <div class="mini-cart-row">
-                    <span>Subtotal</span>
-                    <strong>$${total.toFixed(2)}</strong>
-                </div>
-                <div class="mini-cart-actions">
-                    <a href="cart.html" class="btn btn-secondary">View Cart</a>
-                    <a href="cart.html#checkout" class="btn btn-primary">Checkout</a>
-                </div>
-            </div>
-        </aside>
-    `;
+    const content = items.length === 0
+        ? [createElement('div', { class: 'mini-cart-empty' }, [
+              createElement('i', { class: 'fas fa-shopping-cart', style: 'font-size:2rem;' }),
+              createElement('p', {}, ['Your cart is empty.'])
+          ])]
+        : items.map(i =>
+              createElement('div', { class: 'mini-cart-item', 'data-id': i.id }, [
+                  createElement('img', { class: 'mini-cart-thumb', src: i.image || 'https://via.placeholder.com/64', alt: i.name }),
+                  createElement('div', {}, [
+                      createElement('p', { class: 'mini-cart-name' }, [i.name]),
+                      createElement('p', { class: 'mini-cart-meta' }, [`$${i.price.toFixed(2)} • Qty: ${i.quantity}`]),
+                  ]),
+                  createElement('button', { class: 'mini-cart-remove', title: 'Remove' }, [
+                      createElement('i', { class: 'fas fa-trash' })
+                  ])
+              ])
+          );
 
-    // Close interactions
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) closeMiniCart();
-        if (e.target.closest('.mini-cart-close')) closeMiniCart();
-    });
-    // Simple remove (UI only; actual removal should be handled on cart page)
-    overlay.addEventListener('click', (e) => {
-        const btn = e.target.closest('.mini-cart-remove');
-        if (!btn) return;
-        btn.closest('.mini-cart-item')?.remove();
-    });
-
+    const overlay = createElement('div', { id: 'mini-cart-overlay', class: 'mini-cart-overlay active' }, [
+        createElement('aside', { class: 'mini-cart-drawer', role: 'dialog', 'aria-label': 'Mini cart' }, [
+            createElement('div', { class: 'mini-cart-header' }, [
+                createElement('h3', { class: 'mini-cart-title' }, ['Added to Cart']),
+                createElement('button', { class: 'mini-cart-close', 'aria-label': 'Close mini cart' }, [
+                    createElement('i', { class: 'fas fa-times' })
+                ])
+            ]),
+            createElement('div', { class: 'mini-cart-content' }, content),
+            createElement('div', { class: 'mini-cart-footer' }, [
+                createElement('div', { class: 'mini-cart-row' }, [
+                    createElement('span', {}, ['Subtotal']),
+                    createElement('strong', {}, [`$${total.toFixed(2)}`])
+                ]),
+                createElement('div', { class: 'mini-cart-actions' }, [
+                    createElement('a', { href: 'cart.html', class: 'btn btn-secondary' }, ['View Cart']),
+                    createElement('a', { href: 'cart.html#checkout', class: 'btn btn-primary' }, ['Checkout'])
+                ])
+            ])
+        ])
+    ]);
+    
     document.body.appendChild(overlay);
     document.body.classList.add('no-scroll');
+
+    // Add event listeners after appending
+    const drawer = overlay.querySelector('.mini-cart-drawer');
+    drawer.addEventListener('click', (e) => {
+        if (e.target.closest('.mini-cart-close')) closeMiniCart();
+        const removeBtn = e.target.closest('.mini-cart-remove');
+        if (removeBtn) {
+            import('./cart.js').then(cart => {
+                cart.removeFromCart(parseInt(removeBtn.closest('.mini-cart-item').dataset.id, 10));
+                // Re-render instead of just removing the node to update total
+                renderMiniCart(cart.getCart());
+            });
+        }
+    });
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeMiniCart();
+    });
 }
 
 export function closeMiniCart() {

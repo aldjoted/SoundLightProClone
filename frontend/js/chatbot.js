@@ -1,30 +1,73 @@
-// A safer markdown to HTML converter
-function escapeHtml(str) {
-    return str.replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]));
-}
+import { API_BASE_URL } from './config.js';
+import { apiFetch } from './apiService.js';
+/**
+ * chatbot.js
+ *
+ * Manages the chatbot widget, including UI interactions and API communication.
+ * Features a security-hardened markdown-to-HTML renderer to prevent XSS.
+ */
 
-function simpleMarkdownToHtml(markdown) {
-    // Convert bold/italic
-    let text = markdown.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                       .replace(/\*(.*?)\*/g, '<em>$1</em>');
-    // Split lines and detect list items
-    const lines = text.split('\n');
-    let html = '';
-    let inList = false;
-    for (const line of lines) {
-        if (/^\s*-\s+/.test(line)) {
-            if (!inList) { html += '<ul>'; inList = true; }
-            html += `<li>${line.replace(/^\s*-\s+/, '')}</li>`;
+/**
+ * @param {string} markdown - The markdown text from the API.
+ * @returns {DocumentFragment} A document fragment containing the safe HTML structure.
+ */
+function secureMarkdownToHtml(markdown) {
+    const fragment = document.createDocumentFragment();
+    const lines = markdown.split('\n');
+    let currentList = null;
+
+    lines.forEach(line => {
+        // Bold and Italic using a safer, iterative approach
+        const processInlineFormatting = (text) => {
+            const container = document.createDocumentFragment();
+            // Use split to handle nested or overlapping cases more safely
+            const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
+            parts.forEach(part => {
+                if (part.startsWith('**') && part.endsWith('**')) {
+                    const strong = document.createElement('strong');
+                    strong.textContent = part.slice(2, -2);
+                    container.appendChild(strong);
+                } else if (part.startsWith('*') && part.endsWith('*')) {
+                    const em = document.createElement('em');
+                    em.textContent = part.slice(1, -1);
+                    container.appendChild(em);
+                } else {
+                    container.appendChild(document.createTextNode(part));
+                }
+            });
+            return container;
+        };
+        
+        // List items
+        if (line.trim().startsWith('- ')) {
+            if (!currentList) {
+                currentList = document.createElement('ul');
+            }
+            const li = document.createElement('li');
+            li.appendChild(processInlineFormatting(line.trim().substring(2)));
+            currentList.appendChild(li);
         } else {
-            if (inList) { html += '</ul>'; inList = false; }
-            html += `${line}<br>`;
+            // End of a list
+            if (currentList) {
+                fragment.appendChild(currentList);
+                currentList = null;
+            }
+            // Normal paragraph/line
+            if (line.trim()) {
+                const p = document.createElement('p');
+                p.appendChild(processInlineFormatting(line));
+                fragment.appendChild(p);
+            }
         }
-    }
-    if (inList) html += '</ul>';
-    html = html.replace(/(<br>)+$/,''); // trim trailing breaks
-    return html;
-}
+    });
 
+    // Append any list that's still open at the end
+    if (currentList) {
+        fragment.appendChild(currentList);
+    }
+    
+    return fragment;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const chatbotToggler = document.querySelector(".chatbot-toggler");
@@ -33,49 +76,66 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatInput = document.querySelector(".chat-input textarea");
     const sendChatBtn = document.querySelector(".chat-input button");
 
-    const API_URL = "http://127.0.0.1:8000/api/v1/chatbot/";
-
-    const createChatLi = (message, className) => {
-        const chatLi = document.createElement("li");
-        chatLi.classList.add("chat", className);
-        if (className === "outgoing") {
-            const p = document.createElement('p');
-            p.textContent = message; // escape user text
-            chatLi.appendChild(p);
-        } else {
-            chatLi.innerHTML = `<span class="chat-icon"><i class="fas fa-robot"></i></span><p>${simpleMarkdownToHtml(message)}</p>`;
-        }
-        return chatLi;
+    if (!chatbotToggler || !closeBtn || !chatbox || !chatInput || !sendChatBtn) {
+        return; // Fail gracefully if chatbot elements aren't present
     }
 
-    const generateResponse = (incomingChatLi) => {
+    const API_URL = `${API_BASE_URL}/chatbot/`;
+
+    const createChatLi = (content, className) => {
+        const chatLi = document.createElement("li");
+        chatLi.classList.add("chat", className);
+        const p = document.createElement('p');
+        
+        if (className === "outgoing") {
+            p.textContent = content; // User input is always treated as plain text
+            chatLi.appendChild(p);
+        } else {
+            const icon = document.createElement('span');
+            icon.className = 'chat-icon';
+            icon.innerHTML = '<i class="fas fa-robot"></i>';
+            chatLi.appendChild(icon);
+            // Content can be a string for "Thinking..." or a DocumentFragment for the response
+            if (typeof content === 'string') {
+                // Only allow known-safe typing indicator template
+                const tmp = document.createElement('div');
+                tmp.className = 'chat typing';
+                tmp.appendChild(document.createElement('span'));
+                tmp.appendChild(document.createElement('span'));
+                tmp.appendChild(document.createElement('span'));
+                p.appendChild(tmp);
+            } else {
+                p.appendChild(content); // Append the secure DocumentFragment
+            }
+            chatLi.appendChild(p);
+        }
+        return chatLi;
+    };
+
+    const generateResponse = async (incomingChatLi) => {
         const messageElement = incomingChatLi.querySelector("p");
         const userMessage = chatInput.value.trim();
 
-        const requestOptions = {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ message: userMessage })
-        };
+        try {
+            const data = await apiFetch(`/chatbot/`, {
+                method: 'POST',
+                body: JSON.stringify({ message: userMessage })
+            });
 
-        fetch(API_URL, requestOptions)
-            .then(res => res.json())
-            .then(data => {
-                if (data.reply) {
-                    messageElement.innerHTML = simpleMarkdownToHtml(data.reply);
-                } else {
-                    messageElement.textContent = data.error || "Oops! Something went wrong.";
-                    messageElement.classList.add("error");
-                }
-            })
-            .catch((error) => {
-                messageElement.textContent = "Oops! Something went wrong. Please try again.";
-                messageElement.classList.add("error");
-            })
-            .finally(() => chatbox.scrollTo(0, chatbox.scrollHeight));
-    }
+            if (data.reply) {
+                messageElement.innerHTML = ''; // Clear typing indicator
+                messageElement.appendChild(secureMarkdownToHtml(data.reply));
+            } else {
+                throw new Error(data.error || "No reply in response.");
+            }
+        } catch (error) {
+            console.error("Chatbot API error:", error);
+            messageElement.textContent = "Oops! I'm having trouble connecting. Please try again later.";
+            messageElement.classList.add("error");
+        } finally {
+            chatbox.scrollTo(0, chatbox.scrollHeight);
+        }
+    };
 
     const handleChat = () => {
         const userMessage = chatInput.value.trim();
@@ -88,25 +148,19 @@ document.addEventListener('DOMContentLoaded', () => {
         chatbox.scrollTo(0, chatbox.scrollHeight);
 
         setTimeout(() => {
-            const incomingChatLi = createChatLi("Thinking...", "incoming");
+            const incomingChatLi = createChatLi('typing', "incoming");
             chatbox.appendChild(incomingChatLi);
             chatbox.scrollTo(0, chatbox.scrollHeight);
-            // Replace "Thinking..." with a typing animation
-            const p = incomingChatLi.querySelector("p");
-            p.innerHTML = '<div class="chat typing"><span></span><span></span><span></span></div>';
-
             generateResponse(incomingChatLi);
         }, 600);
-    }
+    };
 
     chatInput.addEventListener("input", () => {
-        // Adjust the height of the input textarea based on its content
         chatInput.style.height = 'auto';
         chatInput.style.height = `${chatInput.scrollHeight}px`;
     });
 
     chatInput.addEventListener("keydown", (e) => {
-        // If Enter key is pressed without Shift key and the window is wide enough, handle the chat
         if (e.key === "Enter" && !e.shiftKey && window.innerWidth > 800) {
             e.preventDefault();
             handleChat();
