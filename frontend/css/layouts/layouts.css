@@ -129,6 +129,13 @@
 .figures-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-xl); text-align: center; }
 .contact-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-xl); margin-bottom: var(--spacing-3xl); padding-bottom: var(--spacing-xl); border-bottom: 1px solid var(--border-color); }
 
+.text-container--prose {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.8;
+}
+
 /* Other Layout Wrappers */
 .video-wrapper { max-width: 900px; margin: 0 auto; box-shadow: var(--shadow-2xl); border-radius: var(--radius-xl); overflow: hidden; }
 .responsive-video { position: relative; padding-bottom: 56.25%; height: 0; }
