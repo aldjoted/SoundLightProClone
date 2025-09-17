@@ -5,20 +5,20 @@
     align-items: center;
     justify-content: center;
     gap: var(--spacing-sm);
-    padding: 0.625rem 1.25rem;
-    font-size: 0.875rem;
-    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
     border-radius: var(--radius-full);
     border: 1px solid transparent;
     cursor: pointer;
     text-decoration: none;
     white-space: nowrap;
+    letter-spacing: -0.01em;
 }
 
 @media (prefers-reduced-motion: no-preference) {
     .btn {
-        /* PERFORMANCE: Transition specific, performant properties instead of 'all' */
-        transition: background-color var(--transition-base), color var(--transition-base), border-color var(--transition-base), transform var(--transition-fast), box-shadow var(--transition-base);
+        transition: all var(--transition-base);
     }
 }
 
@@ -27,31 +27,88 @@
     background: var(--primary-color);
     color: white;
     box-shadow: var(--shadow-sm);
+    border: 1px solid var(--primary-color);
 }
 
 .btn-primary:hover,
 .auth-form button[type="submit"]:hover {
     background: var(--primary-dark);
-    box-shadow: var(--shadow-md);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-    .btn-primary:hover,
-    .auth-form button[type="submit"]:hover {
-        transform: translateY(-2px);
-    }
+    border-color: var(--primary-dark);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-1px);
 }
 
 .btn-secondary {
-    background: var(--bg-primary);
-    color: var(--text-secondary);
-    border-color: var(--border-color);
+    background: white;
+    color: var(--text-primary);
+    border: 1px solid var(--gray-300);
+    box-shadow: var(--shadow-sm);
 }
 
 .btn-secondary:hover {
-    background: var(--bg-secondary);
-    border-color: var(--gray-300);
-    color: var(--text-primary);
+    background: var(--gray-50);
+    border-color: var(--gray-400);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Auth Actions Styling */
+.auth-links {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-shrink: 0;
+}
+
+.auth-links .btn {
+    font-size: 0.875rem;
+    padding: 0.625rem 1.25rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.auth-links .btn span {
+    margin-left: var(--spacing-xs);
+}
+
+/* User Menu */
+.user-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+/* Responsive Auth Buttons */
+@media (max-width: 1200px) {
+    .auth-links {
+        gap: var(--spacing-sm);
+    }
+    .auth-links .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.825rem;
+    }
+}
+
+@media (max-width: 1024px) {
+    .auth-links .btn {
+        padding: 0.5rem 0.875rem;
+        font-size: 0.8rem;
+    }
+    .auth-links .btn span {
+        display: none;
+    }
+}
+
+@media (max-width: 900px) {
+    .auth-links {
+        gap: var(--spacing-xs);
+    }
+    .auth-links .btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+        min-width: 44px;
+    }
 }
 
 /* CODE QUALITY: Auth Form Submit Button now shares .btn base styles */

@@ -22,26 +22,53 @@
     align-items: center;
     gap: var(--spacing-sm);
 }
+
 #search-form {
     position: relative;
     display: flex;
     align-items: center;
-    background: var(--gray-100);
+    background: white;
     border-radius: var(--radius-full);
-    border: 2px solid transparent;
-    transition: border-color var(--transition-base), box-shadow var(--transition-base);
+    border: 2px solid var(--gray-200);
+    transition: all var(--transition-base);
     flex: 1;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
+
 #search-form:focus-within {
-    border-color: var(--primary-light);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1), 0 1px 3px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
 }
+
 #search-input {
     background: transparent;
     border: none;
-    padding: 0.5rem 1rem;
-    width: 180px;
+    padding: 0.75rem 1.25rem;
+    width: 200px;
     outline: none;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+#search-input::placeholder {
+    color: var(--text-light);
+    font-weight: 400;
+}
+
+.search-btn {
+    background: transparent;
+    border: none;
+    padding: 0.75rem 1.25rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    border-radius: var(--radius-full);
+}
+
+.search-btn:hover {
+    color: var(--primary-color);
+    background: rgba(99, 102, 241, 0.08);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -51,7 +78,7 @@
 }
 
 #search-input:focus {
-    width: 250px;
+    width: 280px;
 }
 
 /* Auth & Contact Forms */
@@ -198,7 +225,49 @@
 
 
 /* Responsive Search Form */
+@media (max-width: 1200px) {
+    #search-input { 
+        width: 160px; 
+    }
+    #search-input:focus { 
+        width: 200px; 
+    }
+}
+
 @media (max-width: 1024px) {
-    #search-input { width: 150px; }
-    #search-input:focus { width: 200px; }
+    #search-input { 
+        width: 120px; 
+    }
+    #search-input:focus { 
+        width: 160px; 
+    }
+}
+
+@media (max-width: 900px) {
+    .search-container {
+        flex-shrink: 1;
+        min-width: 0;
+    }
+    #search-input {
+        width: 100px;
+        min-width: 80px;
+    }
+    #search-input:focus {
+        width: 140px;
+    }
+}
+
+@media (max-width: 768px) {
+    .search-container {
+        width: 100%;
+    }
+    #search-form {
+        width: 100%;
+    }
+    #search-input {
+        width: 100%;
+    }
+    #search-input:focus {
+        width: 100%;
+    }
 }

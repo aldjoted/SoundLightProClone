@@ -189,6 +189,38 @@ export function renderMegaMenu(categories) {
     `;
 
     megaMenuContainer.innerHTML = megaMenuHTML;
+    
+    // Set up tab switching functionality
+    setupMegaMenuTabSwitching(megaMenuContainer);
+}
+
+/**
+ * Sets up tab switching functionality for the mega menu.
+ * @param {HTMLElement} megaMenuContainer - The mega menu container element.
+ */
+function setupMegaMenuTabSwitching(megaMenuContainer) {
+    const tabButtons = megaMenuContainer.querySelectorAll('.mega-menu-tab-btn');
+    const tabPanes = megaMenuContainer.querySelectorAll('.mega-menu-pane');
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = button.dataset.target;
+            
+            // Remove active class from all buttons and panes
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabPanes.forEach(pane => pane.classList.remove('active'));
+            
+            // Add active class to clicked button
+            button.classList.add('active');
+            
+            // Show the corresponding pane
+            const targetPane = megaMenuContainer.querySelector(`#${targetId}`);
+            if (targetPane) {
+                targetPane.classList.add('active');
+            }
+        });
+    });
 }
 
 /**

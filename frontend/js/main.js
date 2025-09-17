@@ -65,6 +65,7 @@ function router() {
         'cart.html': initCartPage,
         'login.html': initLoginPage,
         'register.html': initRegisterPage,
+        'search-results.html': initSearchResultsPage,
     };
 
     const initFunction = routes[page];
@@ -223,6 +224,7 @@ async function initHomePage(signal) {
         });
         ui.renderFeaturedGrid(products.slice(0, 3));
         ui.renderCategoryFilters(categories.filter(c => !c.parent));
+        ui.renderMegaMenu(categories);
         ui.renderProductGrid(products, productGrid);
         
         document.querySelector('.filter-controls')?.addEventListener('click', (e) => {
@@ -426,4 +428,11 @@ function filterProducts(categorySlug) {
         ui.renderProductGrid(productsToRender, productGrid);
         productGrid.style.opacity = '1';
     }, 300);
+}
+
+/**
+ * Initializes the Search Results Page (lightweight as page has its own module).
+ */
+function initSearchResultsPage() {
+    // Nothing required here; page-specific logic lives in js/search-results.js
 }
