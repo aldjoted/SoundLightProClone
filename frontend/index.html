@@ -207,6 +207,34 @@
 
     <div id="toast-container" class="toast-container" aria-live="assertive" aria-atomic="true"></div>
 
+    <!-- Chatbot Widget -->
+    <button class="chatbot-toggler" aria-label="Open chatbot" aria-expanded="false">
+        <i class="fas fa-comment"></i>
+    </button>
+
+    <div class="chatbot">
+        <header class="chatbot-header">
+            <h2>Chat Support</h2>
+            <button class="close-btn" aria-label="Close chatbot">
+                <i class="fas fa-times"></i>
+            </button>
+        </header>
+        <ul class="chatbox" role="log" aria-label="Chat conversation" aria-live="polite">
+            <li class="chat incoming">
+                <span class="chat-icon">
+                    <i class="fas fa-robot"></i>
+                </span>
+                <p class="message-content">Hi there! 👋<br>How can I help you today?</p>
+            </li>
+        </ul>
+        <div class="chat-input">
+            <textarea placeholder="Type your message here..." aria-label="Type your message" rows="1"></textarea>
+            <button type="button" aria-label="Send message">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
     <!-- Swiper.js JS -->
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
