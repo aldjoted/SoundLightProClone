@@ -98,6 +98,32 @@ class UserSerializer(serializers.ModelSerializer):
 
 # --- Order and Checkout Serializers ---
 
+class CartItemSerializer(serializers.Serializer):
+    """
+    Serializer for validating cart items in order creation.
+    """
+    id = serializers.IntegerField()
+    quantity = serializers.IntegerField(min_value=1)
+
+class ShippingInfoSerializer(serializers.Serializer):
+    """
+    Serializer for validating shipping information in order creation.
+    """
+    first_name = serializers.CharField(max_length=50)
+    last_name = serializers.CharField(max_length=50)
+    email = serializers.EmailField()
+    address = serializers.CharField(max_length=255)
+    postal_code = serializers.CharField(max_length=20)
+    city = serializers.CharField(max_length=100)
+
+class CreateOrderRequestSerializer(serializers.Serializer):
+    """
+    Serializer for validating the complete order creation request.
+    """
+    items = CartItemSerializer(many=True)
+    shipping_info = ShippingInfoSerializer()
+    stripe_token = serializers.CharField()
+
 class OrderItemSerializer(serializers.ModelSerializer):
     """
     Serializer for OrderItem model. Used as a nested serializer within OrderSerializer.

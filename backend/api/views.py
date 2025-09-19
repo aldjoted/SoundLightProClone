@@ -20,7 +20,7 @@ from .embeddings import model as embedding_model, get_product_text
 from .vector_search import load_faiss_index_and_embeddings
 from .serializers import (
     CategorySerializer, ProductSerializer, RegisterSerializer, 
-    UserSerializer, OrderSerializer
+    UserSerializer, OrderSerializer, CreateOrderRequestSerializer
 )
 
 # Load environment variables and configure Stripe
@@ -68,9 +68,10 @@ class ProductList(generics.ListAPIView):
         """
         Optimized queryset that prevents N+1 issues.
         Optionally filters the products by a 'brand' query parameter in the URL.
+        Includes explicit ordering for consistent pagination results.
         """
         # Note: self.request is a DRF Request object, which has .query_params
-        queryset = Product.objects.filter(available=True).select_related('brand', 'category')
+        queryset = Product.objects.filter(available=True).select_related('brand', 'category').order_by('name')
         brand_slug = self.request.query_params.get('brand') # type: ignore
         if brand_slug is not None:
             queryset = queryset.filter(brand__slug=brand_slug)
@@ -91,37 +92,52 @@ class CategoryList(generics.ListAPIView):
     API view to list all top-level categories (those with no parent).
     The serializer will handle nesting the child categories.
     Prefetching children to mitigate N+1 query issues.
+    Pagination is disabled since categories are typically a small, stable list.
     """
     queryset = Category.objects.filter(parent__isnull=True).prefetch_related(
         Prefetch('children', queryset=Category.objects.prefetch_related('children'))
-    )
+    ).order_by('name')  # Add explicit ordering
     serializer_class = CategorySerializer
     permission_classes = (permissions.AllowAny,)
+    pagination_class = None  # Disable pagination for categories
 
 
 # --- Checkout and Order Views ---
 
-class CreateOrderView(APIView):
+class OrderView(APIView):
     """
-    API view to handle the entire checkout process.
-    - Expects cart items, shipping info, and a Stripe token.
-    - Creates Order and OrderItem records.
-    - Processes payment with Stripe.
-    - Updates product stock.
-    - All database operations are wrapped in a transaction for data integrity.
+    API view to handle order operations.
+    GET: List the user's past orders
+    POST: Create a new order (checkout process)
     """
     permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        cart_items = request.data.get('items', [])
-        shipping_info = request.data.get('shipping_info', {})
-        stripe_token = request.data.get('stripe_token')
+    def get(self, request, *args, **kwargs):
+        """
+        List all orders for the authenticated user.
+        """
+        orders = Order.objects.filter(user=request.user).prefetch_related('items__product')
+        serializer = OrderSerializer(orders, many=True)
+        return Response(serializer.data)
 
-        if not all([cart_items, shipping_info, stripe_token]):
-            return Response(
-                {"error": "Missing items, shipping info, or payment token."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+    def post(self, request, *args, **kwargs):
+        """
+        Handle the entire checkout process.
+        - Validates input using CreateOrderRequestSerializer
+        - Creates Order and OrderItem records
+        - Processes payment with Stripe
+        - Updates product stock
+        - All database operations are wrapped in a transaction for data integrity
+        """
+        # Use serializer for input validation
+        input_serializer = CreateOrderRequestSerializer(data=request.data)
+        if not input_serializer.is_valid():
+            return Response(input_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        validated_data = input_serializer.validated_data
+        cart_items = validated_data['items']
+        shipping_info = validated_data['shipping_info']
+        stripe_token = validated_data['stripe_token']
 
         # N+1 Fix: Get all product IDs from the cart
         product_ids = [item['id'] for item in cart_items]
@@ -133,12 +149,12 @@ class CreateOrderView(APIView):
                 # 1. Create the Order object
                 order = Order.objects.create(
                     user=request.user,
-                    first_name=shipping_info.get('first_name'),
-                    last_name=shipping_info.get('last_name'),
-                    email=shipping_info.get('email'),
-                    address=shipping_info.get('address'),
-                    postal_code=shipping_info.get('postal_code'),
-                    city=shipping_info.get('city'),
+                    first_name=shipping_info['first_name'],
+                    last_name=shipping_info['last_name'],
+                    email=shipping_info['email'],
+                    address=shipping_info['address'],
+                    postal_code=shipping_info['postal_code'],
+                    city=shipping_info['city'],
                 )
                 total_cost = Decimal('0')
                 products_to_update = []

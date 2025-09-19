@@ -147,9 +147,17 @@ export { apiFetch };
  * @param {string} [searchQuery=''] - The search term.
  * @returns {Promise<Array<Object>>} A promise that resolves to an array of products.
  */
-export const getProducts = (searchQuery = '', options = {}) => {
+export const getProducts = async (searchQuery = '', options = {}) => {
     const url = searchQuery ? `/products/?search=${encodeURIComponent(searchQuery)}` : '/products/';
-    return apiFetch(url, options);
+    const response = await apiFetch(url, options);
+    
+    // Handle paginated response - extract the results array
+    if (response && typeof response === 'object' && Array.isArray(response.results)) {
+        return response.results;
+    }
+    
+    // Fallback for non-paginated response (shouldn't happen with current setup)
+    return Array.isArray(response) ? response : [];
 };
 
 /**
@@ -207,7 +215,7 @@ export const logoutUser = () => tokenManager.clearTokens();
  * @param {Object} orderData - The order data, including items and shipping info.
  * @returns {Promise<Object>} A promise that resolves to the created order details.
  */
-export const createOrder = (orderData) => apiFetch('/orders/create/', {
+export const createOrder = (orderData) => apiFetch('/orders/', {
     method: 'POST',
     body: JSON.stringify(orderData),
 });

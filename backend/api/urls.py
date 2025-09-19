@@ -27,8 +27,8 @@ urlpatterns = [
     path('categories/', views.CategoryList.as_view(), name='category_list'),
 
     # --- Checkout Endpoint ---
-    # To create a new order and process payment
-    path('orders/create/', views.CreateOrderView.as_view(), name='create_order'),
+    # To list user's orders (GET) and create a new order (POST)
+    path('orders/', views.OrderView.as_view(), name='order_list_create'),
 
     path('chatbot/', views.ChatbotView.as_view(), name='chatbot'),
 ]
