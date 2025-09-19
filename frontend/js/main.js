@@ -13,6 +13,7 @@ import * as ui from './ui.js';
 import * as auth from './auth.js';
 import AdvancedSearch from './advanced-search.js';
 import MobileNavigation from './mobile-nav.js';
+import { ListenerManager, RequestManager } from './utils.js';
 
 // --- State Management & Cache ---
 
@@ -27,6 +28,10 @@ const appState = {
 
 const cache = new Map();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Global resource managers
+const globalListenerManager = new ListenerManager();
+const globalRequestManager = new RequestManager();
 
 /**
  * Retrieves data from a local cache or fetches it if stale or absent.
@@ -46,10 +51,24 @@ async function getCached(key, fetcher) {
 
 // --- Initialization & Routing ---
 
-let currentRouteAbort = null;
-document.addEventListener('DOMContentLoaded', () => {
-    initApp();
-    router();
+globalListenerManager.add(document, 'DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing app...');
+    try {
+        initApp();
+        router();
+        console.log('App initialization completed successfully');
+    } catch (error) {
+        console.error('App initialization failed:', error);
+        // Show error message to user
+        document.body.innerHTML = `
+            <div style="padding: 20px; text-align: center; font-family: Arial, sans-serif;">
+                <h2>Loading Error</h2>
+                <p>There was an error loading the application. Please refresh the page.</p>
+                <p><strong>Error:</strong> ${error.message}</p>
+                <button onclick="location.reload()" style="padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer;">Reload Page</button>
+            </div>
+        `;
+    }
 });
 
 /**
@@ -70,16 +89,17 @@ function router() {
 
     const initFunction = routes[page];
     if (initFunction) {
-        // cancel previous page work
-        if (currentRouteAbort) {
-            currentRouteAbort.abort();
-        }
-        currentRouteAbort = new AbortController();
-        const { signal } = currentRouteAbort;
+        // Cancel previous page requests
+        globalRequestManager.abort('currentRoute');
+        const controller = globalRequestManager.create('currentRoute');
+        const { signal } = controller;
+        
         const maybePromise = initFunction(signal);
         Promise.resolve(maybePromise).catch(error => {
-            console.error(`Error initializing page ${page}:`, error);
-            ui.showToast('Failed to load page content.', 'error');
+            if (error.name !== 'AbortError') {
+                console.error(`Error initializing page ${page}:`, error);
+                ui.showToast('Failed to load page content.', 'error');
+            }
         });
     }
 }
@@ -88,37 +108,56 @@ function router() {
  * Initializes global components and event listeners that run on every page.
  */
 async function initApp() {
-    if (window.AOS) AOS.init({ duration: 800, once: true });
-
-    ui.updateCartCount(cart.getCartItemCount());
-    document.addEventListener('cartUpdated', () => ui.updateCartCount(cart.getCartItemCount()));
+    console.log('Starting app initialization...');
     
     try {
-        // Only fetch user profile if access token exists
-        const accessToken = localStorage.getItem('accessToken');
-        if (accessToken) {
-            const user = await apiService.getUserProfile();
-            ui.updateUserAuthUI(user);
-        } else {
+        if (window.AOS) AOS.init({ duration: 800, once: true });
+
+        ui.updateCartCount(cart.getCartItemCount());
+        globalListenerManager.add(document, 'cartUpdated', () => ui.updateCartCount(cart.getCartItemCount()));
+        
+        console.log('Cart and UI initialized');
+        
+        try {
+            // Try to get user profile only if we might have a refresh token
+            // This reduces unnecessary 401 calls for anonymous users
+            const refreshToken = localStorage.getItem('refreshToken');
+            if (refreshToken) {
+                const user = await apiService.getUserProfile();
+                ui.updateUserAuthUI(user);
+                console.log('User authenticated:', user.username);
+            } else {
+                // No refresh token, user is not logged in
+                ui.updateUserAuthUI(null);
+                console.log('User not logged in - showing guest UI');
+            }
+        } catch (error) {
+            // If getUserProfile fails, user is not authenticated or token expired
             ui.updateUserAuthUI(null);
+            console.log('User authentication failed - showing guest UI');
         }
+
+        // --- Orchestration ---
+        // Instantiate the imported modules to activate them.
+        console.log('Initializing modules...');
+        new AdvancedSearch();
+        new MobileNavigation();
+        console.log('Modules initialized');
+
+        setupGlobalEventListeners();
+        console.log('Global event listeners set up');
+        
     } catch (error) {
-        ui.updateUserAuthUI(null);
+        console.error('Error in initApp:', error);
+        throw error;
     }
-
-    // --- Orchestration ---
-    // Instantiate the imported modules to activate them.
-    new AdvancedSearch();
-    new MobileNavigation();
-
-    setupGlobalEventListeners();
 }
 
 /**
  * Sets up global event listeners using delegation for performance and simplicity.
  */
 function setupGlobalEventListeners() {
-    document.body.addEventListener('click', (e) => {
+    globalListenerManager.add(document.body, 'click', (e) => {
         const target = e.target;
         
         // User menu toggle
@@ -150,7 +189,7 @@ function setupGlobalEventListeners() {
     // Delegated listener for dynamically loaded product grids
     const productGrid = document.getElementById('product-grid');
     if (productGrid) {
-        productGrid.addEventListener('click', handleProductGridActions);
+        globalListenerManager.add(productGrid, 'click', handleProductGridActions);
     }
 }
 
@@ -199,45 +238,72 @@ async function handleProductGridActions(e) {
  * Initializes the Home Page.
  */
 async function initHomePage(signal) {
+    console.log('Initializing homepage...');
     const productGrid = document.getElementById('product-grid');
     const featuredGrid = document.getElementById('featured-grid');
-    if (!productGrid || !featuredGrid) return;
+    if (!productGrid || !featuredGrid) {
+        console.warn('Product grid or featured grid not found');
+        return;
+    }
+
+    // Page-specific listener manager
+    const pageListenerManager = new ListenerManager();
 
     ui.showSkeletonLoader(productGrid, 8);
     ui.showSkeletonLoader(featuredGrid, 3);
 
     try {
+        console.log('Fetching products and categories...');
         const [products, categories] = await Promise.all([
             getCached('products', () => apiService.getProducts('', { signal })),
             getCached('categories', () => apiService.getCategories({ signal }))
         ]);
 
+        console.log(`Loaded ${products.length} products and ${categories.length} categories`);
+
         appState.products = products;
         appState.categories = categories;
 
+        console.log('Rendering UI components...');
         ui.renderHeroSlider();
-        new Swiper('.hero-slider', {
-            loop: true, effect: 'fade', autoplay: { delay: 7000, disableOnInteraction: false },
-            pagination: { el: '.swiper-pagination', clickable: true },
-            navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
-            lazy: true,
-        });
+        
+        if (window.Swiper) {
+            new Swiper('.hero-slider', {
+                loop: true, effect: 'fade', autoplay: { delay: 7000, disableOnInteraction: false },
+                pagination: { el: '.swiper-pagination', clickable: true },
+                navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+                lazy: true,
+            });
+        }
+        
         ui.renderFeaturedGrid(products.slice(0, 3));
         ui.renderCategoryFilters(categories.filter(c => !c.parent));
         ui.renderMegaMenu(categories);
         ui.renderProductGrid(products, productGrid);
         
-        document.querySelector('.filter-controls')?.addEventListener('click', (e) => {
-            const filterBtn = e.target.closest('.filter-btn');
-            if (!filterBtn) return;
-            document.querySelector('.filter-controls .active')?.classList.remove('active');
-            filterBtn.classList.add('active');
-            filterProducts(filterBtn.dataset.category);
+        console.log('UI components rendered successfully');
+        
+        const filterControls = document.querySelector('.filter-controls');
+        if (filterControls) {
+            pageListenerManager.add(filterControls, 'click', (e) => {
+                const filterBtn = e.target.closest('.filter-btn');
+                if (!filterBtn) return;
+                document.querySelector('.filter-controls .active')?.classList.remove('active');
+                filterBtn.classList.add('active');
+                filterProducts(filterBtn.dataset.category);
+            });
+        }
+
+        // Cleanup function for when leaving the page
+        window.addEventListener('beforeunload', () => {
+            pageListenerManager.removeAll();
         });
 
     } catch (error) {
-        console.error("Error initializing homepage:", error);
-        productGrid.innerHTML = `<p class="error-message">Failed to load products. Please try again. <button onclick="location.reload()">Retry</button></p>`;
+        if (error.name !== 'AbortError') {
+            console.error("Error initializing homepage:", error);
+            productGrid.innerHTML = `<p class="error-message">Failed to load products: ${error.message} <button onclick="location.reload()">Retry</button></p>`;
+        }
     }
 }
 
@@ -274,6 +340,9 @@ function initCartPage() {
     const checkoutSection = document.getElementById('checkout-section');
     if (!container) return;
 
+    // Page-specific listener manager
+    const pageListenerManager = new ListenerManager();
+
     const render = () => {
         const items = cart.getCart();
         container.innerHTML = ''; // Clear previous content
@@ -291,7 +360,7 @@ function initCartPage() {
         checkoutSection.classList.remove('hidden');
     };
 
-    container.addEventListener('change', (e) => {
+    pageListenerManager.add(container, 'change', (e) => {
         if (e.target.classList.contains('qty-input')) {
             const id = parseInt(e.target.closest('.cart-item').dataset.id, 10);
             const qty = Math.max(1, parseInt(e.target.value, 10) || 1);
@@ -299,7 +368,7 @@ function initCartPage() {
         }
     });
 
-    container.addEventListener('click', (e) => {
+    pageListenerManager.add(container, 'click', (e) => {
         if (e.target.closest('.remove-btn')) {
             const id = parseInt(e.target.closest('.cart-item').dataset.id, 10);
             cart.removeFromCart(id);
@@ -309,8 +378,13 @@ function initCartPage() {
         }
     });
 
-    document.addEventListener('cartUpdated', render);
+    pageListenerManager.add(document, 'cartUpdated', render);
     render();
+
+    // Cleanup function for when leaving the page
+    window.addEventListener('beforeunload', () => {
+        pageListenerManager.removeAll();
+    });
 }
 
 /**
@@ -320,7 +394,9 @@ function initLoginPage() {
     const form = document.getElementById('login-form');
     if (!form) return;
 
-    form.addEventListener('submit', async (e) => {
+    const pageListenerManager = new ListenerManager();
+
+    pageListenerManager.add(form, 'submit', async (e) => {
         e.preventDefault();
         try {
             await apiService.loginUser(form.username.value.trim(), form.password.value);
@@ -329,6 +405,11 @@ function initLoginPage() {
         } catch (err) {
             ui.showToast('Login failed. Please check your credentials.', 'error');
         }
+    });
+
+    // Cleanup function for when leaving the page
+    window.addEventListener('beforeunload', () => {
+        pageListenerManager.removeAll();
     });
 }
 
@@ -340,7 +421,9 @@ function initRegisterPage() {
     const form = document.getElementById('register-form');
     if (!form) return;
 
-    form.addEventListener('submit', async (e) => {
+    const pageListenerManager = new ListenerManager();
+
+    pageListenerManager.add(form, 'submit', async (e) => {
         e.preventDefault();
         const data = {
             username: form.username.value.trim(), email: form.email.value.trim(),
@@ -360,6 +443,11 @@ function initRegisterPage() {
             ui.showToast(`Registration failed: ${err.message}`, 'error');
         }
     });
+
+    // Cleanup function for when leaving the page
+    window.addEventListener('beforeunload', () => {
+        pageListenerManager.removeAll();
+    });
 }
 
 /**
@@ -367,9 +455,11 @@ function initRegisterPage() {
  * @param {Object} product - The product data for the page.
  */
 function setupProductDetailPageEventListeners(product) {
+    const pageListenerManager = new ListenerManager();
+    
     const gallery = document.querySelector('.product-gallery');
     if (gallery) {
-        gallery.addEventListener('click', (e) => {
+        pageListenerManager.add(gallery, 'click', (e) => {
             const thumb = e.target.closest('.thumbnail-img');
             if (!thumb) return;
             
@@ -387,7 +477,7 @@ function setupProductDetailPageEventListeners(product) {
 
     const addToCartForm = document.getElementById('add-to-cart-form');
     if (addToCartForm) {
-        addToCartForm.addEventListener('submit', (e) => {
+        pageListenerManager.add(addToCartForm, 'submit', (e) => {
             e.preventDefault();
             const quantity = parseInt(document.getElementById('quantity').value, 10);
             if (quantity > 0) {
@@ -400,13 +490,18 @@ function setupProductDetailPageEventListeners(product) {
 
     const stickyAdd = document.getElementById('sticky-add');
     if (stickyAdd) {
-        stickyAdd.addEventListener('click', () => {
+        pageListenerManager.add(stickyAdd, 'click', () => {
             const qty = parseInt(document.getElementById('sticky-qty').value, 10) || 1;
             cart.addToCart(product, qty);
             ui.showToast(`${product.name} (x${qty}) added to cart!`, 'success');
             ui.renderMiniCart(cart.getCart());
         });
     }
+
+    // Cleanup function for when leaving the page
+    window.addEventListener('beforeunload', () => {
+        pageListenerManager.removeAll();
+    });
 }
 
 /**

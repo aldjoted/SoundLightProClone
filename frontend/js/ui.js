@@ -8,6 +8,17 @@
 // ============= Helper Functions =============
 
 /**
+ * Escapes HTML entities to prevent XSS attacks.
+ * @param {string} text - The text to escape.
+ * @returns {string} The escaped text.
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
  * Helper to get the primary image URL from a product object.
  * @param {Object} product - The product object.
  * @returns {string} The URL of the first image or a placeholder.
@@ -233,10 +244,10 @@ export function renderFeaturedGrid(products) {
 
     grid.innerHTML = products.map(product => `
         <a href="product.html?id=${product.id}" class="focus-card">
-            <img src="${getProductImage(product)}" alt="${product.name}" loading="lazy">
+            <img src="${getProductImage(product)}" alt="${escapeHtml(product.name)}" loading="lazy">
             <div class="focus-card-content">
-                <h3>${product.name}</h3>
-                <p>${product.category}</p>
+                <h3>${escapeHtml(product.name)}</h3>
+                <p>${escapeHtml(product.category)}</p>
             </div>
         </a>
     `).join('');
@@ -278,9 +289,9 @@ export function renderProductGrid(products, container) {
             createElement('a', {
                 href: `product.html?id=${product.id}`,
                 class: 'product-card-image',
-                'aria-label': `View details for ${product.name}`
+                'aria-label': `View details for ${escapeHtml(product.name)}`
             }, [
-                createElement('img', { src: getProductImage(product), alt: product.name, loading: 'lazy' }),
+                createElement('img', { src: getProductImage(product), alt: escapeHtml(product.name), loading: 'lazy' }),
                 createElement('div', { class: 'product-card-overlay' }, [
                     createElement('button', { class: 'btn btn--secondary quick-view-btn', 'data-product-id': product.id }, [
                         createElement('i', { class: 'fas fa-eye' }),
@@ -290,9 +301,9 @@ export function renderProductGrid(products, container) {
             ]),
             createElement('div', { class: 'product-card-content' }, [
                 createElement('div', {}, [
-                    createElement('p', { class: 'product-card-category' }, [product.category]),
+                    createElement('p', { class: 'product-card-category' }, [escapeHtml(product.category)]),
                     createElement('h3', { class: 'product-card-title' }, [
-                        createElement('a', { href: `product.html?id=${product.id}` }, [product.name])
+                        createElement('a', { href: `product.html?id=${product.id}` }, [escapeHtml(product.name)])
                     ])
                 ]),
                 createElement('div', { class: 'product-card-footer' }, [
@@ -416,7 +427,7 @@ export function renderProductDetail(product, container) {
     if (!container || !product) return;
 
     // Set the browser tab title
-    document.title = `${product.name} - SoundLightPro`;
+    document.title = `${escapeHtml(product.name)} - SoundLightPro`;
 
     const hasImages = product.images && product.images.length > 0;
     const mainImageSrc = hasImages ? product.images[0].image : 'https://via.placeholder.com/600x400.png?text=No+Image';
@@ -426,7 +437,7 @@ export function renderProductDetail(product, container) {
         thumbnailsHTML = `
             <div class="product-thumbnails">
                 ${product.images.map((img, index) => `
-                    <img src="${img.image}" alt="${img.alt_text || product.name}" class="thumbnail-img ${index === 0 ? 'active' : ''}" />
+                    <img src="${img.image}" alt="${escapeHtml(img.alt_text || product.name)}" class="thumbnail-img ${index === 0 ? 'active' : ''}" />
                 `).join('')}
             </div>
         `;
@@ -436,17 +447,17 @@ export function renderProductDetail(product, container) {
         <div class="product-detail-layout">
             <div class="product-gallery">
                 <div class="main-image-container">
-                    <img id="main-product-image" src="${mainImageSrc}" alt="${product.name}">
+                    <img id="main-product-image" src="${mainImageSrc}" alt="${escapeHtml(product.name)}">
                 </div>
                 ${thumbnailsHTML}
             </div>
             <div class="product-detail-info">
-                <p class="category">${product.category}</p>
-                <h1>${product.name}</h1>
-                <p class="brand">Brand: <strong>${product.brand ? product.brand.name : 'N/A'}</strong></p>
+                <p class="category">${escapeHtml(product.category)}</p>
+                <h1>${escapeHtml(product.name)}</h1>
+                <p class="brand">Brand: <strong>${product.brand ? escapeHtml(product.brand.name) : 'N/A'}</strong></p>
                 <p class="price">$${parseFloat(product.price).toFixed(2)}</p>
                 <div class="description">
-                    <p>${product.description || 'No description available.'}</p>
+                    <p>${escapeHtml(product.description || 'No description available.')}</p>
                 </div>
                 <form id="add-to-cart-form" class="add-to-cart-form">
                     <input type="number" id="quantity" value="1" min="1" max="${product.stock}" aria-label="Quantity">
@@ -612,17 +623,17 @@ export function renderSearchSuggestions(products, container) {
             ${products.slice(0, 8).map((p, idx) => `
                 <li class="search-result-item ${idx===0?'highlighted':''}" role="option" data-index="${idx}">
                     <a class="result-link" href="product.html?id=${p.id}">
-                        <img class="search-thumb" src="${getProductImage(p)}" alt="${p.name}" loading="lazy">
+                        <img class="search-thumb" src="${getProductImage(p)}" alt="${escapeHtml(p.name)}" loading="lazy">
                         <div class="result-details">
-                            <span class="search-name">${p.name}</span>
+                            <span class="search-name">${escapeHtml(p.name)}</span>
                             <span class="search-price">$${parseFloat(p.price).toFixed(2)}</span>
                         </div>
                     </a>
                     <div class="result-actions">
                         <button class="quick-add-btn"
-                            aria-label="Quick add ${p.name}"
+                            aria-label="Quick add ${escapeHtml(p.name)}"
                             data-id="${p.id}"
-                            data-name="${p.name.replace(/"/g, '&quot;')}"
+                            data-name="${escapeHtml(p.name)}"
                             data-price="${parseFloat(p.price)}"
                             data-image="${getProductImage(p)}">
                             <i class="fas fa-plus"></i>

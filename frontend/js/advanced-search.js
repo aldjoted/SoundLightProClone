@@ -7,6 +7,7 @@
 import * as apiService from './apiService.js';
 import * as cart from './cart.js';
 import { renderSearchSuggestions, showToast } from './ui.js';
+import { debounce } from './utils.js';
 
 class AdvancedSearch {
     constructor() {
@@ -16,8 +17,10 @@ class AdvancedSearch {
         if (!this.input || !this.form || !this.container) return;
 
         this.query = '';
-        this.debounceId = null;
         this.abortController = null;
+        
+        // Use improved debounce function with immediate option
+        this.debouncedSearch = debounce(() => this.search(), 250);
 
         this.bindEvents();
     }
@@ -25,12 +28,12 @@ class AdvancedSearch {
     bindEvents() {
         this.input.addEventListener('input', () => {
             this.query = this.input.value.trim();
-            clearTimeout(this.debounceId);
             if (this.query.length < 2) {
                 this.hideSuggestions();
                 return;
             }
-            this.debounceId = setTimeout(() => this.search(), 250);
+            // Use the debounced search function
+            this.debouncedSearch();
         });
 
         this.input.addEventListener('focus', () => {

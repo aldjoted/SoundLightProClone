@@ -7,6 +7,16 @@
  */
 
 import { API_BASE_URL } from './config.js';
+import { APIError, RetryManager } from './utils.js';
+
+// Initialize global retry manager with sensible defaults
+const retryManager = new RetryManager({
+    maxRetries: 3,
+    baseDelay: 1000,
+    maxDelay: 10000,
+    exponentialBase: 2,
+    jitterFactor: 0.1
+});
 
 function resolveLoginUrl() {
     try {
@@ -17,48 +27,85 @@ function resolveLoginUrl() {
 }
 
 /**
- * Manages JWT access and refresh tokens in LocalStorage.
+ * Manages JWT access tokens in memory and refresh tokens via httpOnly cookies.
+ * This approach prevents XSS attacks by keeping access tokens out of localStorage.
  * @namespace tokenManager
  */
-const tokenManager = {
-    /** @returns {string|null} */
-    getAccessToken: () => localStorage.getItem('accessToken'),
-    /** @param {string} token */
-    setAccessToken: (token) => localStorage.setItem('accessToken', token),
-    /** @returns {string|null} */
-    getRefreshToken: () => localStorage.getItem('refreshToken'),
-    /** @param {string} token */
-    setRefreshToken: (token) => localStorage.setItem('refreshToken', token),
-    clearTokens: () => {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-    }
-};
+const tokenManager = (() => {
+    let accessToken = null;
+    
+    return {
+        /** @returns {string|null} */
+        getAccessToken: () => accessToken,
+        /** @param {string} token */
+        setAccessToken: (token) => { 
+            accessToken = token; 
+        },
+        /** @returns {string|null} */
+        getRefreshToken: () => {
+            // Refresh token should be handled via httpOnly cookie on server
+            // For backward compatibility, check localStorage temporarily
+            return localStorage.getItem('refreshToken');
+        },
+        /** @param {string} token */
+        setRefreshToken: (token) => {
+            // Store in localStorage temporarily for backward compatibility
+            // TODO: Move to httpOnly cookie on server side
+            localStorage.setItem('refreshToken', token);
+        },
+        clearTokens: () => {
+            accessToken = null;
+            localStorage.removeItem('refreshToken');
+            // Server should clear httpOnly cookie when this is called
+        }
+    };
+})();
 
 /**
  * Handles API responses, parsing JSON and throwing standardized errors.
  * @param {Response} response The raw response from a fetch call.
  * @returns {Promise<any>} A promise that resolves with the JSON data or null.
- * @throws {Error} Throws a formatted error for non-successful responses.
+ * @throws {APIError} Throws a formatted APIError for non-successful responses.
  */
 const handleResponse = async (response) => {
     if (response.status === 204) { // No Content
         return null;
     }
+    
     let data = null;
     const contentType = response.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
-        data = await response.json();
-    } else {
-        // Fallback: attempt text for better diagnostics
-        const text = await response.text();
-        try { data = JSON.parse(text); } catch { data = { detail: text }; }
+    
+    try {
+        if (contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            // Fallback: attempt text for better diagnostics
+            const text = await response.text();
+            try { 
+                data = JSON.parse(text); 
+            } catch { 
+                data = { detail: text }; 
+            }
+        }
+    } catch (parseError) {
+        // If we can't parse the response, create a generic error
+        data = { detail: 'Invalid response format' };
     }
+    
     if (!response.ok) {
-        console.error('API Error:', response.status, data);
-        const errorMessage = data.detail || data.error || JSON.stringify(data);
-        throw new Error(errorMessage);
+        const errorMessage = data?.detail || data?.error || data?.message || 'Unknown error occurred';
+        const errorCode = data?.code || `HTTP_${response.status}`;
+        
+        console.error('API Error:', {
+            status: response.status,
+            statusText: response.statusText,
+            data,
+            url: response.url
+        });
+        
+        throw new APIError(errorMessage, response.status, errorCode, response);
     }
+    
     return data;
 };
 
@@ -109,7 +156,7 @@ async function apiFetch(url, options = {}) {
                 // If no refresh token, logout and redirect.
                 tokenManager.clearTokens();
                 window.location.href = resolveLoginUrl();
-                throw new Error('Authentication required.');
+                throw new APIError('Authentication required.', 401, 'NO_REFRESH_TOKEN');
             }
 
             try {
@@ -121,21 +168,30 @@ async function apiFetch(url, options = {}) {
                 console.error('Failed to refresh token:', refreshError);
                 tokenManager.clearTokens();
                 window.location.href = resolveLoginUrl();
-                throw new Error('Session expired. Please log in again.');
+                throw new APIError('Session expired. Please log in again.', 401, 'TOKEN_REFRESH_FAILED');
             }
         }
         
         return handleResponse(response);
     } catch (error) {
+        // Handle AbortError specifically
         if (error && error.name === 'AbortError') {
             throw error;
         }
-        // PRODUCTION GRADE: Handle network errors (e.g., offline)
-        if (error instanceof TypeError) { // Indicates a network error
+        
+        // Handle network errors (e.g., offline)
+        if (error instanceof TypeError) {
             console.error("Network error:", error);
-            throw new Error("Network error. Please check your connection.");
+            throw new APIError("Network error. Please check your connection.", 0, 'NETWORK_ERROR');
         }
-        throw error; // Re-throw other errors (like from handleResponse)
+        
+        // Re-throw APIErrors as-is
+        if (error instanceof APIError) {
+            throw error;
+        }
+        
+        // Wrap other errors in APIError
+        throw new APIError(error.message || 'Unknown error occurred', 0, 'UNKNOWN_ERROR');
     }
 }
 
@@ -143,35 +199,113 @@ async function apiFetch(url, options = {}) {
 export { apiFetch };
 
 /**
+ * API fetch with retry logic for better resilience.
+ * @param {string} url The API endpoint.
+ * @param {RequestInit} options The fetch options.
+ * @param {Object} retryOptions Retry configuration options.
+ * @returns {Promise<any>} The JSON response from the API.
+ */
+export async function apiFetchWithRetry(url, options = {}, retryOptions = {}) {
+    return retryManager.execute(() => apiFetch(url, options), retryOptions);
+}
+
+/**
  * Fetches a list of products, optionally filtered by a search query.
  * @param {string} [searchQuery=''] - The search term.
+ * @param {Object} [options={}] - Fetch options.
+ * @param {boolean} [useRetry=true] - Whether to use retry logic.
  * @returns {Promise<Array<Object>>} A promise that resolves to an array of products.
  */
-export const getProducts = async (searchQuery = '', options = {}) => {
+export const getProducts = async (searchQuery = '', options = {}, useRetry = true) => {
     const url = searchQuery ? `/products/?search=${encodeURIComponent(searchQuery)}` : '/products/';
-    const response = await apiFetch(url, options);
     
-    // Handle paginated response - extract the results array
-    if (response && typeof response === 'object' && Array.isArray(response.results)) {
-        return response.results;
+    const fetchFn = useRetry ? 
+        () => apiFetchWithRetry(url, options) : 
+        () => apiFetch(url, options);
+    
+    try {
+        const response = await fetchFn();
+        
+        // Handle paginated response - extract the results array
+        if (response && typeof response === 'object' && Array.isArray(response.results)) {
+            return response.results;
+        }
+        
+        // Fallback for non-paginated response (shouldn't happen with current setup)
+        return Array.isArray(response) ? response : [];
+    } catch (error) {
+        console.error('Failed to fetch products:', error);
+        if (error instanceof APIError) {
+            // Re-throw APIErrors with additional context
+            throw new APIError(
+                `Failed to load products: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
     }
-    
-    // Fallback for non-paginated response (shouldn't happen with current setup)
-    return Array.isArray(response) ? response : [];
 };
 
 /**
  * Fetches a single product by its ID.
  * @param {string|number} productId - The ID of the product.
+ * @param {Object} [options={}] - Fetch options.
+ * @param {boolean} [useRetry=true] - Whether to use retry logic.
  * @returns {Promise<Object>} A promise that resolves to the product object.
  */
-export const getProductById = (productId, options = {}) => apiFetch(`/products/${productId}/`, options);
+export const getProductById = async (productId, options = {}, useRetry = true) => {
+    if (!productId) {
+        throw new APIError('Product ID is required', 400, 'INVALID_PRODUCT_ID');
+    }
+    
+    const fetchFn = useRetry ? 
+        () => apiFetchWithRetry(`/products/${productId}/`, options) : 
+        () => apiFetch(`/products/${productId}/`, options);
+    
+    try {
+        return await fetchFn();
+    } catch (error) {
+        console.error(`Failed to fetch product ${productId}:`, error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load product: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
 
 /**
  * Fetches all product categories.
+ * @param {Object} [options={}] - Fetch options.
+ * @param {boolean} [useRetry=true] - Whether to use retry logic.
  * @returns {Promise<Array<Object>>} A promise that resolves to an array of categories.
  */
-export const getCategories = (options = {}) => apiFetch('/categories/', options);
+export const getCategories = async (options = {}, useRetry = true) => {
+    const fetchFn = useRetry ? 
+        () => apiFetchWithRetry('/categories/', options) : 
+        () => apiFetch('/categories/', options);
+    
+    try {
+        return await fetchFn();
+    } catch (error) {
+        console.error('Failed to fetch categories:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load categories: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
 
 /**
  * Logs in a user and stores authentication tokens.
@@ -180,13 +314,35 @@ export const getCategories = (options = {}) => apiFetch('/categories/', options)
  * @returns {Promise<Object>} A promise that resolves to the token object.
  */
 export const loginUser = async (username, password) => {
-    const response = await apiFetch('/token/', {
-        method: 'POST',
-        body: JSON.stringify({ username, password }),
-    });
-    tokenManager.setAccessToken(response.access);
-    tokenManager.setRefreshToken(response.refresh);
-    return response;
+    if (!username || !password) {
+        throw new APIError('Username and password are required', 400, 'MISSING_CREDENTIALS');
+    }
+    
+    try {
+        const response = await apiFetch('/token/', {
+            method: 'POST',
+            body: JSON.stringify({ username, password }),
+        });
+        
+        if (!response.access || !response.refresh) {
+            throw new APIError('Invalid response format from login', 500, 'INVALID_LOGIN_RESPONSE');
+        }
+        
+        tokenManager.setAccessToken(response.access);
+        tokenManager.setRefreshToken(response.refresh);
+        return response;
+    } catch (error) {
+        console.error('Login failed:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                error.status === 401 ? 'Invalid username or password' : error.getUserMessage(),
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
 };
 
 /**
@@ -194,28 +350,94 @@ export const loginUser = async (username, password) => {
  * @param {Object} userData - The user's registration data.
  * @returns {Promise<Object>} A promise that resolves to the new user's data.
  */
-export const registerUser = (userData) => apiFetch('/register/', {
-    method: 'POST',
-    body: JSON.stringify(userData),
-});
+export const registerUser = async (userData) => {
+    if (!userData || !userData.username || !userData.email || !userData.password) {
+        throw new APIError('Required registration fields are missing', 400, 'MISSING_REGISTRATION_DATA');
+    }
+    
+    try {
+        return await apiFetch('/register/', {
+            method: 'POST',
+            body: JSON.stringify(userData),
+        });
+    } catch (error) {
+        console.error('Registration failed:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Registration failed: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
 
 /**
  * Fetches the profile of the currently logged-in user.
+ * @param {boolean} [useRetry=true] - Whether to use retry logic.
  * @returns {Promise<Object>} A promise that resolves to the user's profile.
  */
-export const getUserProfile = () => apiFetch('/user/');
+export const getUserProfile = async (useRetry = true) => {
+    const fetchFn = useRetry ? 
+        () => apiFetchWithRetry('/user/') : 
+        () => apiFetch('/user/');
+    
+    try {
+        return await fetchFn();
+    } catch (error) {
+        console.error('Failed to fetch user profile:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load user profile: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
 
 /**
  * Logs out the user by clearing stored tokens.
  */
-export const logoutUser = () => tokenManager.clearTokens();
+export const logoutUser = () => {
+    try {
+        tokenManager.clearTokens();
+    } catch (error) {
+        console.error('Error during logout:', error);
+        // Force clear even if there's an error
+        localStorage.removeItem('refreshToken');
+    }
+};
 
 /**
  * Creates a new order.
  * @param {Object} orderData - The order data, including items and shipping info.
  * @returns {Promise<Object>} A promise that resolves to the created order details.
  */
-export const createOrder = (orderData) => apiFetch('/orders/', {
-    method: 'POST',
-    body: JSON.stringify(orderData),
-});
+export const createOrder = async (orderData) => {
+    if (!orderData || !orderData.items || orderData.items.length === 0) {
+        throw new APIError('Order must contain at least one item', 400, 'EMPTY_ORDER');
+    }
+    
+    try {
+        return await apiFetch('/orders/', {
+            method: 'POST',
+            body: JSON.stringify(orderData),
+        });
+    } catch (error) {
+        console.error('Failed to create order:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to create order: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};

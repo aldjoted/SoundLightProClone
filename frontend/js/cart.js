@@ -1,33 +1,56 @@
 /**
  * cart.js
  * 
- * This module manages the shopping cart state using localStorage.
- * It provides functions to add, retrieve, update, and remove items,
- * as well as to calculate totals.
+ * This module manages the shopping cart state using a StateManager for better
+ * cross-tab synchronization, error handling, and event management.
  */
+
+import { StateManager } from './utils.js';
 
 const CART_KEY = 'shoppingCart';
 
+// Initialize the cart state manager
+const cartStateManager = new StateManager(CART_KEY, { items: [] });
+
+// Set up event listeners for state changes
+cartStateManager.addEventListener('change', (event) => {
+    // Emit the legacy cartUpdated event for backward compatibility
+    document.dispatchEvent(new CustomEvent('cartUpdated', {
+        detail: {
+            cart: event.detail.newState.items,
+            oldCart: event.detail.oldState.items || []
+        }
+    }));
+});
+
+// Handle storage quota exceeded errors
+cartStateManager.addEventListener('quotaExceeded', (event) => {
+    console.error('Cart storage quota exceeded:', event.detail.error);
+    // Could implement cleanup logic here (remove oldest items, compress data, etc.)
+    // For now, just emit an event that the UI can handle
+    document.dispatchEvent(new CustomEvent('cartStorageError', {
+        detail: {
+            error: event.detail.error,
+            message: 'Cart storage is full. Some items may not be saved.'
+        }
+    }));
+});
+
 /**
- * Retrieves the cart from localStorage.
- * @returns {Array<Object>} An array of cart item objects. Returns an empty array if no cart exists.
+ * Retrieves the cart items from the state manager.
+ * @returns {Array<Object>} An array of cart item objects.
  */
 function getCart() {
-    try {
-        const cart = localStorage.getItem(CART_KEY);
-        return cart ? JSON.parse(cart) : [];
-    } catch (e) {
-        console.error("Failed to parse cart from localStorage", e);
-        return []; // Return empty cart on parsing error
-    }
+    const state = cartStateManager.getState();
+    return state.items || [];
 }
 
 /**
- * Saves the cart to localStorage.
- * @param {Array<Object>} cart - The cart array to save.
+ * Updates the cart state with new items.
+ * @param {Array<Object>} items - The new cart items array.
  */
-function saveCart(cart) {
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+function updateCartState(items) {
+    cartStateManager.update({ items });
 }
 
 /**
@@ -36,30 +59,41 @@ function saveCart(cart) {
  * @param {number} quantity - The quantity to add.
  */
 export function addToCart(product, quantity) {
-    const cart = getCart();
-    const existingItemIndex = cart.findIndex(item => item.id === product.id);
+    if (!product || !product.id || quantity <= 0) {
+        console.error('Invalid product or quantity for addToCart');
+        return;
+    }
+
+    const currentItems = getCart();
+    const existingItemIndex = currentItems.findIndex(item => item.id === product.id);
 
     // Determine the image to store in the cart
     const imageUrl = (product.images && product.images.length > 0) 
         ? product.images[0].image 
         : null;
 
+    let newItems;
     if (existingItemIndex > -1) {
         // Product exists, update quantity
-        cart[existingItemIndex].quantity += quantity;
+        newItems = currentItems.map((item, index) => 
+            index === existingItemIndex 
+                ? { ...item, quantity: item.quantity + quantity }
+                : item
+        );
     } else {
         // Product is new, add it to the cart
-        cart.push({
+        const newItem = {
             id: product.id,
             name: product.name,
             price: parseFloat(product.price),
-            image: imageUrl, // Use the determined image URL
+            image: imageUrl,
             quantity: quantity,
-        });
+            addedAt: new Date().toISOString() // Track when item was added
+        };
+        newItems = [...currentItems, newItem];
     }
 
-    saveCart(cart);
-    document.dispatchEvent(new CustomEvent('cartUpdated'));
+    updateCartState(newItems);
 }
 
 /**
@@ -68,13 +102,21 @@ export function addToCart(product, quantity) {
  * @param {number} quantity - The new quantity. Must be 1 or more.
  */
 export function updateCartItemQuantity(productId, quantity) {
-    const cart = getCart();
-    const itemIndex = cart.findIndex(item => item.id === productId);
+    if (!productId || quantity <= 0) {
+        console.error('Invalid productId or quantity for updateCartItemQuantity');
+        return;
+    }
 
-    if (itemIndex > -1 && quantity > 0) {
-        cart[itemIndex].quantity = quantity;
-        saveCart(cart);
-        document.dispatchEvent(new CustomEvent('cartUpdated'));
+    const currentItems = getCart();
+    const itemIndex = currentItems.findIndex(item => item.id === productId);
+
+    if (itemIndex > -1) {
+        const newItems = currentItems.map((item, index) => 
+            index === itemIndex 
+                ? { ...item, quantity, updatedAt: new Date().toISOString() }
+                : item
+        );
+        updateCartState(newItems);
     }
 }
 
@@ -83,18 +125,21 @@ export function updateCartItemQuantity(productId, quantity) {
  * @param {number} productId - The ID of the product to remove.
  */
 export function removeFromCart(productId) {
-    let cart = getCart();
-    cart = cart.filter(item => item.id !== productId);
-    saveCart(cart);
-    document.dispatchEvent(new CustomEvent('cartUpdated'));
+    if (!productId) {
+        console.error('Invalid productId for removeFromCart');
+        return;
+    }
+
+    const currentItems = getCart();
+    const newItems = currentItems.filter(item => item.id !== productId);
+    updateCartState(newItems);
 }
 
 /**
  * Clears the entire cart.
  */
 export function clearCart() {
-    saveCart([]);
-    document.dispatchEvent(new CustomEvent('cartUpdated'));
+    cartStateManager.clear({ items: [] });
 }
 
 /**
@@ -102,8 +147,8 @@ export function clearCart() {
  * @returns {number} The total count of all items.
  */
 export function getCartItemCount() {
-    const cart = getCart();
-    return cart.reduce((total, item) => total + item.quantity, 0);
+    const items = getCart();
+    return items.reduce((total, item) => total + item.quantity, 0);
 }
 
 /**
@@ -111,9 +156,54 @@ export function getCartItemCount() {
  * @returns {number} The total price.
  */
 export function getCartTotal() {
-    const cart = getCart();
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const items = getCart();
+    return items.reduce((total, item) => total + (item.price * item.quantity), 0);
+}
+
+/**
+ * Gets cart statistics for analytics or debugging.
+ * @returns {Object} Cart statistics.
+ */
+export function getCartStats() {
+    const items = getCart();
+    return {
+        itemCount: items.length,
+        totalQuantity: getCartItemCount(),
+        totalValue: getCartTotal(),
+        isEmpty: items.length === 0,
+        oldestItem: items.length > 0 ? items.reduce((oldest, item) => 
+            new Date(item.addedAt || 0) < new Date(oldest.addedAt || 0) ? item : oldest
+        ) : null
+    };
+}
+
+/**
+ * Validates cart data integrity.
+ * @returns {Object} Validation result with any issues found.
+ */
+export function validateCart() {
+    const items = getCart();
+    const issues = [];
+
+    items.forEach((item, index) => {
+        if (!item.id) issues.push(`Item at index ${index} missing ID`);
+        if (!item.name) issues.push(`Item at index ${index} missing name`);
+        if (typeof item.price !== 'number' || item.price < 0) {
+            issues.push(`Item at index ${index} has invalid price`);
+        }
+        if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+            issues.push(`Item at index ${index} has invalid quantity`);
+        }
+    });
+
+    return {
+        isValid: issues.length === 0,
+        issues
+    };
 }
 
 // Export getCart to be used by the cart page to render items
 export { getCart };
+
+// Export the state manager for advanced usage if needed
+export { cartStateManager };
