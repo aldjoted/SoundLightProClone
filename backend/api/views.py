@@ -1,7 +1,6 @@
 import os
 import stripe
 from dotenv import load_dotenv
-from decimal import Decimal
 from typing import Optional
 
 from django.db import transaction
@@ -24,6 +23,8 @@ from .serializers import (
     CategorySerializer, ProductSerializer, RegisterSerializer, 
     UserSerializer, OrderSerializer, CreateOrderRequestSerializer
 )
+from . import services
+from .services import OrderCreationError
 
 # Load environment variables and configure Stripe
 load_dotenv()
@@ -133,12 +134,10 @@ class OrderView(APIView):
 
     def post(self, request, *args, **kwargs):
         """
-        Handle the entire checkout process.
+        Handle the entire checkout process using the service layer.
         - Validates input using CreateOrderRequestSerializer
-        - Creates Order and OrderItem records
-        - Processes payment with Stripe
-        - Updates product stock
-        - All database operations are wrapped in a transaction for data integrity
+        - Delegates order creation to the service layer
+        - Returns appropriate responses based on service results
         """
         # Use serializer for input validation
         input_serializer = CreateOrderRequestSerializer(data=request.data)
@@ -150,82 +149,29 @@ class OrderView(APIView):
         shipping_info = validated_data['shipping_info']
         stripe_token = validated_data['stripe_token']
 
-        # N+1 Fix: Get all product IDs from the cart
-        product_ids = [item['id'] for item in cart_items]
-        # Fetch all products in a single query
-        products = Product.objects.in_bulk(product_ids)
-
         try:
-            with transaction.atomic():
-                # 1. Create the Order object
-                order = Order.objects.create(
-                    user=request.user,
-                    first_name=shipping_info['first_name'],
-                    last_name=shipping_info['last_name'],
-                    email=shipping_info['email'],
-                    address=shipping_info['address'],
-                    postal_code=shipping_info['postal_code'],
-                    city=shipping_info['city'],
-                )
-                total_cost = Decimal('0')
-                products_to_update = []
-
-                # 2. Create OrderItem objects and prepare stock updates
-                for item_data in cart_items:
-                    product = products.get(item_data['id'])
-                    if not product:
-                        # This raises an exception to trigger the transaction rollback
-                        raise Product.DoesNotExist(f"Product with ID {item_data['id']} not found.")
-                    
-                    quantity = item_data['quantity']
-                    if product.stock < quantity:
-                        # Raise exception to rollback transaction
-                        raise ValueError(f"Not enough stock for {product.name}. Only {product.stock} available.")
-
-                    OrderItem.objects.create(
-                        order=order,
-                        product=product,
-                        price=product.price,
-                        quantity=quantity
-                    )
-                    total_cost += product.price * quantity
-                    
-                    # Decrement stock and add to list for bulk update
-                    product.stock -= quantity
-                    products_to_update.append(product)
-                
-                # Bulk update product stock in one query for performance
-                Product.objects.bulk_update(products_to_update, ['stock'])
-                
-                order.total_paid = total_cost
-                
-                # 3. Process payment with Stripe
-                charge = stripe.Charge.create(
-                    amount=int(total_cost * 100),
-                    currency='usd',
-                    description=f'Order {order.pk} for {order.email}',
-                    source=stripe_token,
-                )
-
-                # 4. Finalize the order if payment is successful
-                order.paid = True
-                order.stripe_id = charge.id
-                order.save() # Save the final changes to the order
-
-            # 5. Serialize and return the created order (outside the transaction block)
+            # Delegate order creation to the service layer
+            order = services.create_order_from_cart(
+                user=request.user,
+                cart_items=cart_items,
+                shipping_info=shipping_info,
+                stripe_token=stripe_token
+            )
+            
+            # Serialize and return the created order
             serializer = OrderSerializer(order)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        except Product.DoesNotExist as e:
+        except OrderCreationError as e:
+            # Handle business logic errors (stock issues, payment failures, etc.)
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except ValueError as e: # Catches our stock check error
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except StripeError as e:
-            # The transaction will be rolled back automatically on this exception
-            return Response({"error": f"Payment failed: {str(e)}"}, status=status.HTTP_402_PAYMENT_REQUIRED)
         except Exception as e:
-            # The transaction will be rolled back automatically on any other exception
-            return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            # Log unexpected errors for debugging (in production, use proper logging)
+            print(f"Unexpected error in order creation: {e}")
+            return Response(
+                {"error": "An unexpected error occurred. Please try again later."}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 # --- Chatbot View ---
 
