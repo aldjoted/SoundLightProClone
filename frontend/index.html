@@ -6,11 +6,35 @@
     <meta name="description" content="SoundLightPro - Professional audio and lighting equipment for events, concerts, and venues">
     <title>SoundLightPro - Professional Audio and Lighting Equipment</title>
     
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://soundlightpro.com/">
+    <meta property="og:title" content="SoundLightPro - Professional Audio and Lighting Equipment">
+    <meta property="og:description" content="Professional audio and lighting equipment for events, concerts, and venues in Cameroon. Quality sound systems, lighting solutions, and expert support.">
+    <meta property="og:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
+    <meta property="og:site_name" content="SoundLightPro">
+    <meta property="og:locale" content="en_US">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://soundlightpro.com/">
+    <meta property="twitter:title" content="SoundLightPro - Professional Audio and Lighting Equipment">
+    <meta property="twitter:description" content="Professional audio and lighting equipment for events, concerts, and venues in Cameroon.">
+    <meta property="twitter:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
+    
     <!-- Preconnect to external resources -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://www.youtube.com">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="css/main.css" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style">
     
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -29,6 +53,34 @@
 </head>
 
 <body>
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Store",
+      "name": "SoundLightPro",
+      "description": "Professional audio and lighting equipment for events, concerts, and venues",
+      "url": "https://soundlightpro.com",
+      "logo": "https://soundlightpro.com/images/logo/logoslp.jpg",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "1451, 63 Bd de la République",
+        "addressLocality": "Douala",
+        "addressCountry": "CM"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+237680494949",
+        "contactType": "customer service",
+        "email": "info@soundlightpro.com"
+      },
+      "sameAs": [
+        "https://www.facebook.com/beglec.cm/",
+        "https://www.youtube.com/@soundlightpro3226"
+      ]
+    }
+    </script>
+    
     <!-- Skip to main content for accessibility -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
@@ -69,7 +121,7 @@
                             <button type="submit" class="search-btn" aria-label="Submit search"><i class="fas fa-search"></i></button>
                         </form>
                         <!-- Conteneur pour les suggestions de recherche -->
-                        <div id="search-suggestions" class="search-suggestions-container"></div>
+                        <div id="search-suggestions" class="search-suggestions-container" role="listbox" aria-label="Search suggestions"></div>
                     </div>
                                         
                     <div class="user-actions">
@@ -236,16 +288,50 @@
     </div>
 
     <!-- Swiper.js JS -->
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" defer></script>
 
     <!-- AOS (Animate On Scroll) JS -->
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js" defer></script>
     
     <!-- Les scripts sont de type 'module' pour permettre l'utilisation de 'import'/'export' -->
     <script src="js/apiService.js" type="module"></script>
     <script src="js/cart.js" type="module"></script>
     <script src="js/ui.js" type="module"></script>
     <script src="js/main.js" type="module"></script>
+    
+    <!-- Handle search parameter from 404 redirects -->
+    <script>
+        // Check for search parameter from 404 page redirect
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchTerm = urlParams.get('search');
+            if (searchTerm) {
+                // Find the search input in the header
+                const searchInput = document.querySelector('.header-search-input, #search-input, [placeholder*="search" i]');
+                if (searchInput) {
+                    // Set the search term
+                    searchInput.value = searchTerm;
+                    
+                    // Focus on the search input
+                    searchInput.focus();
+                    searchInput.select();
+                    
+                    // Optionally trigger search automatically
+                    const searchForm = searchInput.closest('form');
+                    if (searchForm) {
+                        // Give user a moment to see the pre-filled search, then trigger
+                        setTimeout(() => {
+                            searchForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                        }, 1500);
+                    }
+                }
+                
+                // Clean up the URL parameter
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+            }
+        });
+    </script>
     <script src="js/chatbot.js" type="module"></script>
 </body>
 </html>

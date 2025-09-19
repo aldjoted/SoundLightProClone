@@ -6,9 +6,30 @@
     <meta name="description" content="Contact SoundLightPro for sales, support, and inquiries.">
     <title>Contact Us - SoundLightPro</title>
     
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://soundlightpro.com/contact.html">
+    <meta property="og:title" content="Contact Us - SoundLightPro">
+    <meta property="og:description" content="Contact SoundLightPro for sales, support, and inquiries. Located in Douala, Cameroon.">
+    <meta property="og:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary">
+    <meta property="twitter:title" content="Contact Us - SoundLightPro">
+    <meta property="twitter:description" content="Contact SoundLightPro for sales, support, and inquiries.">
+    
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="css/main.css" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/main.css">
@@ -21,10 +42,14 @@
         <div class="container">
             <div class="header-wrapper">
                 <a href="index.html" class="logo" aria-label="SoundLightPro Home">
-                    <img src="images/logo/444943157_482616697615239_602270310558548998_n.jpg" alt="SoundLightPro Logo" class="logo-image">
+                    <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
                 </a>
+                
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="main-navigation">
+                    <span class="hamburger-icon"></span>
+                </button>
                         
-                <nav class="main-nav" role="navigation" aria-label="Main navigation">
+                <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
                         <li><a href="index.html" class="nav-link">Home</a></li>
                         <li class="nav-item mega-menu-container">
