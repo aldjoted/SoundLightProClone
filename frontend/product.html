@@ -32,11 +32,6 @@
                 <a href="index.html" class="logo" aria-label="SoundLightPro Home">
                     <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
                 </a>
-                
-                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="main-navigation">
-                    <span class="hamburger-icon"></span>
-                </button>
-                
                 <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
                         <li><a href="index.html" class="nav-link">Home</a></li>
@@ -57,7 +52,18 @@
                             </a>
                         </li>
                     </ul>
-                </nav>   
+                </nav>
+                <!-- Search row under nav -->
+                <div class="header-search-row">
+                    <div class="search-container">
+                        <form id="search-form" role="search">
+                            <input type="search" id="search-input" data-i18n="search_placeholder" placeholder="Search products..." aria-label="Search products" autocomplete="off">
+                            <button type="submit" class="search-btn" aria-label="Submit search"><i class="fas fa-search"></i></button>
+                        </form>
+                        <div id="search-suggestions" class="search-suggestions-container" role="listbox" aria-label="Search suggestions"></div>
+                    </div>
+                </div>
+
                 <div class="header-actions">
                     <div class="user-actions">
                         <div id="auth-links" class="auth-links">

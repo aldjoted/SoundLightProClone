@@ -1,0 +1,75 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-19 12:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: api/models.py:15
+msgid "Product name"
+msgstr "Nom du produit"
+
+#: api/models.py:16
+msgid "Product description"
+msgstr "Description du produit"
+
+#: api/models.py:17
+msgid "Price"
+msgstr "Prix"
+
+#: api/models.py:18
+msgid "Stock quantity"
+msgstr "Quantité en stock"
+
+#: api/models.py:25
+msgid "Category name"
+msgstr "Nom de la catégorie"
+
+#: api/models.py:26
+msgid "Category description"
+msgstr "Description de la catégorie"
+
+#: api/models.py:33
+msgid "Brand name"
+msgstr "Nom de la marque"
+
+#: api/models.py:34
+msgid "Brand description"
+msgstr "Description de la marque"
+
+#: api/views.py:45
+msgid "Product not found"
+msgstr "Produit non trouvé"
+
+#: api/views.py:67
+msgid "Search results"
+msgstr "Résultats de recherche"
+
+#: api/views.py:68
+msgid "No products found"
+msgstr "Aucun produit trouvé"
+
+#: api/serializers.py:25
+msgid "Invalid product data"
+msgstr "Données de produit invalides"
+
+#: api/serializers.py:35
+msgid "Category is required"
+msgstr "La catégorie est requise"
+
+#: api/serializers.py:45
+msgid "Brand is required"
+msgstr "La marque est requise"

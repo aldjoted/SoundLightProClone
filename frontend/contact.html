@@ -44,11 +44,6 @@
                 <a href="index.html" class="logo" aria-label="SoundLightPro Home">
                     <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
                 </a>
-                
-                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="main-navigation">
-                    <span class="hamburger-icon"></span>
-                </button>
-                        
                 <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
                         <li><a href="index.html" class="nav-link">Home</a></li>
@@ -68,9 +63,35 @@
                         </li>
                     </ul>
                 </nav>
-                
+                <!-- Search bar on its own row under the navigation -->
+                <div class="header-search-row">
+                    <div class="search-container">
+                        <form id="search-form" role="search">
+                            <input type="search" id="search-input" placeholder="Search products..." aria-label="Search products" autocomplete="off">
+                            <button type="submit" class="search-btn" aria-label="Submit search"><i class="fas fa-search"></i></button>
+                        </form>
+                        <div id="search-suggestions" class="search-suggestions-container" role="listbox" aria-label="Search suggestions"></div>
+                    </div>
+                </div>
                 <div class="header-actions">
-                    <!-- Search and User Actions will be here -->
+                    <div class="user-actions">
+                        <div id="auth-links" class="auth-links">
+                            <a href="login.html" class="btn btn--secondary"><i class="fas fa-sign-in-alt"></i><span>Login</span></a>
+                            <a href="register.html" class="btn btn--primary"><i class="fas fa-user-plus"></i><span>Register</span></a>
+                        </div>
+                        <div id="user-info" class="user-info hidden">
+                            <div class="user-menu">
+                                <button class="user-menu-toggle" aria-expanded="false" aria-controls="user-dropdown-menu" aria-label="User menu">
+                                    <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div id="user-dropdown-menu" class="user-dropdown">
+                                    <a href="#"><i class="fas fa-user"></i> Profile</a>
+                                    <a href="#"><i class="fas fa-box"></i> Orders</a>
+                                    <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

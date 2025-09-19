@@ -9,8 +9,10 @@ class CategorySerializer(serializers.ModelSerializer):
     """
     Serializer for the Category model.
     Uses django-mptt for efficient hierarchical data handling.
+    Supports multiple languages.
     """
     children = serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
 
     class Meta:
         model = Category
@@ -21,14 +23,35 @@ class CategorySerializer(serializers.ModelSerializer):
         # Only serialize direct children, not all descendants
         children = obj.get_children()
         return CategorySerializer(children, many=True, context=self.context).data
+    
+    def get_name(self, obj):
+        """Return name in the requested language"""
+        request = self.context.get('request')
+        if request:
+            language = request.headers.get('Accept-Language', 'en')
+            if language.startswith('fr'):
+                return obj.get_name('fr')
+        return obj.get_name('en')
 
 class BrandSerializer(serializers.ModelSerializer):
     """
     Serializer for the Brand model.
+    Supports multiple languages.
     """
+    description = serializers.SerializerMethodField()
+    
     class Meta:
         model = Brand
         fields = ['name', 'slug', 'image', 'description']
+    
+    def get_description(self, obj):
+        """Return description in the requested language"""
+        request = self.context.get('request')
+        if request:
+            language = request.headers.get('Accept-Language', 'en')
+            if language.startswith('fr'):
+                return obj.get_description('fr')
+        return obj.get_description('en')
 
 class ProductImageSerializer(serializers.ModelSerializer):
     """
@@ -42,6 +65,7 @@ class ProductSerializer(serializers.ModelSerializer):
     """
     Serializer for the Product model.
     Displays the category name, brand object, and a list of all product images.
+    Supports multiple languages.
     """
     category = serializers.SlugRelatedField(
         slug_field='name',
@@ -50,6 +74,8 @@ class ProductSerializer(serializers.ModelSerializer):
     brand = BrandSerializer(read_only=True)
     # Use the new ProductImageSerializer to nest all related images
     images = ProductImageSerializer(many=True, read_only=True)
+    name = serializers.SerializerMethodField()
+    description = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -57,6 +83,24 @@ class ProductSerializer(serializers.ModelSerializer):
             'id', 'category', 'brand', 'name', 'description', 
             'price', 'images', 'stock', 'available'
         ]
+    
+    def get_name(self, obj):
+        """Return name in the requested language"""
+        request = self.context.get('request')
+        if request:
+            language = request.headers.get('Accept-Language', 'en')
+            if language.startswith('fr'):
+                return obj.get_name('fr')
+        return obj.get_name('en')
+    
+    def get_description(self, obj):
+        """Return description in the requested language"""
+        request = self.context.get('request')
+        if request:
+            language = request.headers.get('Accept-Language', 'en')
+            if language.startswith('fr'):
+                return obj.get_description('fr')
+        return obj.get_description('en')
 
 # --- User Authentication Serializers ---
 

@@ -117,13 +117,13 @@
 .auth-links {
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm); /* Reduced gap for more compact layout */
     flex-shrink: 0;
 }
 
 .auth-links .btn {
-    font-size: 0.875rem;
-    padding: 0.625rem 1.25rem;
+    font-size: 0.85rem; /* Smaller font */
+    padding: 0.5rem 1rem; /* More compact padding */
     font-weight: 500;
     white-space: nowrap;
 }

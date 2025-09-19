@@ -44,6 +44,7 @@
     transition: transform var(--transition-base);
     flex-shrink: 0;
     min-width: 120px;
+    margin-right: var(--spacing-xl); /* Add more space to push elements away */
 }
 
 .logo:hover {
@@ -66,9 +67,44 @@
 .header-actions {
     display: flex;
     align-items: center;
-    gap: var(--spacing-lg);
+    gap: var(--spacing-md);
     flex-shrink: 0;
     min-width: 0; /* Allow shrinking when needed */
+    margin-left: auto; /* Push to the right */
+}
+
+/* New: second row under nav for search */
+.header-search-row {
+    width: 100%;
+    grid-column: 1 / -1;
+    margin-top: var(--spacing-xs);
+}
+
+/* Make header wrapper behave as a grid to place nav and search on two rows */
+.main-header .container .header-wrapper {
+    display: grid;
+    grid-template-columns: auto 1fr auto; /* logo | nav/search | actions */
+    grid-template-rows: auto auto;       /* row1: logo+nav, row2: search */
+    align-items: center;
+    column-gap: var(--spacing-lg);
+    row-gap: var(--spacing-xs);
+}
+
+.logo { grid-column: 1; grid-row: 1; }
+.main-nav { grid-column: 2; grid-row: 1; }
+.header-actions { grid-column: 3; grid-row: 1; }
+.header-search-row { grid-column: 1 / -1; grid-row: 2; }
+
+/* Make the search form span nicely under the nav */
+.header-search-row #search-form {
+    max-width: 720px;
+    margin: 0 auto; /* centered under nav */
+}
+
+/* Keep suggestions positioning sane in the new row */
+.header-search-row .search-suggestions-container {
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 /* ============= Hero Slider ============= */
@@ -232,13 +268,13 @@
         gap: var(--spacing-md);
     }
     .header-actions {
-        gap: var(--spacing-md);
+        gap: var(--spacing-sm);
     }
     #search-input {
-        width: 160px;
+        width: 130px;
     }
     #search-input:focus {
-        width: 200px;
+        width: 220px;
     }
 }
 
@@ -256,13 +292,13 @@
         max-width: 120px;
     }
     .header-actions {
-        gap: var(--spacing-sm);
+        gap: var(--spacing-xs);
     }
     #search-input {
-        width: 120px;
+        width: 110px;
     }
     #search-input:focus {
-        width: 160px;
+        width: 180px;
     }
     .auth-links .btn {
         padding: 0.5rem 0.875rem;
@@ -299,7 +335,7 @@
         min-width: 80px;
     }
     #search-input:focus {
-        width: 140px;
+        width: 160px;
     }
 }
 
@@ -339,4 +375,14 @@
     .footer-bottom { flex-direction: column; gap: var(--spacing-md); }
     .sticky-cta { display: flex; }
     .product-detail-info { padding-bottom: 80px; } /* leave room for sticky bar */
+    /* On tablets and below, collapse header to single row; search goes back under actions (existing mobile behavior) */
+    .main-header .container .header-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .header-search-row {
+        order: 3;
+        width: 100%;
+        margin-top: var(--spacing-sm);
+    }
 }

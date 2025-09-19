@@ -14,6 +14,8 @@ import * as auth from './auth.js';
 import AdvancedSearch from './advanced-search.js';
 import MobileNavigation from './mobile-nav.js';
 import { ListenerManager, RequestManager } from './utils.js';
+import i18n from './i18n.js';
+import './language-switcher.js';
 
 // --- State Management & Cache ---
 
@@ -111,6 +113,10 @@ async function initApp() {
     console.log('Starting app initialization...');
     
     try {
+        // Initialize internationalization
+        console.log('Initializing i18n...');
+        setupI18n();
+        
         if (window.AOS) AOS.init({ duration: 800, once: true });
 
         ui.updateCartCount(cart.getCartItemCount());
@@ -230,6 +236,68 @@ async function handleProductGridActions(e) {
             ui.showToast('Could not load product details.', 'error');
         }
     }
+}
+
+/**
+ * Setup internationalization system
+ */
+function setupI18n() {
+    // Listen for language changes to update dynamic content
+    i18n.addListener((newLanguage) => {
+        console.log(`Language switched to: ${newLanguage}`);
+        
+        // Update cart messages and UI elements
+        const cartCount = cart.getCartItemCount();
+        ui.updateCartCount(cartCount);
+        
+        // Re-render dynamic content if needed
+        const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+        
+        // Update toast messages if any are visible
+        const toasts = document.querySelectorAll('.toast');
+        toasts.forEach(toast => {
+            // Toast messages will be in the new language for new toasts
+            // Existing toasts will remain in their original language
+        });
+        
+        // Update any dynamic content that might need translation
+        updateDynamicTranslations();
+    });
+    
+    // Initial translation of the page
+    i18n.translatePage();
+}
+
+/**
+ * Update dynamic content translations
+ */
+function updateDynamicTranslations() {
+    // Update cart button text
+    const cartButtons = document.querySelectorAll('.add-to-cart-btn');
+    cartButtons.forEach(btn => {
+        if (!btn.disabled && btn.innerHTML.includes('Add')) {
+            btn.innerHTML = `<i class="fas fa-shopping-cart"></i> ${i18n.t('btn_add_to_cart')}`;
+        }
+    });
+    
+    // Update search placeholder
+    const searchInputs = document.querySelectorAll('input[type="search"], .search-input');
+    searchInputs.forEach(input => {
+        input.placeholder = i18n.t('search_placeholder');
+    });
+    
+    // Update any other dynamic elements that need translation
+    const elements = document.querySelectorAll('[data-i18n-dynamic]');
+    elements.forEach(element => {
+        const key = element.getAttribute('data-i18n-dynamic');
+        if (key) {
+            if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                element.placeholder = i18n.t(key);
+            } else {
+                element.textContent = i18n.t(key);
+            }
+        }
+    });
 }
 
 // --- Page Initializers ---

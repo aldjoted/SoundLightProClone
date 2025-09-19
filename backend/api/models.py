@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from decimal import Decimal
 from mptt.models import MPTTModel, TreeForeignKey
+from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
 
@@ -10,7 +11,8 @@ class Category(MPTTModel):
     Model for product categories.
     Uses django-mptt for efficient hierarchical data handling.
     """
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, verbose_name=_("Category name"))
+    name_fr = models.CharField(max_length=255, blank=True, verbose_name=_("Category name (French)"))
     slug = models.SlugField(unique=True) # A slug is a URL-friendly version of the name
     parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
     
@@ -26,14 +28,21 @@ class Category(MPTTModel):
         # Create a string representation for display in the Django admin
         # This will show the full path of the category, e.g., "Audio > Speakers"
         return ' -> '.join([ancestor.name for ancestor in self.get_ancestors(include_self=True)])
+    
+    def get_name(self, language='en'):
+        """Get category name in specified language"""
+        if language == 'fr' and self.name_fr:
+            return self.name_fr
+        return self.name
 
 class Brand(models.Model):
     """
     Model for product brands.
     """
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255, unique=True, verbose_name=_("Brand name"))
     slug = models.SlugField(unique=True)
-    description = models.TextField(blank=True)
+    description = models.TextField(blank=True, verbose_name=_("Brand description"))
+    description_fr = models.TextField(blank=True, verbose_name=_("Brand description (French)"))
     image = models.ImageField(upload_to='brands/', blank=True, null=True)
 
     class Meta:
@@ -41,6 +50,12 @@ class Brand(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def get_description(self, language='en'):
+        """Get brand description in specified language"""
+        if language == 'fr' and self.description_fr:
+            return self.description_fr
+        return self.description
 
 
 class Product(models.Model):
@@ -49,12 +64,14 @@ class Product(models.Model):
     """
     category = models.ForeignKey(Category, related_name='products', on_delete=models.CASCADE)
     brand = models.ForeignKey(Brand, related_name='products', on_delete=models.SET_NULL, null=True, blank=True)
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
+    name = models.CharField(max_length=255, verbose_name=_("Product name"))
+    name_fr = models.CharField(max_length=255, blank=True, verbose_name=_("Product name (French)"))
+    description = models.TextField(blank=True, verbose_name=_("Product description"))
+    description_fr = models.TextField(blank=True, verbose_name=_("Product description (French)"))
     # Use DecimalField for price to avoid floating point rounding errors
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Price"))
     # The single image field has been REMOVED from here.
-    stock = models.PositiveIntegerField(default=0)
+    stock = models.PositiveIntegerField(default=0, verbose_name=_("Stock quantity"))
     available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -64,6 +81,18 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def get_name(self, language='en'):
+        """Get product name in specified language"""
+        if language == 'fr' and self.name_fr:
+            return self.name_fr
+        return self.name
+    
+    def get_description(self, language='en'):
+        """Get product description in specified language"""
+        if language == 'fr' and self.description_fr:
+            return self.description_fr
+        return self.description
 
 class ProductImage(models.Model):
     """

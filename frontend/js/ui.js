@@ -5,6 +5,8 @@
  * by avoiding innerHTML with untrusted data and uses efficient rendering techniques.
  */
 
+import i18n from './i18n.js';
+
 // ============= Helper Functions =============
 
 /**
@@ -279,7 +281,7 @@ export function renderProductGrid(products, container) {
     container.innerHTML = ''; // Clear existing content or skeletons
 
     if (products.length === 0) {
-        container.appendChild(createElement('p', { class: 'info-message' }, ['No products found.']));
+        container.appendChild(createElement('p', { class: 'info-message' }, [i18n.t('search_no_results')]));
         return;
     }
     
@@ -295,7 +297,7 @@ export function renderProductGrid(products, container) {
                 createElement('div', { class: 'product-card-overlay' }, [
                     createElement('button', { class: 'btn btn--secondary quick-view-btn', 'data-product-id': product.id }, [
                         createElement('i', { class: 'fas fa-eye' }),
-                        document.createTextNode(' Quick View')
+                        document.createTextNode(' ' + i18n.t('btn_quick_view'))
                     ])
                 ])
             ]),
@@ -307,10 +309,10 @@ export function renderProductGrid(products, container) {
                     ])
                 ]),
                 createElement('div', { class: 'product-card-footer' }, [
-                    createElement('p', { class: 'product-card-price' }, [`$${parseFloat(product.price).toFixed(2)}`]),
+                    createElement('p', { class: 'product-card-price' }, [i18n.formatCurrency(product.price)]),
                     createElement('button', { class: 'btn btn--secondary add-to-cart-btn', 'data-product-id': product.id }, [
                         createElement('i', { class: 'fas fa-shopping-cart' }),
-                        document.createTextNode(' Add')
+                        document.createTextNode(' ' + i18n.t('btn_add_to_cart'))
                     ])
                 ])
             ])
