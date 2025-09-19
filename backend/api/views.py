@@ -16,6 +16,8 @@ import google.generativeai as genai # type: ignore
 # from google import genai    # type: ignore
 
 from .models import Category, Product, Order, OrderItem
+from .embeddings import model as embedding_model, get_product_text
+from .vector_search import load_faiss_index_and_embeddings
 from .serializers import (
     CategorySerializer, ProductSerializer, RegisterSerializer, 
     UserSerializer, OrderSerializer
@@ -240,19 +242,22 @@ class ChatbotView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # --- Simple RAG: Find relevant products ---
-        # A more advanced implementation would use vector embeddings.
-        # For now, we'll do a simple keyword search.
-        keywords = user_message.lower().split()
-        
-        # Build a query to search for products
-        query = Q()
-        for keyword in keywords:
-            # Avoid generic words, focus on potential product names/categories
-            if len(keyword) > 2: 
-                query |= Q(name__icontains=keyword) | Q(category__name__icontains=keyword) | Q(brand__name__icontains=keyword)
-
-        relevant_products = Product.objects.filter(query, available=True)[:5] # Limit to 5 products
+        # --- Vector Search RAG: Find relevant products ---
+        index, embeddings = load_faiss_index_and_embeddings()
+        relevant_products = []
+        if index is not None and embeddings is not None:
+            # Generate embedding for the user query
+            query_embedding = embedding_model.encode([user_message], normalize_embeddings=True)
+            # Search for top 5 most similar products
+            D, I = index.search(query_embedding, 5)
+            # Get all available products in the same order as embeddings
+            all_products = list(Product.objects.filter(available=True).select_related('brand', 'category'))
+            for idx in I[0]:
+                if 0 <= idx < len(all_products):
+                    relevant_products.append(all_products[idx])
+        else:
+            # Fallback: no index, return empty list
+            relevant_products = []
 
         # --- Format product data for the prompt ---
         product_context = "No specific products found."
