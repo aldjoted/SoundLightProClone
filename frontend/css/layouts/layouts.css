@@ -74,8 +74,7 @@
 /* ============= Hero Slider ============= */
 .hero-slider {
     position: relative;
-    height: 60vh;
-    min-height: 450px;
+    aspect-ratio: 21 / 9;
     max-height: 700px;
     overflow: hidden;
     background: var(--bg-dark);
@@ -199,7 +198,7 @@
 /* Sticky CTA */
 .sticky-cta {
     position: fixed; left: 0; right: 0; bottom: 0;
-    z-index: var(--z-dropdown); /* CODE QUALITY: Sits above content but below modals */
+    z-index: var(--z-dropdown);
     background: var(--bg-card); border-top: 1px solid var(--border-color);
     box-shadow: 0 -6px 16px rgba(0,0,0,.08); padding: var(--spacing-md);
     display: none; align-items: center; gap: var(--spacing-md);

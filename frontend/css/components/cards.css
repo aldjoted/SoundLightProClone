@@ -1,5 +1,29 @@
 /* --- Component: Card Styles --- */
 
+/* ============================================= */
+/* Base Card Component                           */
+/* ============================================= */
+.card-base {
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .card-base {
+        transition: transform var(--transition-slow), box-shadow var(--transition-slow);
+    }
+    .card-base:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-xl);
+    }
+}
+
+/* ============================================= */
+/* Specific Card Implementations                 */
+/* ============================================= */
+
 /* Featured Focus Card */
 .focus-card {
     position: relative;
@@ -49,12 +73,20 @@
 
 /* Product Card */
 .product-card {
-    background: var(--bg-card);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-md);
-    overflow: hidden;
+    /* Extends .card-base styles */
     display: flex;
     flex-direction: column;
+    container-type: inline-size; /* Enable container queries */
+}
+
+/* Container queries for responsive product cards */
+@container (min-width: 300px) {
+    .product-card-content {
+        padding: var(--spacing-xl);
+    }
+    .product-card-title {
+        font-size: 1.25rem;
+    }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -93,9 +125,8 @@
 }
 .product-card-category {
     font-size: 0.75rem;
-    color: var(--primary-color);
-    /* A11Y Check: Contrast is 3.56:1 on white background. Consider a darker shade or bolder font-weight for AA compliance. */
-    font-weight: 600;
+    color: var(--primary-dark); /* Improved contrast from 3.56:1 to better accessibility */
+    font-weight: 700; /* Bolder text improves perceived contrast */
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: var(--spacing-sm);

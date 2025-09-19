@@ -1,5 +1,54 @@
 /* --- Utilities: Helper classes, states, and widgets --- */
 
+/* ============================================= */
+/* Transition Utility Classes                   */
+/* ============================================= */
+.transition-base {
+    transition: all var(--transition-base);
+}
+.transition-fast {
+    transition: all var(--transition-fast);
+}
+.transition-slow {
+    transition: all var(--transition-slow);
+}
+.transition-transform {
+    transition: transform var(--transition-base);
+}
+.transition-colors {
+    transition: background-color var(--transition-base), color var(--transition-base), border-color var(--transition-base);
+}
+.transition-shadow {
+    transition: box-shadow var(--transition-base);
+}
+.transition-opacity {
+    transition: opacity var(--transition-base);
+}
+
+/* ============================================= */
+/* Modern CSS Utility Classes                   */
+/* ============================================= */
+.container-query {
+    container-type: inline-size;
+}
+
+.aspect-video {
+    aspect-ratio: 16 / 9;
+}
+
+.aspect-square {
+    aspect-ratio: 1 / 1;
+}
+
+.aspect-hero {
+    aspect-ratio: 21 / 9;
+    max-height: 700px;
+}
+
+.aspect-card {
+    aspect-ratio: 4 / 3;
+}
+
 /* Helper Classes */
 .hidden {
     display: none !important;
@@ -13,6 +62,15 @@
     outline: 3px solid rgba(99, 102, 241, .45);
     outline-offset: 2px;
     border-radius: var(--radius-sm);
+}
+
+/* Enhanced focus states for specific components */
+.btn:focus-visible {
+    outline-offset: 3px;
+}
+
+.nav-link:focus-visible {
+    outline-offset: -2px; /* Inside the element for better visual */
 }
 
 /* A11Y: Hides content visually but keeps it accessible to screen readers */
@@ -172,7 +230,6 @@ body.no-scroll {
 .mini-cart-drawer { position: fixed; top: 0; right: 0; width: 380px; max-width: 90vw; height: 100vh; background: var(--bg-card); box-shadow: var(--shadow-2xl); z-index: calc(var(--z-modal) + 1); display: flex; flex-direction: column; transform: translateX(100%); }
 @media (prefers-reduced-motion: no-preference) {
     .mini-cart-drawer {
-        /* PERFORMANCE: Animate transform instead of 'right' for smoother, GPU-accelerated transitions */
         transition: transform var(--transition-slow);
     }
 }

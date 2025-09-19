@@ -166,7 +166,7 @@ export function renderMegaMenu(categories) {
             <div class="mega-menu-column featured">
                  <h4>${parent.name}</h4>
                  <p>${parent.description || `Explore our full range of ${parent.name}.`}</p>
-                 <a href="index.html#products?category=${parent.slug}" class="btn btn-secondary">View All</a>
+                 <a href="index.html#products?category=${parent.slug}" class="btn btn--secondary">View All</a>
             </div>
             ${parent.children.map(child => `
                 <div class="mega-menu-column">
@@ -274,7 +274,7 @@ export function renderProductGrid(products, container) {
     
     const fragment = document.createDocumentFragment();
     products.forEach(product => {
-        const card = createElement('div', { class: 'product-card' }, [
+        const card = createElement('div', { class: 'product-card card-base' }, [
             createElement('a', {
                 href: `product.html?id=${product.id}`,
                 class: 'product-card-image',
@@ -282,7 +282,7 @@ export function renderProductGrid(products, container) {
             }, [
                 createElement('img', { src: getProductImage(product), alt: product.name, loading: 'lazy' }),
                 createElement('div', { class: 'product-card-overlay' }, [
-                    createElement('button', { class: 'btn btn-secondary quick-view-btn', 'data-product-id': product.id }, [
+                    createElement('button', { class: 'btn btn--secondary quick-view-btn', 'data-product-id': product.id }, [
                         createElement('i', { class: 'fas fa-eye' }),
                         document.createTextNode(' Quick View')
                     ])
@@ -297,7 +297,7 @@ export function renderProductGrid(products, container) {
                 ]),
                 createElement('div', { class: 'product-card-footer' }, [
                     createElement('p', { class: 'product-card-price' }, [`$${parseFloat(product.price).toFixed(2)}`]),
-                    createElement('button', { class: 'btn btn-secondary add-to-cart-btn', 'data-product-id': product.id }, [
+                    createElement('button', { class: 'btn btn--secondary add-to-cart-btn', 'data-product-id': product.id }, [
                         createElement('i', { class: 'fas fa-shopping-cart' }),
                         document.createTextNode(' Add')
                     ])
@@ -326,7 +326,7 @@ export function renderQuickViewModal(product) {
                         <h2 id="modal-title">${product.name}</h2>
                         <p class="price">$${parseFloat(product.price).toFixed(2)}</p>
                         <p>${product.description ? product.description.substring(0, 150) + (product.description.length > 150 ? '...' : '') : 'No description available.'}</p>
-                        <button class="btn btn-primary add-to-cart-modal-btn" data-product-id="${product.id}">
+                        <button class="btn btn--primary add-to-cart-modal-btn" data-product-id="${product.id}">
                             <i class="fas fa-shopping-cart"></i> Add to Cart
                         </button>
                         <a href="product.html?id=${product.id}" class="view-full-details">View full details &rarr;</a>
@@ -450,7 +450,7 @@ export function renderProductDetail(product, container) {
                 </div>
                 <form id="add-to-cart-form" class="add-to-cart-form">
                     <input type="number" id="quantity" value="1" min="1" max="${product.stock}" aria-label="Quantity">
-                    <button type="submit" class="btn btn-primary" ${product.stock === 0 ? 'disabled' : ''}>
+                    <button type="submit" class="btn btn--primary btn--full-width" ${product.stock === 0 ? 'disabled' : ''}>
                         <i class="fas fa-shopping-cart"></i> 
                         ${product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
                     </button>
@@ -471,7 +471,7 @@ export function renderProductDetail(product, container) {
     sticky.innerHTML = `
         <p class="price">$${parseFloat(product.price).toFixed(2)}</p>
         <input type="number" class="qty" id="sticky-qty" value="1" min="1" max="${product.stock || 1}" aria-label="Quantity">
-        <button class="btn btn-primary" id="sticky-add" ${product.stock === 0 ? 'disabled' : ''}>
+        <button class="btn btn--primary btn--full-width" id="sticky-add" ${product.stock === 0 ? 'disabled' : ''}>
             <i class="fas fa-shopping-cart"></i> ${product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
         </button>
     `;
@@ -521,8 +521,8 @@ export function renderMiniCart(items = []) {
                     createElement('strong', {}, [`$${total.toFixed(2)}`])
                 ]),
                 createElement('div', { class: 'mini-cart-actions' }, [
-                    createElement('a', { href: 'cart.html', class: 'btn btn-secondary' }, ['View Cart']),
-                    createElement('a', { href: 'cart.html#checkout', class: 'btn btn-primary' }, ['Checkout'])
+                    createElement('a', { href: 'cart.html', class: 'btn btn--secondary' }, ['View Cart']),
+                    createElement('a', { href: 'cart.html#checkout', class: 'btn btn--primary' }, ['Checkout'])
                 ])
             ])
         ])

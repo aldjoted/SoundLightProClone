@@ -37,6 +37,14 @@
     --border-color: var(--gray-200);
 
     /* ============================================= */
+    /* Breakpoints                                   */
+    /* ============================================= */
+    --breakpoint-sm: 640px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 1024px;
+    --breakpoint-xl: 1280px;
+
+    /* ============================================= */
     /* Spacing & Sizing                              */
     /* ============================================= */
     --spacing-xs: 0.25rem;  /* 4px */
@@ -74,10 +82,15 @@
     --transition-base: 250ms ease;
     --transition-slow: 350ms ease;
 
-    --z-dropdown: 1000;    /* For dropdowns, mega menus */
-    --z-sticky: 1020;      /* For sticky headers */
-    --z-mobile-overlay: 1030; /* For mobile menu overlay */
-    --z-mobile-panel: 1040;   /* For mobile menu panel */
-    --z-toast: 1080;       /* For toast notifications, skip links */
-    --z-modal: 2000;       /* For modal dialogs and overlays */
+    /* Z-Index Scale */
+    --z-base: 1000;
+    --z-dropdown: calc(var(--z-base) + 100);
+    --z-sticky: calc(var(--z-base) + 200);
+    --z-overlay: calc(var(--z-base) + 300);
+    --z-modal: calc(var(--z-base) + 400);
+    --z-toast: calc(var(--z-base) + 500);
+
+    /* Legacy z-index values for compatibility */
+    --z-mobile-overlay: var(--z-overlay);
+    --z-mobile-panel: calc(var(--z-overlay) + 10);
 }
