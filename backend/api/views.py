@@ -8,6 +8,8 @@ from django.db import transaction
 from django.db.models import Q, Prefetch
 from django.db.models.query import QuerySet
 from django.contrib.auth.models import User
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 from rest_framework import generics, permissions, status, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -64,6 +66,10 @@ class ProductList(generics.ListAPIView):
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'description']
 
+    @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes
+    def get(self, *args, **kwargs):
+        return super().get(*args, **kwargs)
+
     def get_queryset(self) -> QuerySet[Product]:  # type: ignore
         """
         Optimized queryset that prevents N+1 issues.
@@ -91,15 +97,20 @@ class CategoryList(generics.ListAPIView):
     """
     API view to list all top-level categories (those with no parent).
     The serializer will handle nesting the child categories.
-    Prefetching children to mitigate N+1 query issues.
+    Uses django-mptt for efficient tree queries.
     Pagination is disabled since categories are typically a small, stable list.
     """
-    queryset = Category.objects.filter(parent__isnull=True).prefetch_related(
-        Prefetch('children', queryset=Category.objects.prefetch_related('children'))
-    ).order_by('name')  # Add explicit ordering
     serializer_class = CategorySerializer
     permission_classes = (permissions.AllowAny,)
     pagination_class = None  # Disable pagination for categories
+
+    @method_decorator(cache_page(60 * 60))  # Cache for 1 hour
+    def get(self, *args, **kwargs):
+        return super().get(*args, **kwargs)
+
+    def get_queryset(self) -> QuerySet[Category]:  # type: ignore
+        # Use django-mptt's get_cached_trees() for efficient tree loading
+        return Category.objects.filter(parent__isnull=True).order_by('name')
 
 
 # --- Checkout and Order Views ---

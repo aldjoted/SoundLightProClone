@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'mptt',
 
     # Our custom app
     'api',
@@ -166,6 +167,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5500", # Alternative for VS Code Live Server
 ]
 
+# Uncomment below when Redis is available
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -175,3 +177,10 @@ CACHES = {
         }
     }
 }
+
+# Use dummy cache when Redis is not available
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+#     }
+# }

@@ -1,17 +1,21 @@
 from django.db import models
 from django.contrib.auth.models import User
 from decimal import Decimal
+from mptt.models import MPTTModel, TreeForeignKey
 
 # Create your models here.
 
-class Category(models.Model):
+class Category(MPTTModel):
     """
     Model for product categories.
-    Allows for nested categories by having a self-referencing ForeignKey.
+    Uses django-mptt for efficient hierarchical data handling.
     """
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True) # A slug is a URL-friendly version of the name
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
+    parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
+    
+    class MPTTMeta:
+        order_insertion_by = ['name']
     
     class Meta:
         # Enforce that category names are unique to avoid confusion
@@ -21,12 +25,7 @@ class Category(models.Model):
     def __str__(self):
         # Create a string representation for display in the Django admin
         # This will show the full path of the category, e.g., "Audio > Speakers"
-        full_path = [self.name]
-        k = self.parent
-        while k is not None:
-            full_path.append(k.name)
-            k = k.parent
-        return ' -> '.join(full_path[::-1])
+        return ' -> '.join([ancestor.name for ancestor in self.get_ancestors(include_self=True)])
 
 class Brand(models.Model):
     """

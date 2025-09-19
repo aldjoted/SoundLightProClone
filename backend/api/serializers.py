@@ -8,7 +8,7 @@ from .models import Category, Brand, Product, ProductImage, Order, OrderItem
 class CategorySerializer(serializers.ModelSerializer):
     """
     Serializer for the Category model.
-    Includes nested serialization for child categories to represent the hierarchy.
+    Uses django-mptt for efficient hierarchical data handling.
     """
     children = serializers.SerializerMethodField()
 
@@ -17,8 +17,10 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'slug', 'parent', 'children']
 
     def get_children(self, obj):
-        # Recursively serialize children categories
-        return CategorySerializer(obj.children.all(), many=True).data
+        # Use django-mptt's get_children() method which is optimized
+        # Only serialize direct children, not all descendants
+        children = obj.get_children()
+        return CategorySerializer(children, many=True, context=self.context).data
 
 class BrandSerializer(serializers.ModelSerializer):
     """
