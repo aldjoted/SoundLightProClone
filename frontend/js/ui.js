@@ -327,18 +327,28 @@ export function renderProductGrid(products, container) {
  * @param {Object} product - The product object to display.
  */
 export function renderQuickViewModal(product) {
+    let desc = 'No description available.';
+    if (product.description) {
+        if (product.description.length > 150) {
+            desc = product.description.substring(0, 150) + '...';
+        } else {
+            desc = product.description;
+        }
+    }
+    const productNameEsc = escapeHtml(product.name || '');
+    const productImage = getProductImage(product);
     const modalHTML = `
         <div class="modal-overlay" id="quick-view-overlay">
             <div class="modal-content" id="quick-view-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
                 <button class="modal-close-btn" aria-label="Close quick view">&times;</button>
                 <div class="product-detail-layout">
                     <div class="product-gallery">
-                        <img src="${getProductImage(product)}" alt="${product.name}">
+                        <img src="${productImage}" alt="${productNameEsc}">
                     </div>
                     <div class="product-detail-info">
-                        <h2 id="modal-title">${product.name}</h2>
+                        <h2 id="modal-title">${productNameEsc}</h2>
                         <p class="price">$${parseFloat(product.price).toFixed(2)}</p>
-                        <p>${product.description ? product.description.substring(0, 150) + (product.description.length > 150 ? '...' : '') : 'No description available.'}</p>
+                        <p>${escapeHtml(desc)}</p>
                         <button class="btn btn--primary add-to-cart-modal-btn" data-product-id="${product.id}">
                             <i class="fas fa-shopping-cart"></i> Add to Cart
                         </button>
@@ -433,6 +443,10 @@ export function renderProductDetail(product, container) {
 
     const hasImages = product.images && product.images.length > 0;
     const mainImageSrc = hasImages ? product.images[0].image : 'https://via.placeholder.com/600x400.png?text=No+Image';
+    const isOutOfStock = product.stock === 0;
+    const addBtnDisabledAttr = isOutOfStock ? 'disabled' : '';
+    const addBtnLabel = isOutOfStock ? 'Out of Stock' : 'Add to Cart';
+    const stockInfoText = product.stock > 0 ? `${product.stock} units available` : 'Currently out of stock';
     
     let thumbnailsHTML = '';
     if (hasImages && product.images.length > 1) {
@@ -463,14 +477,12 @@ export function renderProductDetail(product, container) {
                 </div>
                 <form id="add-to-cart-form" class="add-to-cart-form">
                     <input type="number" id="quantity" value="1" min="1" max="${product.stock}" aria-label="Quantity">
-                    <button type="submit" class="btn btn--primary btn--full-width" ${product.stock === 0 ? 'disabled' : ''}>
+                    <button type="submit" class="btn btn--primary btn--full-width" ${addBtnDisabledAttr}>
                         <i class="fas fa-shopping-cart"></i> 
-                        ${product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                        ${addBtnLabel}
                     </button>
                 </form>
-                <p class="stock-info">
-                    ${product.stock > 0 ? `${product.stock} units available` : 'Currently out of stock'}
-                </p>
+                <p class="stock-info">${stockInfoText}</p>
             </div>
         </div>
     `;
@@ -484,8 +496,8 @@ export function renderProductDetail(product, container) {
     sticky.innerHTML = `
         <p class="price">$${parseFloat(product.price).toFixed(2)}</p>
         <input type="number" class="qty" id="sticky-qty" value="1" min="1" max="${product.stock || 1}" aria-label="Quantity">
-        <button class="btn btn--primary btn--full-width" id="sticky-add" ${product.stock === 0 ? 'disabled' : ''}>
-            <i class="fas fa-shopping-cart"></i> ${product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+        <button class="btn btn--primary btn--full-width" id="sticky-add" ${addBtnDisabledAttr}>
+            <i class="fas fa-shopping-cart"></i> ${addBtnLabel}
         </button>
     `;
     document.body.appendChild(sticky);
@@ -646,4 +658,100 @@ export function renderSearchSuggestions(products, container) {
         </ul>
     `;
     container.classList.remove('hidden');
+}
+
+// ============= Cart Page UI Helpers =============
+
+/**
+ * Returns HTML string for an empty cart state. Used with container.innerHTML.
+ * Static content only (no untrusted interpolation).
+ */
+export function getEmptyCartHTML() {
+    const title = i18n.t ? i18n.t('cart_empty_title', 'Your cart is empty') : 'Your cart is empty';
+    const subtitle = i18n.t ? i18n.t('cart_empty_sub', 'Looks like you haven\'t added anything yet.') : "Looks like you haven't added anything yet.";
+    const cta = i18n.t ? i18n.t('cart_continue_shopping', 'Continue shopping') : 'Continue shopping';
+    return `
+        <div class="cart-empty card-base">
+            <div class="cart-empty-icon"><i class="fas fa-shopping-cart"></i></div>
+            <h3>${title}</h3>
+            <p>${subtitle}</p>
+            <a class="btn btn--primary" href="index.html">${cta}</a>
+        </div>
+    `;
+}
+
+/**
+ * Builds and returns DOM nodes for the cart layout and the summary panel.
+ * @param {Array<{id:number,name:string,price:number,image?:string,quantity:number}>} items
+ * @returns {{ cartLayout: HTMLElement, summary: HTMLElement }}
+ */
+export function getCartLayoutHTML(items) {
+    const placeholder = 'https://via.placeholder.com/96x96.png?text=No+Image';
+    const list = createElement('div', { class: 'cart-items' });
+
+    let subtotal = 0;
+    items.forEach(item => {
+        const lineTotal = (Number(item.price) || 0) * (Number(item.quantity) || 0);
+        subtotal += lineTotal;
+        const imgSrc = item.image || placeholder;
+
+        const cartItem = createElement('div', { class: 'cart-item', 'data-id': item.id }, [
+            // Image column
+            createElement('div', { class: 'cart-item-image' }, [
+                createElement('img', { src: imgSrc, alt: item.name || 'Product image', loading: 'lazy' })
+            ]),
+            // Details column
+            createElement('div', { class: 'cart-item-details' }, [
+                createElement('h3', {}, [item.name || '—']),
+                createElement('p', { class: 'price' }, [i18n.formatCurrency ? i18n.formatCurrency(item.price) : `$${Number(item.price).toFixed(2)}`]),
+                createElement('div', { class: 'cart-item-actions' }, [
+                    createElement('label', { for: `qty-${item.id}` }, ['Qty ']),
+                    createElement('div', { class: 'qty-controls' }, [
+                        createElement('button', { class: 'qty-btn qty-decrement', 'aria-label': 'Decrease quantity', title: 'Decrease quantity' }, [
+                            createElement('i', { class: 'fas fa-minus' })
+                        ]),
+                        createElement('input', { id: `qty-${item.id}`, class: 'qty-input', type: 'number', min: '1', value: String(item.quantity), 'aria-label': 'Quantity' }),
+                        createElement('button', { class: 'qty-btn qty-increment', 'aria-label': 'Increase quantity', title: 'Increase quantity' }, [
+                            createElement('i', { class: 'fas fa-plus' })
+                        ])
+                    ]),
+                    createElement('button', { class: 'btn btn--secondary remove-btn', title: 'Remove from cart' }, [
+                        createElement('i', { class: 'fas fa-trash' }),
+                        document.createTextNode(' Remove')
+                    ])
+                ])
+            ]),
+            // Subtotal column
+            createElement('div', { class: 'cart-item-subtotal' }, [
+                i18n.formatCurrency ? i18n.formatCurrency(lineTotal) : `$${lineTotal.toFixed(2)}`
+            ])
+        ]);
+
+        list.appendChild(cartItem);
+    });
+
+    const cartLayout = createElement('section', { class: 'cart-layout' }, [
+        createElement('div', { class: 'cart-items-container card-base' }, [list])
+    ]);
+
+    const summary = createElement('aside', { class: 'cart-summary card-base' }, [
+        createElement('div', { class: 'cart-summary-header' }, [
+            createElement('h3', { class: 'cart-summary-title' }, [i18n.t ? i18n.t('cart_summary', 'Order summary') : 'Order summary'])
+        ]),
+        createElement('div', { class: 'cart-summary-body' }, [
+            createElement('div', { class: 'summary-row' }, [
+                createElement('span', {}, [i18n.t ? i18n.t('cart_subtotal', 'Subtotal') : 'Subtotal']),
+                createElement('strong', { class: 'summary-value' }, [i18n.formatCurrency ? i18n.formatCurrency(subtotal) : `$${subtotal.toFixed(2)}`])
+            ]),
+            createElement('p', { class: 'summary-note' }, [i18n.t ? i18n.t('cart_taxes_note', 'Taxes and shipping calculated at checkout.') : 'Taxes and shipping calculated at checkout.'])
+        ]),
+        createElement('div', { class: 'cart-summary-actions' }, [
+            createElement('button', { id: 'proceed-checkout', class: 'btn btn--primary btn--full-width' }, [
+                createElement('i', { class: 'fas fa-lock' }),
+                document.createTextNode(' ' + (i18n.t ? i18n.t('cart_checkout', 'Proceed to checkout') : 'Proceed to checkout'))
+            ])
+        ])
+    ]);
+
+    return { cartLayout, summary };
 }

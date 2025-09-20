@@ -33,13 +33,19 @@ const translations = {
         btn_remove: "Remove",
         btn_update: "Update",
         
-        // Cart
+    // Cart
         cart_empty: "Your cart is empty.",
         cart_total: "Total",
         cart_subtotal: "Subtotal",
         cart_item_added: "added to cart!",
         cart_item_removed: "removed from cart",
         cart_updated: "Cart updated",
+    cart_summary: "Order summary",
+    cart_taxes_note: "Taxes and shipping calculated at checkout.",
+    cart_checkout: "Proceed to checkout",
+    cart_empty_title: "Your cart is empty",
+    cart_empty_sub: "Looks like you haven't added anything yet.",
+    cart_continue_shopping: "Continue shopping",
         
         // Product details
         product_category: "Category",
@@ -132,13 +138,19 @@ const translations = {
         btn_remove: "Supprimer",
         btn_update: "Mettre à Jour",
         
-        // Cart
+    // Cart
         cart_empty: "Votre panier est vide.",
         cart_total: "Total",
         cart_subtotal: "Sous-total",
         cart_item_added: "ajouté au panier !",
         cart_item_removed: "retiré du panier",
         cart_updated: "Panier mis à jour",
+    cart_summary: "Récapitulatif de commande",
+    cart_taxes_note: "Taxes et frais de livraison calculés lors du paiement.",
+    cart_checkout: "Passer au paiement",
+    cart_empty_title: "Votre panier est vide",
+    cart_empty_sub: "On dirait que vous n'avez encore rien ajouté.",
+    cart_continue_shopping: "Continuer vos achats",
         
         // Product details
         product_category: "Catégorie",
@@ -251,10 +263,14 @@ class I18n {
      * Get translated text for a key
      */
     t(key, params = {}) {
-        const translation = translations[this.currentLanguage]?.[key] || translations.en[key] || key;
-        
+        let translation = translations[this.currentLanguage]?.[key] || translations.en[key];
+        if (!translation) {
+            // Humanize the key: replace underscores with spaces and capitalize first letter
+            const humanized = key.replace(/_/g, ' ').replace(/\b\w/g, (m, idx) => m.toUpperCase());
+            translation = humanized;
+        }
         // Simple parameter replacement
-        return translation.replace(/\{(\w+)\}/g, (match, param) => {
+        return String(translation).replace(/\{(\w+)\}/g, (match, param) => {
             return params[param] || match;
         });
     }

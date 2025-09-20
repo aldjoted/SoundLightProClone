@@ -437,6 +437,26 @@ function initCartPage() {
     });
 
     pageListenerManager.add(container, 'click', (e) => {
+        const itemEl = e.target.closest('.cart-item');
+        if (itemEl) {
+            const id = parseInt(itemEl.dataset.id, 10);
+            if (e.target.closest('.qty-increment')) {
+                const input = itemEl.querySelector('.qty-input');
+                const current = Math.max(1, parseInt(input.value, 10) || 1);
+                const next = current + 1;
+                input.value = String(next);
+                cart.updateCartItemQuantity(id, next);
+                return;
+            }
+            if (e.target.closest('.qty-decrement')) {
+                const input = itemEl.querySelector('.qty-input');
+                const current = Math.max(1, parseInt(input.value, 10) || 1);
+                const next = Math.max(1, current - 1);
+                input.value = String(next);
+                cart.updateCartItemQuantity(id, next);
+                return;
+            }
+        }
         if (e.target.closest('.remove-btn')) {
             const id = parseInt(e.target.closest('.cart-item').dataset.id, 10);
             cart.removeFromCart(id);
