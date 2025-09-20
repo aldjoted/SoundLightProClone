@@ -50,7 +50,7 @@ const tokenManager = (() => {
         /** @param {string} token */
         setRefreshToken: (token) => {
             // Store in localStorage temporarily for backward compatibility
-            // TODO: Move to httpOnly cookie on server side
+            // TODO: Implement httpOnly cookie storage on server side
             localStorage.setItem('refreshToken', token);
         },
         clearTokens: () => {
@@ -88,7 +88,8 @@ const handleResponse = async (response) => {
             }
         }
     } catch (parseError) {
-        // If we can't parse the response, create a generic error
+        // Log parse error for debugging and return structured error
+        console.warn('Failed to parse API response:', parseError);
         data = { detail: 'Invalid response format' };
     }
     
@@ -210,6 +211,34 @@ export async function apiFetchWithRetry(url, options = {}, retryOptions = {}) {
 }
 
 /**
+ * Executes a fetch operation with or without retry logic
+ * @param {string} url - The URL to fetch
+ * @param {Object} options - Fetch options
+ * @param {boolean} useRetry - Whether to use retry logic
+ * @returns {Promise<any>} - The response data
+ */
+const executeFetch = async (url, options, useRetry) => {
+    return useRetry ? 
+        apiFetchWithRetry(url, options) : 
+        apiFetch(url, options);
+};
+
+/**
+ * Normalizes product response data
+ * @param {any} response - The API response
+ * @returns {Array<Object>} - Array of products
+ */
+const normalizeProductsResponse = (response) => {
+    // Handle paginated response - extract the results array
+    if (response && typeof response === 'object' && Array.isArray(response.results)) {
+        return response.results;
+    }
+    
+    // Fallback for non-paginated response
+    return Array.isArray(response) ? response : [];
+};
+
+/**
  * Fetches a list of products, optionally filtered by a search query.
  * @param {string} [searchQuery=''] - The search term.
  * @param {Object} [options={}] - Fetch options.
@@ -219,20 +248,9 @@ export async function apiFetchWithRetry(url, options = {}, retryOptions = {}) {
 export const getProducts = async (searchQuery = '', options = {}, useRetry = true) => {
     const url = searchQuery ? `/products/?search=${encodeURIComponent(searchQuery)}` : '/products/';
     
-    const fetchFn = useRetry ? 
-        () => apiFetchWithRetry(url, options) : 
-        () => apiFetch(url, options);
-    
     try {
-        const response = await fetchFn();
-        
-        // Handle paginated response - extract the results array
-        if (response && typeof response === 'object' && Array.isArray(response.results)) {
-            return response.results;
-        }
-        
-        // Fallback for non-paginated response (shouldn't happen with current setup)
-        return Array.isArray(response) ? response : [];
+        const response = await executeFetch(url, options, useRetry);
+        return normalizeProductsResponse(response);
     } catch (error) {
         console.error('Failed to fetch products:', error);
         if (error instanceof APIError) {
@@ -351,7 +369,7 @@ export const loginUser = async (username, password) => {
  * @returns {Promise<Object>} A promise that resolves to the new user's data.
  */
 export const registerUser = async (userData) => {
-    if (!userData || !userData.username || !userData.email || !userData.password) {
+    if (!userData?.username || !userData?.email || !userData?.password) {
         throw new APIError('Required registration fields are missing', 400, 'MISSING_REGISTRATION_DATA');
     }
     
@@ -419,7 +437,7 @@ export const logoutUser = () => {
  * @returns {Promise<Object>} A promise that resolves to the created order details.
  */
 export const createOrder = async (orderData) => {
-    if (!orderData || !orderData.items || orderData.items.length === 0) {
+    if (!orderData?.items?.length) {
         throw new APIError('Order must contain at least one item', 400, 'EMPTY_ORDER');
     }
     

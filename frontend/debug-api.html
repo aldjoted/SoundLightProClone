@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug API</title>
+</head>
+<body>
+    <h1>Debug API Test</h1>
+    <div id="results"></div>
+    <script>
+        async function testAPI() {
+            const resultsDiv = document.getElementById('results');
+            
+            try {
+                console.log('Testing API connection...');
+                
+                // Test 1: Direct fetch to API
+                const response = await fetch('http://127.0.0.1:8000/api/v1/products/', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('API Response:', data);
+                
+                resultsDiv.innerHTML = `
+                    <h2>✅ API Test Successful</h2>
+                    <p><strong>Status:</strong> ${response.status}</p>
+                    <p><strong>Products found:</strong> ${data.count}</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                console.error('API Test Failed:', error);
+                resultsDiv.innerHTML = `
+                    <h2>❌ API Test Failed</h2>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>Stack:</strong> <pre>${error.stack}</pre></p>
+                `;
+            }
+        }
+        
+        // Run test when page loads
+        testAPI();
+    </script>
+</body>
+</html>

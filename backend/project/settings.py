@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '383euga!whnvj9x)_(%5i^qkz5f#b21%4z-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.0.198', '0.0.0.0']
 
 
 # Application definition
@@ -179,6 +179,13 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5500",  # Default for VS Code Live Server
     "http://127.0.0.1:5500", # Alternative for VS Code Live Server
+    "http://localhost:8080",  # Vite preview server
+    "http://127.0.0.1:8080", # Alternative for Vite preview server
+    "http://localhost:3000",  # Vite dev server
+    "http://127.0.0.1:3000", # Alternative for Vite dev server
+    "http://192.168.0.198:8080", # Local network access for Vite preview
+    "http://192.168.0.198:3000", # Local network access for Vite dev
+    "http://192.168.0.198:5500", # Local network access for Live Server
 ]
 
 # Uncomment below when Redis is available

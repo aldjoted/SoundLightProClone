@@ -68,7 +68,7 @@ class LanguageSwitcher {
     setupEventListeners() {
         document.addEventListener('click', (e) => {
             const pill = e.target.closest('.lang-pill');
-            if (pill && pill.hasAttribute('data-lang-switch')) {
+            if (pill?.hasAttribute('data-lang-switch')) {
                 const lang = pill.getAttribute('data-lang-switch');
                 i18n.setLanguage(lang);
                 this.updateCurrentLanguage();

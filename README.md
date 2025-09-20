@@ -338,7 +338,163 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## Deployment
+## Making Your Website Available to Others
+
+This section provides step-by-step instructions for sharing your SoundLightPro website with others, from local network access to full production deployment.
+
+### Option 1: Local Network Access (Quickest Setup)
+
+Perfect for sharing with colleagues, friends, or testing on multiple devices within your home/office network.
+
+#### Step 1: Get Your Local IP Address
+
+**Windows:**
+```cmd
+ipconfig | findstr IPv4
+```
+
+**macOS/Linux:**
+```bash
+ifconfig | grep "inet " | grep -v 127.0.0.1
+```
+
+Look for an IP address like `192.168.x.x` or `10.x.x.x`.
+
+#### Step 2: Configure Backend for Network Access
+
+1. **Update Django Settings** (`backend/project/settings.py`):
+   ```python
+   ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'YOUR_LOCAL_IP', '0.0.0.0']
+   
+   CORS_ALLOWED_ORIGINS = [
+       "http://localhost:5500",
+       "http://127.0.0.1:5500", 
+       "http://localhost:8080",
+       "http://127.0.0.1:8080",
+       "http://localhost:3000",
+       "http://127.0.0.1:3000",
+       "http://YOUR_LOCAL_IP:8080",  # Add your local IP
+       "http://YOUR_LOCAL_IP:3000",  # Add your local IP
+       "http://YOUR_LOCAL_IP:5500",  # Add your local IP
+   ]
+   ```
+
+2. **Start Backend Server**:
+   ```bash
+   cd backend
+   python manage.py runserver YOUR_LOCAL_IP:8000
+   # Example: python manage.py runserver 192.168.0.198:8000
+   ```
+
+#### Step 3: Configure Frontend for Network Access
+
+1. **Update API Configuration** (`frontend/js/config.js`):
+   ```javascript
+   export const API_BASE_URL = runtime.API_BASE_URL || 
+     import.meta.env.VITE_API_BASE_URL || 
+     (window.location.hostname === 'YOUR_LOCAL_IP' ? 
+       'http://YOUR_LOCAL_IP:8000/api/v1' : 
+       'http://127.0.0.1:8000/api/v1');
+   ```
+
+2. **Build and Start Frontend**:
+   ```bash
+   cd frontend
+   npm run build
+   npm run preview -- --host YOUR_LOCAL_IP
+   # Example: npm run preview -- --host 192.168.0.198
+   ```
+
+#### Step 4: Share Access
+
+Your website is now accessible at:
+- **Website**: `http://YOUR_LOCAL_IP:8080`
+- **API**: `http://YOUR_LOCAL_IP:8000`
+
+Anyone on your WiFi network can visit these URLs!
+
+### Option 2: Public Internet Access
+
+For sharing beyond your local network, choose one of these options:
+
+#### A. Using Ngrok (Temporary Public URLs)
+
+1. **Install Ngrok**: [Download from ngrok.com](https://ngrok.com/)
+
+2. **Expose Backend**:
+   ```bash
+   ngrok http 8000
+   ```
+
+3. **Expose Frontend**:
+   ```bash
+   ngrok http 8080
+   ```
+
+4. **Update Frontend Config** with ngrok URLs
+
+#### B. Port Forwarding (Router Configuration)
+
+1. **Access Router Admin Panel** (usually `192.168.1.1` or `192.168.0.1`)
+2. **Set Up Port Forwarding**:
+   - Forward external port `8000` to `YOUR_LOCAL_IP:8000` (Backend)
+   - Forward external port `8080` to `YOUR_LOCAL_IP:8080` (Frontend)
+3. **Update CORS Settings** in Django to include your public IP
+4. **Share Your Public IP**: `http://YOUR_PUBLIC_IP:8080`
+
+⚠️ **Security Warning**: Only use for testing. Production requires proper security setup.
+
+#### C. Cloud Deployment (Recommended for Production)
+
+See the [Production Deployment](#production-deployment) section below.
+
+### Option 3: Development Server Access
+
+For development sharing (less stable but quick):
+
+1. **Start Backend**:
+   ```bash
+   cd backend
+   python manage.py runserver 0.0.0.0:8000
+   ```
+
+2. **Start Frontend Dev Server**:
+   ```bash
+   cd frontend
+   npm run dev -- --host 0.0.0.0
+   ```
+
+Access at `http://YOUR_LOCAL_IP:3000`
+
+### Troubleshooting Network Access
+
+**Can't access from other devices?**
+- Check Windows Firewall settings
+- Ensure both devices are on the same network
+- Try disabling antivirus temporarily
+- Verify IP address hasn't changed
+
+**CORS errors?**
+- Double-check CORS_ALLOWED_ORIGINS includes your IP
+- Restart Django server after changes
+- Check browser developer console for specific errors
+
+**API calls failing?**
+- Verify backend is accessible: `http://YOUR_LOCAL_IP:8000/api/v1/products/`
+- Check frontend config.js API_BASE_URL
+- Ensure no proxy/VPN interference
+
+---
+
+## Production Deployment
+
+### Cloud Platform Options
+
+#### Recommended Platforms:
+- **Vercel** (Frontend) + **Railway/Heroku** (Backend)
+- **Netlify** (Frontend) + **DigitalOcean App Platform** (Backend)
+- **AWS** (Full stack)
+- **Google Cloud Platform** (Full stack)
 
 ### Production Considerations
 

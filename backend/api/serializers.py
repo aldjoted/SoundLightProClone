@@ -39,6 +39,7 @@ class BrandSerializer(serializers.ModelSerializer):
     Supports multiple languages.
     """
     description = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
     
     class Meta:
         model = Brand
@@ -53,13 +54,37 @@ class BrandSerializer(serializers.ModelSerializer):
                 return obj.get_description('fr')
         return obj.get_description('en')
 
+    def get_image(self, obj):
+        """Return absolute URL for brand image if available"""
+        try:
+            url = obj.image.url if obj.image else ''
+        except Exception:
+            url = ''
+        request = self.context.get('request')
+        if request and url:
+            return request.build_absolute_uri(url)
+        return url
+
 class ProductImageSerializer(serializers.ModelSerializer):
     """
     Serializer for the ProductImage model.
+    Returns absolute URLs for images to support cross-origin frontend.
     """
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = ProductImage
         fields = ['image', 'alt_text']
+
+    def get_image(self, obj):
+        try:
+            url = obj.image.url if obj.image else ''
+        except Exception:
+            url = ''
+        request = self.context.get('request')
+        if request and url:
+            return request.build_absolute_uri(url)
+        return url
 
 class ProductSerializer(serializers.ModelSerializer):
     """

@@ -518,7 +518,7 @@ const ChatbotModule = (() => {
             attachEventListeners();
             
             isInitialized = true;
-            console.log('Chatbot: Successfully initialized');
+            // Initialization complete
             return true;
         } catch (error) {
             console.error('Chatbot: Initialization failed', error);

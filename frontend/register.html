@@ -60,7 +60,7 @@
                             <input type="search" id="search-input" placeholder="Search products..." aria-label="Search products" autocomplete="off">
                             <button type="submit" class="search-btn" aria-label="Submit search"><i class="fas fa-search"></i></button>
                         </form>
-                        <div id="search-suggestions" class="search-suggestions-container" role="listbox" aria-label="Search suggestions"></div>
+                        <div id="search-suggestions" class="hidden" aria-label="Search suggestions"></div>
                     </div>
                 </div>
                 <div class="header-actions">
@@ -141,7 +141,7 @@
         <i class="fas fa-comment-dots"></i>
     </button>
     <!-- Chatbot Interface -->
-    <div class="chatbot" id="chatbot-panel" role="dialog" aria-modal="false" aria-label="Assistant">
+    <dialog class="chatbot" id="chatbot-panel" aria-label="Assistant">
         <header class="chatbot-header">
             <h2>SoundLightPro Assistant</h2>
             <button class="close-btn fas fa-times" aria-label="Close assistant"></button>

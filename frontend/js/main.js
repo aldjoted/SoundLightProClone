@@ -14,6 +14,9 @@ import * as auth from './auth.js';
 import AdvancedSearch from './advanced-search.js';
 import MobileNavigation from './mobile-nav.js';
 import { ListenerManager, RequestManager } from './utils.js';
+import { initPerformanceOptimizations } from './performance.js';
+import { initSecurity } from './security.js';
+import { initAnalytics } from './analytics.js';
 import i18n from './i18n.js';
 import './language-switcher.js';
 
@@ -54,11 +57,9 @@ async function getCached(key, fetcher) {
 // --- Initialization & Routing ---
 
 globalListenerManager.add(document, 'DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing app...');
     try {
         initApp();
         router();
-        console.log('App initialization completed successfully');
     } catch (error) {
         console.error('App initialization failed:', error);
         // Show error message to user
@@ -110,19 +111,23 @@ function router() {
  * Initializes global components and event listeners that run on every page.
  */
 async function initApp() {
-    console.log('Starting app initialization...');
-    
     try {
+        // Initialize security measures first
+        initSecurity();
+        
+        // Initialize performance optimizations
+        initPerformanceOptimizations();
+        
+        // Initialize analytics and monitoring
+        initAnalytics();
+        
         // Initialize internationalization
-        console.log('Initializing i18n...');
         setupI18n();
         
         if (window.AOS) AOS.init({ duration: 800, once: true });
 
         ui.updateCartCount(cart.getCartItemCount());
         globalListenerManager.add(document, 'cartUpdated', () => ui.updateCartCount(cart.getCartItemCount()));
-        
-        console.log('Cart and UI initialized');
         
         try {
             // Try to get user profile only if we might have a refresh token
@@ -131,27 +136,21 @@ async function initApp() {
             if (refreshToken) {
                 const user = await apiService.getUserProfile();
                 ui.updateUserAuthUI(user);
-                console.log('User authenticated:', user.username);
             } else {
                 // No refresh token, user is not logged in
                 ui.updateUserAuthUI(null);
-                console.log('User not logged in - showing guest UI');
             }
         } catch (error) {
             // If getUserProfile fails, user is not authenticated or token expired
             ui.updateUserAuthUI(null);
-            console.log('User authentication failed - showing guest UI');
         }
 
         // --- Orchestration ---
         // Instantiate the imported modules to activate them.
-        console.log('Initializing modules...');
         new AdvancedSearch();
         new MobileNavigation();
-        console.log('Modules initialized');
 
         setupGlobalEventListeners();
-        console.log('Global event listeners set up');
         
     } catch (error) {
         console.error('Error in initApp:', error);
@@ -247,8 +246,6 @@ async function handleProductGridActions(e) {
 function setupI18n() {
     // Listen for language changes to update dynamic content
     i18n.addListener((newLanguage) => {
-        console.log(`Language switched to: ${newLanguage}`);
-        
         // Update cart messages and UI elements
         const cartCount = cart.getCartItemCount();
         ui.updateCartCount(cartCount);
@@ -309,7 +306,6 @@ function updateDynamicTranslations() {
  * Initializes the Home Page.
  */
 async function initHomePage(signal) {
-    console.log('Initializing homepage...');
     const productGrid = document.getElementById('product-grid');
     const featuredGrid = document.getElementById('featured-grid');
     if (!productGrid || !featuredGrid) {
@@ -324,18 +320,14 @@ async function initHomePage(signal) {
     ui.showSkeletonLoader(featuredGrid, 3);
 
     try {
-        console.log('Fetching products and categories...');
         const [products, categories] = await Promise.all([
             getCached('products', () => apiService.getProducts('', { signal })),
             getCached('categories', () => apiService.getCategories({ signal }))
         ]);
 
-        console.log(`Loaded ${products.length} products and ${categories.length} categories`);
-
         appState.products = products;
         appState.categories = categories;
 
-        console.log('Rendering UI components...');
         ui.renderHeroSlider();
         
         if (window.Swiper) {
@@ -351,8 +343,6 @@ async function initHomePage(signal) {
         ui.renderCategoryFilters(categories.filter(c => !c.parent));
         ui.renderMegaMenu(categories);
         ui.renderProductGrid(products, productGrid);
-        
-        console.log('UI components rendered successfully');
         
         const filterControls = document.querySelector('.filter-controls');
         if (filterControls) {

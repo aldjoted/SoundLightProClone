@@ -92,7 +92,7 @@
                 <a href="index.html" class="logo" aria-label="SoundLightPro Home">
                     <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
                 </a>
-                <!-- MISE À JOUR : Ajout de id="main-navigation" pour l'attribut aria-controls du bouton mobile. -->
+                <!-- Navigation updated for main navigation -->
                 <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
                         <li><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
@@ -121,8 +121,8 @@
                             <input type="search" id="search-input" data-i18n="search_placeholder" placeholder="Search products..." aria-label="Search products" autocomplete="off">
                             <button type="submit" class="search-btn" aria-label="Submit search"><i class="fas fa-search"></i></button>
                         </form>
-                        <!-- Conteneur pour les suggestions de recherche -->
-                        <div id="search-suggestions" class="search-suggestions-container" role="listbox" aria-label="Search suggestions"></div>
+                        <!-- Search suggestions dropdown -->
+                        <div id="search-suggestions" class="hidden" aria-label="Search suggestions"></div>
                     </div>
                 </div>
                 <div class="header-actions">
@@ -182,9 +182,9 @@
         <section id="products" class="product-listing container" aria-labelledby="products-title" data-aos="fade-up">
             <div class="section-header">
                 <h2 id="products-title" class="section-title" data-i18n="nav_products">Our Products</h2>
-                <div class="filter-controls" role="group" aria-label="Product categories">
+                <fieldset class="filter-controls" aria-label="Product categories">
                     <!-- Les boutons de filtre sont injectés ici par ui.js -->
-                </div>
+                </fieldset>
             </div>
             <!-- #product-grid est la cible pour l'affichage des produits. La logique de filtrage dans main.js agit sur cet élément. -->
             <div id="product-grid" class="product-grid">

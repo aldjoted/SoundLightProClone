@@ -127,6 +127,9 @@ export function renderHeroSlider(_unused = []) {
     const swiperWrapper = document.querySelector('.swiper-wrapper');
     if (!swiperWrapper) return;
 
+    // Build absolute URL from site root so it works on any page path
+    const toAbs = (p) => new URL(p.replace(/^\//, ''), window.location.origin + '/').toString();
+    
     const images = [
         'images/hero/soundlightpro-banner-home1.jpg',
         'images/hero/soundlightpro-banner-home2.jpg',
@@ -146,7 +149,7 @@ export function renderHeroSlider(_unused = []) {
     const img = document.createElement('img');
     img.className = 'slide-bg';
     img.alt = `Promotional banner ${index + 1}`;
-    img.src = src;
+    img.src = toAbs(src);
     img.width = 1920; // intrinsic size hint to reduce CLS
     img.height = 822; // matches ~21:9 ratio
         if (index > 0) img.loading = 'lazy';
