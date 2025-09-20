@@ -27,6 +27,7 @@ const ChatbotModule = (() => {
         
         SELECTORS: {
             toggler: '.chatbot-toggler',
+            panel: '#chatbot-panel',
             closeBtn: '.close-btn',
             chatbox: '.chatbox',
             chatInput: '.chat-input textarea',
@@ -371,6 +372,15 @@ const ChatbotModule = (() => {
      */
     function openChatbot() {
         document.body.classList.add(CONFIG.CLASSES.showChatbot);
+        document.body.classList.add('no-scroll');
+        // Ensure <dialog> is actually opened on browsers that require it
+        try {
+            if (elements.panel && typeof elements.panel.showModal === 'function') {
+                if (!elements.panel.open) elements.panel.showModal();
+            } else if (elements.panel) {
+                elements.panel.setAttribute('open', '');
+            }
+        } catch {}
         elements.toggler.setAttribute(CONFIG.ARIA.expanded, 'true');
         
         // Focus management
@@ -386,6 +396,15 @@ const ChatbotModule = (() => {
      */
     function closeChatbot() {
         document.body.classList.remove(CONFIG.CLASSES.showChatbot);
+        document.body.classList.remove('no-scroll');
+        // Properly close the dialog element
+        try {
+            if (elements.panel && typeof elements.panel.close === 'function') {
+                if (elements.panel.open) elements.panel.close();
+            } else if (elements.panel) {
+                elements.panel.removeAttribute('open');
+            }
+        } catch {}
         elements.toggler.setAttribute(CONFIG.ARIA.expanded, 'false');
         elements.toggler.focus();
         
@@ -431,13 +450,14 @@ const ChatbotModule = (() => {
     function cacheElements() {
         try {
             elements.toggler = document.querySelector(CONFIG.SELECTORS.toggler);
+            elements.panel = document.querySelector(CONFIG.SELECTORS.panel) || document.querySelector('.chatbot');
             elements.closeBtn = document.querySelector(CONFIG.SELECTORS.closeBtn);
             elements.chatbox = document.querySelector(CONFIG.SELECTORS.chatbox);
             elements.chatInput = document.querySelector(CONFIG.SELECTORS.chatInput);
             elements.sendBtn = document.querySelector(CONFIG.SELECTORS.sendBtn);
 
             // Validate required elements
-            const requiredElements = [elements.toggler, elements.closeBtn, elements.chatbox, elements.chatInput, elements.sendBtn];
+            const requiredElements = [elements.toggler, elements.panel, elements.closeBtn, elements.chatbox, elements.chatInput, elements.sendBtn];
             if (requiredElements.some(el => !el)) {
                 console.warn('Chatbot: Some required elements not found');
                 return false;
@@ -482,12 +502,29 @@ const ChatbotModule = (() => {
         elements.chatInput.addEventListener('input', debouncedInputHandler);
         elements.chatInput.addEventListener('keydown', handleKeydown);
 
-        // Button events
-        elements.sendBtn.addEventListener('click', handleChatSubmission);
-        elements.closeBtn.addEventListener('click', closeChatbot);
-        elements.toggler.addEventListener('click', toggleChatbot);
+        // Button events: use a single 'click' handler to avoid double-trigger on mobile (touchend + pointerup)
+        const onClick = (el, handler) => { if (el) el.addEventListener('click', handler); };
+        onClick(elements.sendBtn, handleChatSubmission);
+        onClick(elements.closeBtn, closeChatbot);
+        onClick(elements.toggler, toggleChatbot);
 
-        // Accessibility: Allow Enter key on buttons
+        // Close when clicking outside the dialog content when <dialog> supports 'close'
+        if (elements.panel) {
+            elements.panel.addEventListener('click', (e) => {
+                const rect = elements.panel.getBoundingClientRect();
+                const isInDialog = (
+                    e.clientX >= rect.left &&
+                    e.clientX <= rect.right &&
+                    e.clientY >= rect.top &&
+                    e.clientY <= rect.bottom
+                );
+                if (!isInDialog && elements.panel.open) {
+                    closeChatbot();
+                }
+            });
+        }
+
+        // Accessibility: Allow Enter/Space key on buttons
         [elements.sendBtn, elements.closeBtn, elements.toggler].forEach(btn => {
             btn.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
