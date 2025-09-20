@@ -103,8 +103,12 @@
 
 /* Keep suggestions positioning sane in the new row */
 .header-search-row .search-suggestions-container {
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
+    right: auto;
+    transform: none;
+    width: min(360px, 90vw);
+    max-height: 55vh;
+    overflow-y: auto;
 }
 
 /* ============= Hero Slider ============= */

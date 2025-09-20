@@ -18,6 +18,14 @@ class AdvancedSearch {
 
         this.query = '';
         this.abortController = null;
+        this.items = [];
+        this.highlightIndex = -1;
+
+        // ARIA setup for combobox pattern
+        this.input.setAttribute('role', 'combobox');
+        this.input.setAttribute('aria-autocomplete', 'list');
+        this.input.setAttribute('aria-expanded', 'false');
+        this.input.setAttribute('aria-haspopup', 'listbox');
         
         // Use improved debounce function with immediate option
         this.debouncedSearch = debounce(() => this.search(), 250);
@@ -39,9 +47,7 @@ class AdvancedSearch {
         this.input.addEventListener('focus', () => {
             if (this.container.innerHTML.trim()) this.showSuggestions();
         });
-        this.input.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') this.hideSuggestions();
-        });
+        this.input.addEventListener('keydown', (e) => this.handleInputKeydown(e));
 
         document.addEventListener('click', (e) => {
             const root = this.input.closest('.search-container');
@@ -72,6 +78,38 @@ class AdvancedSearch {
         });
     }
 
+    handleInputKeydown(e) {
+        const key = e.key;
+        if (key === 'Escape') {
+            this.hideSuggestions();
+            return;
+        }
+        // Keyboard navigation only when suggestions are visible
+        if (this.container?.classList?.contains('hidden') === false) {
+            if (key === 'ArrowDown') {
+                e.preventDefault();
+                this.moveHighlight(1);
+                return;
+            }
+            if (key === 'ArrowUp') {
+                e.preventDefault();
+                this.moveHighlight(-1);
+                return;
+            }
+            if (key === 'Enter') {
+                if (this.highlightIndex >= 0 && this.items[this.highlightIndex]) {
+                    e.preventDefault();
+                    const link = this.items[this.highlightIndex]?.querySelector('a.result-link');
+                    if (link?.href) {
+                        window.location.href = link.href;
+                    } else {
+                        this.form.requestSubmit();
+                    }
+                }
+            }
+        }
+    }
+
     async search() {
         // cancel previous
         if (this.abortController) this.abortController.abort();
@@ -81,6 +119,7 @@ class AdvancedSearch {
         try {
             const products = await apiService.getProducts(this.query, { signal });
             renderSearchSuggestions(products, this.container);
+            this.initKeyboardState();
             this.showSuggestions();
         } catch (err) {
             if (err?.name === 'AbortError') return;
@@ -89,8 +128,54 @@ class AdvancedSearch {
         }
     }
 
-    showSuggestions() { this.container.classList.remove('hidden'); }
-    hideSuggestions() { this.container.classList.add('hidden'); this.container.innerHTML = ''; }
+    showSuggestions() { 
+        this.container.classList.remove('hidden');
+        this.input.setAttribute('aria-expanded', 'true');
+    }
+    hideSuggestions() {
+        this.container.classList.add('hidden');
+        this.container.innerHTML = '';
+        this.items = [];
+        this.highlightIndex = -1;
+        this.input.removeAttribute('aria-activedescendant');
+        this.input.setAttribute('aria-expanded', 'false');
+    }
+
+    initKeyboardState() {
+        // Ensure the listbox has an ID and wire aria-controls
+        const ul = this.container.querySelector('ul[role="listbox"]');
+        if (ul) {
+            if (!ul.id) ul.id = 'search-suggestions-list';
+            this.input.setAttribute('aria-controls', ul.id);
+        }
+        this.items = Array.from(this.container.querySelectorAll('li.search-result-item'));
+        this.highlightIndex = this.items.length ? 0 : -1;
+        this.syncHighlight();
+    }
+
+    moveHighlight(delta) {
+        if (!this.items.length) return;
+        const next = (this.highlightIndex + delta + this.items.length) % this.items.length;
+        this.highlightIndex = next;
+        this.syncHighlight();
+    }
+
+    syncHighlight() {
+        this.items.forEach((li, idx) => {
+            const isActive = idx === this.highlightIndex;
+            li.classList.toggle('highlighted', isActive);
+            li.setAttribute('aria-selected', String(isActive));
+            if (!li.id) li.id = `search-option-${idx}`;
+            if (isActive) {
+                this.input.setAttribute('aria-activedescendant', li.id);
+                // Keep highlighted item in view
+                li.scrollIntoView({ block: 'nearest' });
+            }
+        });
+        if (this.highlightIndex === -1) {
+            this.input.removeAttribute('aria-activedescendant');
+        }
+    }
 }
 
 export default AdvancedSearch;

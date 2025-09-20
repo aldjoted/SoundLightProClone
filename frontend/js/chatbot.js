@@ -1,5 +1,5 @@
-import { API_BASE_URL } from './config.js';
 import { apiFetch } from './apiService.js';
+import { debounce } from './utils.js';
 
 /**
  * Chatbot Module
@@ -342,24 +342,6 @@ const ChatbotModule = (() => {
         elements.chatInput.style.height = 'auto';
         elements.chatInput.style.height = `${elements.chatInput.scrollHeight}px`;
     }, CONFIG.DEBOUNCE_DELAY);
-
-    /**
-     * Debounce utility function
-     * @param {Function} func - Function to debounce
-     * @param {number} wait - Wait time in milliseconds
-     * @returns {Function} Debounced function
-     */
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
 
     /**
      * Get responsive breakpoint from CSS

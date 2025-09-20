@@ -6,6 +6,7 @@
  */
 
 import i18n from './i18n.js';
+import { ListenerManager } from './utils.js';
 
 // ============= Helper Functions =============
 
@@ -165,44 +166,54 @@ export function renderMegaMenu(categories) {
     if (!megaMenuContainer) return;
 
     const parentCategories = categories.filter(c => c.parent === null && c.children.length > 0);
-    
-    // 1. Construire les onglets
-    const tabsHTML = parentCategories.map((parent, index) => `
-        <button class="mega-menu-tab-btn ${index === 0 ? 'active' : ''}" data-target="pane-${parent.slug}">
-            ${parent.name}
-        </button>
-    `).join('');
 
-    // 2. Construire les panneaux de contenu
-    const panesHTML = parentCategories.map((parent, index) => `
-        <div id="pane-${parent.slug}" class="mega-menu-pane ${index === 0 ? 'active' : ''}">
-            <div class="mega-menu-column featured">
-                 <h4>${parent.name}</h4>
-                 <p>${parent.description || `Explore our full range of ${parent.name}.`}</p>
-                 <a href="index.html#products?category=${parent.slug}" class="btn btn--secondary">View All</a>
-            </div>
-            ${parent.children.map(child => `
-                <div class="mega-menu-column">
-                    <a href="index.html#products?category=${child.slug}">
-                        <h5>${child.name}</h5>
-                    </a>
-                </div>
-            `).join('')}
-        </div>
-    `).join('');
+    // Clear container and rebuild safely
+    megaMenuContainer.innerHTML = '';
 
-    // 3. Assembler le tout
-    const megaMenuHTML = `
-        <div class="mega-menu-header">
-            ${tabsHTML}
-        </div>
-        <div class="mega-menu-content">
-            ${panesHTML}
-        </div>
-    `;
+    // Header with tabs
+    const header = createElement('div', { class: 'mega-menu-header' });
+    parentCategories.forEach((parent, index) => {
+        const btn = createElement('button', {
+            class: `mega-menu-tab-btn ${index === 0 ? 'active' : ''}`,
+            'data-target': `pane-${parent.slug}`
+        }, [escapeHtml(parent.name)]);
+        header.appendChild(btn);
+    });
 
-    megaMenuContainer.innerHTML = megaMenuHTML;
-    
+    // Content panes
+    const content = createElement('div', { class: 'mega-menu-content' });
+    parentCategories.forEach((parent, index) => {
+        const pane = createElement('div', {
+            id: `pane-${parent.slug}`,
+            class: `mega-menu-pane ${index === 0 ? 'active' : ''}`
+        });
+
+        // Featured column
+        const featured = createElement('div', { class: 'mega-menu-column featured' });
+        featured.appendChild(createElement('h4', {}, [escapeHtml(parent.name)]));
+        const descText = parent.description || `Explore our full range of ${parent.name}.`;
+        featured.appendChild(createElement('p', {}, [escapeHtml(descText)]));
+        featured.appendChild(createElement('a', {
+            href: `index.html#products?category=${encodeURIComponent(parent.slug)}`,
+            class: 'btn btn--secondary'
+        }, ['View All']));
+        pane.appendChild(featured);
+
+        // Children columns
+        parent.children.forEach(child => {
+            const col = createElement('div', { class: 'mega-menu-column' });
+            const link = createElement('a', { href: `index.html#products?category=${encodeURIComponent(child.slug)}` });
+            link.appendChild(createElement('h5', {}, [escapeHtml(child.name)]));
+            col.appendChild(link);
+            pane.appendChild(col);
+        });
+
+        content.appendChild(pane);
+    });
+
+    megaMenuContainer.appendChild(header);
+    megaMenuContainer.appendChild(content);
+
     // Set up tab switching functionality
     setupMegaMenuTabSwitching(megaMenuContainer);
 }
@@ -263,12 +274,16 @@ export function renderFeaturedGrid(products) {
 export function renderCategoryFilters(categories) {
     const filterContainer = document.querySelector('.filter-controls');
     if(!filterContainer) return;
+    filterContainer.innerHTML = '';
+    const frag = document.createDocumentFragment();
 
-    let buttonsHTML = '<button class="filter-btn active" data-category="all">All</button>';
+    frag.appendChild(createElement('button', { class: 'filter-btn active', 'data-category': 'all' }, ['All']));
     categories.forEach(category => {
-        buttonsHTML += `<button class="filter-btn" data-category="${category.slug}">${category.name}</button>`;
+        const btn = createElement('button', { class: 'filter-btn', 'data-category': category.slug }, [escapeHtml(category.name)]);
+        frag.appendChild(btn);
     });
-    filterContainer.innerHTML = buttonsHTML;
+
+    filterContainer.appendChild(frag);
 }
 
 /**
@@ -360,7 +375,7 @@ export function renderQuickViewModal(product) {
     `;
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     document.body.classList.add('no-scroll');
-    
+
     // Set up event listeners for the modal
     setupQuickViewEventListeners(product);
 }
@@ -373,34 +388,36 @@ function setupQuickViewEventListeners(product) {
     const overlay = document.getElementById('quick-view-overlay');
     const closeBtn = overlay.querySelector('.modal-close-btn');
     const addToCartBtn = overlay.querySelector('.add-to-cart-modal-btn');
-    
+
+    // Use a scoped ListenerManager to ensure full cleanup
+    const lm = new ListenerManager();
+    overlay._listenerManager = lm; // attach for cleanup on close
+
     // Close modal when clicking close button
-    closeBtn.addEventListener('click', closeQuickViewModal);
-    
+    lm.add(closeBtn, 'click', closeQuickViewModal);
+
     // Close modal when clicking overlay background
-    overlay.addEventListener('click', (e) => {
+    lm.add(overlay, 'click', (e) => {
         if (e.target === overlay) {
             closeQuickViewModal();
         }
     });
-    
+
     // Close modal when pressing Escape key
     const handleEscape = (e) => {
         if (e.key === 'Escape') {
             closeQuickViewModal();
-            document.removeEventListener('keydown', handleEscape);
         }
     };
-    document.addEventListener('keydown', handleEscape);
-    
+    lm.add(document, 'keydown', handleEscape);
+
     // Handle add to cart from modal
-    addToCartBtn.addEventListener('click', async () => {
+    lm.add(addToCartBtn, 'click', async () => {
         try {
-            // Dynamically import cart module to avoid circular dependencies
             const cart = await import('./cart.js');
             cart.addToCart(product, 1);
             showToast(`${product.name} added to cart!`, 'success');
-            
+
             // Update button state temporarily
             addToCartBtn.disabled = true;
             addToCartBtn.innerHTML = `<i class="fas fa-check"></i> Added`;
@@ -408,7 +425,7 @@ function setupQuickViewEventListeners(product) {
                 addToCartBtn.disabled = false;
                 addToCartBtn.innerHTML = `<i class="fas fa-shopping-cart"></i> Add to Cart`;
             }, 1500);
-            
+
             // Update cart count and mini cart
             updateCartCount(cart.getCartItemCount());
             renderMiniCart(cart.getCart());
@@ -425,6 +442,11 @@ function setupQuickViewEventListeners(product) {
 function closeQuickViewModal() {
     const overlay = document.getElementById('quick-view-overlay');
     if (overlay) {
+        // Clean up listeners first
+        if (overlay._listenerManager && typeof overlay._listenerManager.removeAll === 'function') {
+            overlay._listenerManager.removeAll();
+            overlay._listenerManager = null;
+        }
         overlay.remove();
         document.body.classList.remove('no-scroll');
     }
@@ -611,7 +633,9 @@ export function updateUserAuthUI(user) {
             authLinks.classList.add('hidden');
             userInfo.classList.remove('hidden');
             usernameDisplay.textContent = user.username;
-            userMenuToggle.setAttribute('aria-expanded', 'false');
+            if (userMenuToggle) {
+                userMenuToggle.setAttribute('aria-expanded', 'false');
+            }
         } else {
             authLinks.classList.remove('hidden');
             userInfo.classList.add('hidden');
@@ -632,7 +656,14 @@ export function renderSearchSuggestions(products, container) {
         container.classList.remove('hidden');
         return;
     }
+    const count = Math.min(products.length, 8);
+    const q = (document.getElementById('search-input')?.value || '').trim();
+    const viewAllHref = q ? `search-results.html?${new URLSearchParams({ q }).toString()}` : 'search-results.html';
     container.innerHTML = `
+        <div class="suggestions-header">
+            <span class="header-title">Products</span>
+            <span class="header-count">${count}${products.length > 8 ? '+' : ''}</span>
+        </div>
         <ul role="listbox">
             ${products.slice(0, 8).map((p, idx) => `
                 <li class="search-result-item ${idx===0?'highlighted':''}" role="option" data-index="${idx}">
@@ -656,6 +687,12 @@ export function renderSearchSuggestions(products, container) {
                 </li>
             `).join('')}
         </ul>
+        <div class="suggestions-footer">
+            <a class="view-all-results" href="${viewAllHref}">
+                <i class="fas fa-search"></i>
+                View all results
+            </a>
+        </div>
     `;
     container.classList.remove('hidden');
 }

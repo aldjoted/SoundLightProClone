@@ -171,7 +171,9 @@ function setupGlobalEventListeners() {
         if (userMenuToggle) {
             e.stopPropagation();
             const isExpanded = userMenuToggle.getAttribute('aria-expanded') === 'true';
-            userMenuToggle.setAttribute('aria-expanded', !isExpanded);
+                if (userMenuToggle) {
+                    userMenuToggle.setAttribute('aria-expanded', !isExpanded);
+                }
             return;
         }
 

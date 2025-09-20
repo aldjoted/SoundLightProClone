@@ -12,7 +12,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!grid) return;
 
     const q = getQuery();
-    subtitle && (subtitle.textContent = q ? `Looking for "${q}"` : 'Showing all products');
+    if (subtitle) {
+        subtitle.textContent = q ? `Looking for "${q}"` : 'Showing all products';
+    }
 
     showSkeletonLoader(grid, 8);
     const abort = new AbortController();
@@ -22,11 +24,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         const products = await apiService.getProducts(q, { signal });
         renderProductGrid(products, grid);
         if (products.length === 0) {
-            grid.innerHTML = `<p class="info-message">No results for "${q}". Try a different term.</p>`;
+            grid.innerHTML = '';
+            const p = document.createElement('p');
+            p.className = 'info-message';
+            p.textContent = q ? `No results for "${q}". Try a different term.` : 'No results.';
+            grid.appendChild(p);
         }
     } catch (err) {
         console.error('Search results error', err);
-        grid.innerHTML = `<p class="error-message">Failed to load results. Please retry.</p>`;
+        grid.innerHTML = '';
+        const p = document.createElement('p');
+        p.className = 'error-message';
+        p.textContent = 'Failed to load results. Please retry.';
+        grid.appendChild(p);
         showToast('Failed to load search results.', 'error');
     }
 });
