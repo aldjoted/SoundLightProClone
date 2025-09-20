@@ -128,7 +128,10 @@
 .search-result-item .result-details { min-width: 0; display: flex; align-items: center; justify-content: space-between; width: 100%; }
 .search-result-item .search-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .search-result-item .search-price { margin-left: auto; }
-.search-thumb { width: 36px; height: 36px; border-radius: var(--radius-sm); object-fit: cover; background: var(--gray-100); flex: 0 0 36px; }
+.search-thumb { width: 36px; height: 36px; border-radius: var(--radius-sm); object-fit: cover; background: var(--gray-100); flex: 0 0 36px; aspect-ratio: 1 / 1; }
+
+/* Mini cart thumb styling for CLS reduction */
+.mini-cart-thumb { width: 64px; height: 64px; border-radius: var(--radius-sm); object-fit: cover; background: var(--gray-100); flex: 0 0 64px; aspect-ratio: 1 / 1; }
 .search-name { display: block; font-weight: 600; }
 .search-price { color: var(--primary-dark); font-weight: 700; font-size: .9rem; }
 

@@ -188,9 +188,10 @@ function setupGlobalEventListeners() {
             return;
         }
         
-        // Close user menu on outside click
-        if (document.querySelector('.user-menu-toggle[aria-expanded="true"]') && !target.closest('.user-menu')) {
-            document.querySelector('.user-menu-toggle').setAttribute('aria-expanded', 'false');
+        // Close user menu on outside click (guarded)
+        const openToggle = document.querySelector('.user-menu-toggle[aria-expanded="true"]');
+        if (openToggle && !target.closest('.user-menu')) {
+            openToggle.setAttribute('aria-expanded', 'false');
         }
     });
 

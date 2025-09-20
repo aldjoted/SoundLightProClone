@@ -143,10 +143,12 @@ export function renderHeroSlider(_unused = []) {
     images.forEach((src, index) => {
         const slide = document.createElement('div');
         slide.className = 'swiper-slide';
-        const img = document.createElement('img');
-        img.className = 'slide-bg';
-        img.alt = `Promotional banner ${index + 1}`;
-        img.src = src;
+    const img = document.createElement('img');
+    img.className = 'slide-bg';
+    img.alt = `Promotional banner ${index + 1}`;
+    img.src = src;
+    img.width = 1920; // intrinsic size hint to reduce CLS
+    img.height = 822; // matches ~21:9 ratio
         if (index > 0) img.loading = 'lazy';
         const overlay = document.createElement('div');
         overlay.className = 'slide-overlay';
@@ -257,7 +259,7 @@ export function renderFeaturedGrid(products) {
 
     grid.innerHTML = products.map(product => `
         <a href="product.html?id=${product.id}" class="focus-card">
-            <img src="${getProductImage(product)}" alt="${escapeHtml(product.name)}" loading="lazy">
+            <img src="${getProductImage(product)}" alt="${escapeHtml(product.name)}" loading="lazy" width="400" height="250">
             <div class="focus-card-content">
                 <h3>${escapeHtml(product.name)}</h3>
                 <p>${escapeHtml(product.category)}</p>
@@ -308,7 +310,7 @@ export function renderProductGrid(products, container) {
                 class: 'product-card-image',
                 'aria-label': `View details for ${escapeHtml(product.name)}`
             }, [
-                createElement('img', { src: getProductImage(product), alt: escapeHtml(product.name), loading: 'lazy' }),
+                createElement('img', { src: getProductImage(product), alt: escapeHtml(product.name), loading: 'lazy', width: '400', height: '250' }),
                 createElement('div', { class: 'product-card-overlay' }, [
                     createElement('button', { class: 'btn btn--secondary quick-view-btn', 'data-product-id': product.id }, [
                         createElement('i', { class: 'fas fa-eye' }),
@@ -475,7 +477,7 @@ export function renderProductDetail(product, container) {
         thumbnailsHTML = `
             <div class="product-thumbnails">
                 ${product.images.map((img, index) => `
-                    <img src="${img.image}" alt="${escapeHtml(img.alt_text || product.name)}" class="thumbnail-img ${index === 0 ? 'active' : ''}" />
+                    <img src="${img.image}" alt="${escapeHtml(img.alt_text || product.name)}" class="thumbnail-img ${index === 0 ? 'active' : ''}" width="300" height="300" />
                 `).join('')}
             </div>
         `;
@@ -485,7 +487,7 @@ export function renderProductDetail(product, container) {
         <div class="product-detail-layout">
             <div class="product-gallery">
                 <div class="main-image-container">
-                    <img id="main-product-image" src="${mainImageSrc}" alt="${escapeHtml(product.name)}">
+                    <img id="main-product-image" src="${mainImageSrc}" alt="${escapeHtml(product.name)}" width="800" height="500">
                 </div>
                 ${thumbnailsHTML}
             </div>
@@ -668,7 +670,7 @@ export function renderSearchSuggestions(products, container) {
             ${products.slice(0, 8).map((p, idx) => `
                 <li class="search-result-item ${idx===0?'highlighted':''}" role="option" data-index="${idx}">
                     <a class="result-link" href="product.html?id=${p.id}">
-                        <img class="search-thumb" src="${getProductImage(p)}" alt="${escapeHtml(p.name)}" loading="lazy">
+                        <img class="search-thumb" src="${getProductImage(p)}" alt="${escapeHtml(p.name)}" loading="lazy" width="36" height="36">
                         <div class="result-details">
                             <span class="search-name">${escapeHtml(p.name)}</span>
                             <span class="search-price">$${parseFloat(p.price).toFixed(2)}</span>
