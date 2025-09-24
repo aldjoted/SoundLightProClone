@@ -322,3 +322,230 @@
 @media (max-width: 480px) {
     .mobile-nav-panel { width: 100%; transform: translateX(100%); }
 }
+
+/* ===== Responsive Full-Width Header Background (logoslp.jpg) ===== */
+.main-header {
+    position: relative;
+    width: 100%;
+    /* Corrected filename + improved positioning (shows more top content) */
+    background: #000 url("../../images/logo/logoslp.jpg") center top / cover no-repeat;
+    /* Dynamic height responsive to viewport while keeping a sensible min/max */
+    min-height: clamp(160px, 38vh, 480px);
+    display: flex;
+    align-items: center;
+    color: #fff;
+}
+
+/* Optional subtle dark overlay for readability: enable by adding .has-overlay to .main-header */
+.main-header.has-overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.55));
+    pointer-events: none;
+}
+
+.main-header > .container, .main-header .header-wrapper { position: relative; z-index: 1; }
+
+/* Remove default spacing so content can sit comfortably over background */
+.main-header .header-wrapper { padding-top: var(--spacing-md); padding-bottom: var(--spacing-md); }
+
+/* Logo anchor now text/empty (image removed) - ensure accessible sizing without img */
+.main-header .logo { display: inline-flex; align-items: center; font-size: 1.15rem; font-weight: 700; color: #fff; text-decoration: none; letter-spacing: .5px; }
+.main-header .logo:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+/* High-contrast navigation links over dark background */
+.main-header .nav-link {
+    color: #fff !important;
+    background: transparent;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    transition: background-color var(--transition-fast), opacity var(--transition-fast), outline-color var(--transition-fast);
+}
+.main-header .nav-link::after { background: #fff; }
+.main-header .nav-link:hover, .main-header .nav-link:focus-visible, .main-header .nav-link.active {
+    color: #fff;
+    background: rgba(255,255,255,0.14);
+}
+.main-header .nav-link:hover::after, .main-header .nav-link.active::after { width: 60%; }
+
+/* Cart link variant */
+.main-header .cart-link {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.4);
+}
+.main-header .cart-link:hover { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.65); }
+.main-header .cart-badge { border-color: rgba(0,0,0,0.5); }
+
+/* Auth / buttons in header */
+.main-header .btn {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: #fff;
+    backdrop-filter: blur(2px);
+}
+.main-header .btn:hover { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.65); color: #fff; }
+
+/* User menu toggle & dropdown adjustments for dark header */
+.main-header .user-menu-toggle { background: rgba(255,255,255,0.12); color: #fff; }
+.main-header .user-menu-toggle:hover { background: rgba(255,255,255,0.18); }
+
+/* Focus styles for accessibility */
+.main-header .nav-link:focus-visible, .main-header .btn:focus-visible, .main-header .user-menu-toggle:focus-visible, .main-header .cart-link:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+/* Adjust search input (if present in header) for contrast */
+.main-header .search-container input[type="search"],
+.main-header #search-input {
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.4);
+}
+.main-header .search-container input::placeholder { color: rgba(255,255,255,0.75); }
+.main-header .search-container input:focus { border-color: #fff; }
+
+/* Mobile hamburger contrasting color */
+.main-header .mobile-menu-toggle { color: #fff; }
+.main-header .mobile-menu-toggle .hamburger span { background: #fff; }
+
+/* Ensure dropdowns remain readable; keep existing light styles but raise stacking above overlay */
+.main-header .user-dropdown, .main-header .mega-menu { z-index: 10; }
+
+@media (max-width: 900px) {
+    .main-header { min-height: clamp(140px, 28vh, 340px); }
+    .main-header .nav-link { padding: var(--spacing-xs) var(--spacing-sm); }
+}
+
+/* Prevent logo from being cut on very wide screens: switch to contain so full artwork stays visible */
+@media (min-width: 1200px) {
+    .main-header {
+        background-size: contain; /* show entire logo */
+        background-position: center top; /* anchor top so text below remains visible */
+        background-repeat: no-repeat;
+        /* Allow a little more vertical room so it doesn't look cramped when contained */
+        min-height: clamp(220px, 32vh, 520px);
+    }
+}
+
+/* Utility class to force always-show-full-logo regardless of breakpoint */
+.main-header.logo-fit-always {
+    background-size: contain !important;
+    background-position: center top !important;
+    background-repeat: no-repeat !important;
+}
+
+/* If you find there is too much empty space below the contained logo on ultra-wide monitors,
+   you can optionally reduce the height using this helper class in addition: */
+.main-header.logo-fit-tight { min-height: clamp(180px, 26vh, 420px) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+    .main-header .nav-link { transition: none; }
+}
+
+/* ===== Refined Header Search Positioning (avoid covering background logo) ===== */
+/* Place search row as an overlaid bar at the bottom of the header on larger screens */
+.main-header { padding-bottom: clamp(52px, 11vh, 140px); }
+.main-header .header-search-row {
+    position: absolute;
+    right: clamp(1rem, 4vw, 3rem); /* anchor to right edge */
+    bottom: clamp(0.75rem, 2vh, 1.75rem);
+    left: auto;
+    transform: none;
+    width: min(500px, 48%); /* narrower so logo area remains clear */
+    margin: 0; /* override earlier margin */
+    z-index: 12; /* above overlay and background */
+    pointer-events: none; /* allow only the form to capture events */
+    display: flex;
+    justify-content: flex-end;
+}
+.main-header .header-search-row #search-form {
+    width: 100%;
+    pointer-events: auto; /* re-enable interaction */
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: var(--radius-lg);
+    padding: 4px 6px 4px 10px;
+    box-shadow: 0 4px 16px -4px rgba(0,0,0,0.6);
+}
+.main-header .header-search-row #search-form:focus-within { border-color: #fff; }
+.main-header .header-search-row #search-input {
+    background: transparent;
+    border: none;
+    color: #fff;
+    padding: 0.65rem 0.75rem;
+    font-size: 0.95rem;
+}
+.main-header .header-search-row #search-input::placeholder { color: rgba(255,255,255,0.75); }
+.main-header .header-search-row .search-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: #fff;
+    padding: 0.55rem 0.85rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+.main-header .header-search-row .search-btn:hover { background: rgba(255,255,255,0.22); }
+
+/* Suggestions dropdown inside repositioned search */
+.main-header .header-search-row #search-suggestions {
+    top: calc(100% + 6px);
+    left: 0;
+    width: 100%;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: var(--radius-lg);
+}
+
+/* Mobile / narrow screens: revert to flow layout to avoid cramped overlay */
+@media (max-width: 820px) {
+    .main-header { padding-bottom: var(--spacing-md); }
+    .main-header .header-search-row {
+        position: static;
+        transform: none;
+        width: 100% !important;
+        margin-top: var(--spacing-xs);
+        pointer-events: auto;
+        right: auto; left: auto; bottom: auto; justify-content: center;
+    }
+    .main-header .header-search-row #search-form {
+        background: rgba(0,0,0,0.5);
+    }
+}
+
+/* ===== Alternative Placement: Under Auth Buttons (Overrides previous floating style) ===== */
+/* Requested: place the search bar directly beneath the login/register buttons in the header's actions column. */
+@media (min-width: 821px) {
+    .main-header { padding-bottom: var(--spacing-lg); }
+    .main-header .header-search-row {
+        position: static; /* remove absolute positioning */
+        grid-column: 3; /* align under the actions (column 3 in grid) */
+        grid-row: 2;
+        width: 100% !important;
+        max-width: none;
+        justify-content: flex-end;
+        pointer-events: auto;
+        margin-top: var(--spacing-xs);
+    }
+    .main-header .header-search-row #search-form {
+        width: 100%;
+        max-width: 420px; /* reasonable width below buttons */
+        margin: 0 0 0 auto; /* align right */
+        background: rgba(0,0,0,0.55);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        border: 1px solid rgba(255,255,255,0.35);
+        border-radius: var(--radius-lg);
+        padding: 4px 6px 4px 10px;
+        box-shadow: 0 4px 14px -4px rgba(0,0,0,0.55);
+    }
+    .main-header .header-search-row #search-suggestions {
+        width: 100%;
+    }
+}
