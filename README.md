@@ -382,7 +382,7 @@ Look for an IP address like `192.168.x.x` or `10.x.x.x`.
 2. **Start Backend Server**:
    ```bash
    cd backend
-   python manage.py runserver YOUR_LOCAL_IP:8000
+      python manage.py runserver YOUR_LOCAL_IP:8000
    # Example: python manage.py runserver 192.168.0.198:8000
    ```
 
