@@ -201,7 +201,7 @@ export class ModuleLoader {
         }
         
         try {
-            const module = await import(modulePath);
+            const module = await import(/* @vite-ignore */ modulePath);
             ModuleLoader.loadedModules.set(cacheKey, module);
             return module;
         } catch (error) {

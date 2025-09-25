@@ -321,6 +321,21 @@
 }
 @media (max-width: 480px) {
     .mobile-nav-panel { width: 100%; transform: translateX(100%); }
+    
+    /* Extra small screens - optimize logo display */
+    .main-header {
+        background-size: contain !important;
+        background-position: center top !important;
+        background-repeat: no-repeat !important;
+        min-height: clamp(140px, 30vh, 300px) !important;
+        padding-top: 0 !important;
+        padding-bottom: var(--spacing-sm) !important;
+        /* Override conflicting layout styles */
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border-bottom: none !important;
+        box-shadow: none !important;
+    }
 }
 
 /* ===== Responsive Full-Width Header Background (logoslp.jpg) ===== */
@@ -415,7 +430,19 @@
 .main-header .user-dropdown, .main-header .mega-menu { z-index: 10; }
 
 @media (max-width: 900px) {
-    .main-header { min-height: clamp(140px, 28vh, 340px); }
+    .main-header { 
+        min-height: clamp(160px, 32vh, 380px) !important;
+        /* Use contain on mobile to ensure full logo visibility */
+        background-size: contain !important;
+        background-position: center top !important;
+        background-repeat: no-repeat !important;
+        padding-top: 0 !important;
+        /* Override conflicting layout styles */
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border-bottom: none !important;
+        box-shadow: none !important;
+    }
     .main-header .nav-link { padding: var(--spacing-xs) var(--spacing-sm); }
 }
 
@@ -443,6 +470,56 @@
 
 @media (prefers-reduced-motion: reduce) {
     .main-header .nav-link { transition: none; }
+}
+
+/* ===== MOBILE LOGO FIX - MAXIMUM SPECIFICITY ===== */
+/* Force mobile header to show full logo properly */
+@media screen and (max-width: 768px) {
+    body .main-header.main-header.main-header {
+        background: #000 url("../../images/logo/logoslp.jpg") center top / contain no-repeat !important;
+        min-height: 200px !important;
+        height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border-bottom: none !important;
+        box-shadow: none !important;
+        position: relative !important;
+        display: flex !important;
+        align-items: flex-start !important;
+    }
+    
+    body .main-header.main-header.main-header .container {
+        padding-top: 10px !important;
+        margin-top: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    body .main-header.main-header.main-header .header-wrapper {
+        padding: 8px 16px !important;
+        margin: 0 !important;
+        background: rgba(0, 0, 0, 0.3) !important;
+        border-radius: 8px !important;
+        backdrop-filter: blur(10px) !important;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    body .main-header.main-header.main-header {
+        min-height: 180px !important;
+    }
+    
+    body .main-header.main-header.main-header .header-wrapper {
+        padding: 6px 12px !important;
+    }
+}
+
+@media screen and (max-width: 390px) {
+    body .main-header.main-header.main-header {
+        min-height: 160px !important;
+    }
 }
 
 /* ===== Header-to-Hero Transition Element ===== */
@@ -528,7 +605,31 @@
 
 /* Mobile / narrow screens: revert to flow layout to avoid cramped overlay */
 @media (max-width: 820px) {
-    .main-header { padding-bottom: var(--spacing-md); }
+    .main-header { 
+        padding-bottom: var(--spacing-md);
+        padding-top: 0 !important;
+        /* Ensure full logo visibility on smaller mobile screens */
+        background-size: contain !important;
+        background-position: center top !important;
+        background-repeat: no-repeat !important;
+        min-height: clamp(180px, 35vh, 350px) !important;
+        /* Override conflicting layout styles */
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border-bottom: none !important;
+        box-shadow: none !important;
+        /* Ensure content alignment */
+        display: flex !important;
+        align-items: flex-start !important;
+    }
+    .main-header .container {
+        padding-top: var(--spacing-sm);
+        width: 100%;
+    }
+    .main-header .header-wrapper {
+        padding-top: var(--spacing-sm) !important;
+        margin-top: 0 !important;
+    }
     .main-header .header-search-row {
         position: static;
         transform: none;
