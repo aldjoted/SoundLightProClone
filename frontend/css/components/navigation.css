@@ -445,6 +445,29 @@
     .main-header .nav-link { transition: none; }
 }
 
+/* ===== Header-to-Hero Transition Element ===== */
+/* Add a subtle gradient separator between header and hero content */
+.main-header::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, 
+        rgba(99, 102, 241, 0.8) 0%, 
+        rgba(168, 85, 247, 0.6) 50%, 
+        rgba(236, 72, 153, 0.4) 100%);
+    z-index: 15;
+}
+
+/* Alternative: Subtle shadow transition (uncomment to use instead of gradient) */
+/*
+.main-header {
+    box-shadow: 0 8px 32px -8px rgba(0,0,0,0.3);
+}
+*/
+
 /* ===== Refined Header Search Positioning (avoid covering background logo) ===== */
 /* Place search row as an overlaid bar at the bottom of the header on larger screens */
 .main-header { padding-bottom: clamp(52px, 11vh, 140px); }
