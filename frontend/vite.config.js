@@ -39,7 +39,6 @@ export default defineConfig({
       },
       output: {
         manualChunks: {
-          vendor: ['swiper', 'aos'],
           utils: ['./js/utils.js'],
           api: ['./js/apiService.js'],
           ui: ['./js/ui.js'],

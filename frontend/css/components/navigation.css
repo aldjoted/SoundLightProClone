@@ -343,7 +343,7 @@
     position: relative;
     width: 100%;
     /* Corrected filename + improved positioning (shows more top content) */
-    background: #000 url("../../images/logo/logoslp.jpg") center top / cover no-repeat;
+    background: #000 url("/images/logo/logoslp.jpg") center top / cover no-repeat;
     /* Dynamic height responsive to viewport while keeping a sensible min/max */
     min-height: clamp(160px, 38vh, 480px);
     display: flex;
@@ -476,7 +476,7 @@
 /* Force mobile header to show full logo properly */
 @media screen and (max-width: 768px) {
     body .main-header.main-header.main-header {
-        background: #000 url("../../images/logo/logoslp.jpg") center top / contain no-repeat !important;
+        background: #000 url("/images/logo/logoslp.jpg") center top / contain no-repeat !important;
         min-height: 200px !important;
         height: auto !important;
         padding: 0 !important;
