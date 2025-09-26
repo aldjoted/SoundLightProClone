@@ -17,34 +17,13 @@
 <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <!-- Chatbot Toggler -->
-    <button class="chatbot-toggler" aria-label="Open assistant" aria-controls="chatbot-panel">
-        <i class="fas fa-comment-dots"></i>
-    </button>
-    <!-- Chatbot Interface -->
-    <dialog class="chatbot" id="chatbot-panel" aria-label="Assistant">
-        <header class="chatbot-header">
-            <h2>SoundLightPro Assistant</h2>
-            <button class="close-btn fas fa-times" aria-label="Close assistant"></button>
-        </header>
-        <ul class="chatbox">
-            <li class="chat incoming">
-                <span class="chat-icon"><i class="fas fa-robot"></i></span>
-                <p>Hi there! 👋<br>How can I help you today?</p>
-            </li>
-        </ul>
-        <div class="chat-input">
-            <textarea placeholder="Ask a question..." required></textarea>
-            <button id="send-btn" class="fas fa-paper-plane" aria-label="Send message"></button>
-        </div>
-    </dialog>
-
-    <header class="main-header" role="banner">
+    <!-- Header -->
+    <header class="main-header has-overlay" role="banner">
         <div class="container">
+            <!-- Le conteneur .header-wrapper est utilisé par main.js pour injecter le bouton du menu mobile -->
             <div class="header-wrapper">
-                <a href="index.html" class="logo" aria-label="SoundLightPro Home">
-                    <img src="/images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
-                </a>
+                <a href="index.html" class="logo" aria-label="SoundLightPro Home">SoundLightPro</a>
+                <!-- Navigation updated for main navigation -->
                 <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
                         <li><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
@@ -66,12 +45,14 @@
                         </li>
                     </ul>
                 </nav>
+                <!-- Search bar on its own row under the navigation -->
                 <div class="header-search-row">
                     <div class="search-container">
                         <form id="search-form" role="search">
                             <input type="search" id="search-input" data-i18n="search_placeholder" placeholder="Search products..." aria-label="Search products" autocomplete="off">
                             <button type="submit" class="search-btn" aria-label="Submit search"><i class="fas fa-search"></i></button>
                         </form>
+                        <!-- Search suggestions dropdown -->
                         <div id="search-suggestions" class="hidden" aria-label="Search suggestions"></div>
                     </div>
                 </div>
@@ -121,6 +102,28 @@
             </div>
         </section>
     </main>
+
+    <!-- Chatbot Toggler -->
+    <button class="chatbot-toggler" aria-label="Open assistant" aria-controls="chatbot-panel">
+        <i class="fas fa-comment-dots"></i>
+    </button>
+    <!-- Chatbot Interface -->
+    <dialog class="chatbot" id="chatbot-panel" aria-label="Assistant">
+        <header class="chatbot-header">
+            <h2>SoundLightPro Assistant</h2>
+            <button class="close-btn fas fa-times" aria-label="Close assistant"></button>
+        </header>
+        <ul class="chatbox">
+            <li class="chat incoming">
+                <span class="chat-icon"><i class="fas fa-robot"></i></span>
+                <p>Hi there! 👋<br>How can I help you today?</p>
+            </li>
+        </ul>
+        <div class="chat-input">
+            <textarea placeholder="Ask a question..." required></textarea>
+            <button id="send-btn" class="fas fa-paper-plane" aria-label="Send message"></button>
+        </div>
+    </dialog>
 
     <footer class="main-footer" role="contentinfo">
         <div class="container">
