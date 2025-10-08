@@ -56,8 +56,8 @@ class LanguageSwitcher {
         const currentLang = i18n.getCurrentLanguage();
         return `
             <div class="lang-toggle" role="group" aria-label="Language selector">
-                <button class="lang-pill ${currentLang === 'en' ? 'active' : ''}" data-lang-switch="en" aria-pressed="${currentLang === 'en'}">EN</button>
-                <button class="lang-pill ${currentLang === 'fr' ? 'active' : ''}" data-lang-switch="fr" aria-pressed="${currentLang === 'fr'}">FR</button>
+                <button class="lang-pill ${currentLang === 'en' ? 'active' : ''}" data-lang-switch="en" aria-pressed="${currentLang === 'en'}" aria-label="Switch to English">EN</button>
+                <button class="lang-pill ${currentLang === 'fr' ? 'active' : ''}" data-lang-switch="fr" aria-pressed="${currentLang === 'fr'}" aria-label="Switch to French">FR</button>
             </div>
         `;
     }

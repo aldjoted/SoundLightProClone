@@ -6,21 +6,91 @@
     <meta name="description" content="About SoundLightPro - Our mission, team, and history.">
     <title>About Us - SoundLightPro</title>
     
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://soundlightpro.com/about.html">
+    <meta property="og:title" content="About Us - SoundLightPro">
+    <meta property="og:description" content="Learn about SoundLightPro's mission to provide professional audio and lighting equipment in Cameroon. Meet our team and discover our story.">
+    <meta property="og:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
+    <meta property="og:site_name" content="SoundLightPro">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://soundlightpro.com/about.html">
+    <meta name="twitter:title" content="About Us - SoundLightPro">
+    <meta name="twitter:description" content="Learn about SoundLightPro's mission to provide professional audio and lighting equipment in Cameroon.">
+    <meta name="twitter:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
+    
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="css/main.css" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/main.css">
 </head>
 
 <body>
+    <!-- Structured Data for About Page -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "SoundLightPro",
+      "description": "Professional audio and lighting equipment supplier in Cameroon",
+      "url": "https://soundlightpro.com",
+      "logo": "https://soundlightpro.com/images/logo/logoslp.jpg",
+      "image": "https://soundlightpro.com/images/logo/logoslp.jpg",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "1451, 63 Bd de la République",
+        "addressLocality": "Douala",
+        "addressCountry": "CM"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "4.0511",
+        "longitude": "9.7679"
+      },
+      "telephone": "+237680494949",
+      "email": "info@soundlightpro.com",
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "opens": "08:00",
+        "closes": "18:00"
+      },
+      "priceRange": "$$",
+      "sameAs": [
+        "https://www.facebook.com/beglec.cm/",
+        "https://www.youtube.com/@soundlightpro3226"
+      ]
+    }
+    </script>
+    
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <header class="main-header has-overlay" role="banner">
         <div class="container">
             <div class="header-wrapper">
-                <a href="index.html" class="logo" aria-label="SoundLightPro Home">SoundLightPro</a>
+                <a href="index.html" class="logo" aria-label="SoundLightPro Home">
+                    <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
+                </a>
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-nav-panel">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
                 <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
                         <li><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
@@ -63,8 +133,6 @@
                                     <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
                                 </button>
                                 <div id="user-dropdown-menu" class="user-dropdown">
-                                    <a href="#"><i class="fas fa-user"></i> Profile</a>
-                                    <a href="#"><i class="fas fa-box"></i> Orders</a>
                                     <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
                                 </div>
                             </div>

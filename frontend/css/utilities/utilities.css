@@ -56,6 +56,53 @@
 .text-center {
     text-align: center;
 }
+.text-left {
+    text-align: left;
+}
+
+/* Spacing Utilities */
+.mt-md {
+    margin-top: var(--spacing-md);
+}
+.mt-lg {
+    margin-top: var(--spacing-lg);
+}
+.mb-md {
+    margin-bottom: var(--spacing-md);
+}
+.mb-lg {
+    margin-bottom: var(--spacing-lg);
+}
+.mb-xl {
+    margin-bottom: var(--spacing-xl);
+}
+.mb-2xl {
+    margin-bottom: var(--spacing-2xl);
+}
+.p-lg {
+    padding: var(--spacing-lg);
+}
+.p-xl {
+    padding: var(--spacing-xl);
+}
+.p-2xl {
+    padding: var(--spacing-2xl);
+}
+
+/* Layout Utilities */
+.max-w-800 {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.pb-xl {
+    padding-bottom: var(--spacing-xl);
+}
+.flex-row-center {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
 
 /* Accessibility */
 :focus-visible {

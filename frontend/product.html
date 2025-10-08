@@ -5,11 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="View product details for professional audio and lighting equipment.">
     <title>Product Details - SoundLightPro</title>
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    
+    <!-- Open Graph / Facebook (will be updated dynamically) -->
+    <meta property="og:type" content="product">
+    <meta property="og:url" content="https://soundlightpro.com/product.html">
+    <meta property="og:title" content="Product Details - SoundLightPro">
+    <meta property="og:description" content="Professional audio and lighting equipment from SoundLightPro.">
+    <meta property="og:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
+    <meta property="og:site_name" content="SoundLightPro">
+    <meta property="product:price:amount" content="">
+    <meta property="product:price:currency" content="USD">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Product Details - SoundLightPro">
+    <meta name="twitter:description" content="Professional audio and lighting equipment from SoundLightPro.">
+    <meta name="twitter:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
 
     <!-- Preconnect to external resources -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="css/main.css" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style">
     
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -22,6 +46,31 @@
 </head>
 
 <body>
+    <!-- Structured Data for Product (will be populated dynamically by JavaScript) -->
+    <script type="application/ld+json" id="product-schema">
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": "",
+      "description": "",
+      "image": "",
+      "brand": {
+        "@type": "Brand",
+        "name": ""
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock",
+        "seller": {
+          "@type": "Organization",
+          "name": "SoundLightPro"
+        }
+      }
+    }
+    </script>
+    
     <!-- Skip to main content for accessibility -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
@@ -30,8 +79,15 @@
         <div class="container">
             <div class="header-wrapper">
                 <a href="index.html" class="logo" aria-label="SoundLightPro Home">
-                    <img src="/images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
+                    <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
                 </a>
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-nav-panel">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
                 <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
                         <li><a href="index.html" class="nav-link">Home</a></li>
@@ -76,8 +132,6 @@
                                     <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
                                 </button>
                                 <div id="user-dropdown-menu" class="user-dropdown">
-                                    <a href="#"><i class="fas fa-user"></i> Profile</a>
-                                    <a href="#"><i class="fas fa-box"></i> Orders</a>
                                     <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
                                 </div>
                             </div>
@@ -147,8 +201,6 @@
                                         <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
                                     </button>
                                     <div id="user-dropdown-menu" class="user-dropdown">
-                                        <a href="#"><i class="fas fa-user"></i> Profile</a>
-                                        <a href="#"><i class="fas fa-box"></i> Orders</a>
                                         <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
                                     </div>
                                 </div>

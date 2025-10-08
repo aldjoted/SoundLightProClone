@@ -1,0 +1,78 @@
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Python / Django ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+*.so
+*.dylib
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# Packaging / builds / caches
+pip-wheel-metadata/
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+.cache/
+.pytest_cache/
+.mypy_cache/
+.pyre/
+.pytype/
+.coverage
+.coverage.*
+htmlcov/
+.ipynb_checkpoints/
+
+# Django project
+local_settings.py
+backend/*.sqlite3
+backend/staticfiles/
+backend/media/
+*.log
+
+# Compiled translations (keep .po, ignore .mo)
+**/*.mo
+
+# Database dumps
+*.sql
+*.psql
+
+# --- Node / Vite (frontend) ---
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.cache/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# --- Environment files (secrets) ---
+.env
+*.env
+*.env.*
+backend/.env
+frontend/.env
+frontend/.env.*
+
+# --- Editors / IDE ---
+.vscode/
+.idea/
+*.iml
+
+# --- Project-specific generated artifacts ---
+backend/product_faiss.index
+backend/product_embeddings.npy
+
+# Redis dump (if ever present)
+dump.rdb

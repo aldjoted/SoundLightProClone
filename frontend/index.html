@@ -89,7 +89,16 @@
         <div class="container">
             <!-- Le conteneur .header-wrapper est utilisé par main.js pour injecter le bouton du menu mobile -->
             <div class="header-wrapper">
-                <a href="index.html" class="logo" aria-label="SoundLightPro Home">SoundLightPro</a>
+                <a href="index.html" class="logo" aria-label="SoundLightPro Home">
+                    <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
+                </a>
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-nav-panel">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
                 <!-- Navigation updated for main navigation -->
                 <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
@@ -135,8 +144,6 @@
                                     <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
                                 </button>
                                 <div id="user-dropdown-menu" class="user-dropdown">
-                                    <a href="#"><i class="fas fa-user"></i> Profile</a>
-                                    <a href="#"><i class="fas fa-box"></i> Orders</a>
                                     <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
                                 </div>
                             </div>
@@ -231,7 +238,7 @@
                 <div class="newsletter-content">
                     <h2>Stay Updated</h2><p>Get the latest news about new products and exclusive offers</p>
                     <form class="newsletter-form" id="newsletter-form">
-                        <input type="email" placeholder="Enter your email" required aria-label="Email for newsletter"><button type="submit" class="btn btn--primary">Subscribe</button>
+                        <input type="email" placeholder="Enter your email" required aria-label="Email for newsletter"><button type="submit" class="btn btn--primary" aria-label="Subscribe to newsletter">Subscribe</button>
                     </form>
                 </div>
             </div>

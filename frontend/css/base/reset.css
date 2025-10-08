@@ -50,6 +50,9 @@ a:hover {
     color: var(--primary-dark);
 }
 
+/* ============================================= */
+/* Skip Link - Accessibility Enhancement */
+/* ============================================= */
 .skip-link {
     position: absolute;
     top: -100px;
@@ -57,15 +60,28 @@ a:hover {
     background: var(--primary-color);
     color: white;
     padding: var(--spacing-sm) var(--spacing-md);
-    z-index: var(--z-toast); /* CODE QUALITY: Sits above all other content on focus */
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 0 0 var(--radius-md) 0;
+    box-shadow: var(--shadow-lg);
+    z-index: 9999; /* Maximum z-index for accessibility - must be above all content */
+    opacity: 0;
+    pointer-events: none;
 }
 
 @media (prefers-reduced-motion: no-preference) {
     .skip-link {
-        transition: top var(--transition-base);
+        transition: top var(--transition-base), opacity var(--transition-base);
     }
 }
 
 .skip-link:focus {
-    top: var(--spacing-sm);
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 9999;
+    opacity: 1;
+    pointer-events: auto;
+    outline: 3px solid var(--accent-color);
+    outline-offset: 2px;
 }

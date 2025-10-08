@@ -6,10 +6,32 @@
     <meta name="description" content="Login to your SoundLightPro account.">
     <title>Login - SoundLightPro</title>
     
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://soundlightpro.com/login.html">
+    <meta property="og:title" content="Login - SoundLightPro">
+    <meta property="og:description" content="Login to your SoundLightPro account to manage orders and access exclusive features.">
+    <meta property="og:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
+    <meta property="og:site_name" content="SoundLightPro">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Login - SoundLightPro">
+    <meta name="twitter:description" content="Login to your SoundLightPro account.">
+    <meta name="twitter:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
+    
     <!-- Preconnect to external resources -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="css/main.css" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style">
     
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -22,6 +44,17 @@
 </head>
 
 <body>
+    <!-- Structured Data for Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "SoundLightPro",
+      "url": "https://soundlightpro.com",
+      "logo": "https://soundlightpro.com/images/logo/logoslp.jpg"
+    }
+    </script>
+    
     <!-- Skip to main content for accessibility -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
@@ -30,8 +63,15 @@
         <div class="container">
             <div class="header-wrapper">
                 <a href="index.html" class="logo" aria-label="SoundLightPro Home">
-                    <img src="/images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
+                    <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
                 </a>
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-nav-panel">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
                 <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
                         <li><a href="index.html" class="nav-link">Home</a></li>
@@ -76,8 +116,6 @@
                                     <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
                                 </button>
                                 <div id="user-dropdown-menu" class="user-dropdown">
-                                    <a href="#"><i class="fas fa-user"></i> Profile</a>
-                                    <a href="#"><i class="fas fa-box"></i> Orders</a>
                                     <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
                                 </div>
                             </div>
@@ -101,7 +139,7 @@
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" required autocomplete="current-password">
                 </div>
-                <button type="submit" class="btn-primary">Login</button>
+                <button type="submit" class="btn btn-primary" aria-label="Login to account">Login</button>
             </form>
             <p style="text-align: center; margin-top: 1.5rem;">
                 Don't have an account? <a href="register.html">Register here</a>.
@@ -161,8 +199,6 @@
                                         <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
                                     </button>
                                     <div id="user-dropdown-menu" class="user-dropdown">
-                                        <a href="#"><i class="fas fa-user"></i> Profile</a>
-                                        <a href="#"><i class="fas fa-box"></i> Orders</a>
                                         <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
                                     </div>
                                 </div>

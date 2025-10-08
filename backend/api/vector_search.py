@@ -19,10 +19,14 @@ def build_and_save_faiss_index():
         return None
     embeddings = generate_product_embeddings(products)
     embeddings = np.ascontiguousarray(embeddings, dtype=np.float32)
+    # Determine embedding dimension from the computed embeddings (shape: [N, D])
+    if embeddings.ndim != 2 or embeddings.shape[0] == 0:
+        return None
+    dim = embeddings.shape[1]
     np.save(EMBEDDINGS_PATH, embeddings)
-    index = faiss.IndexFlatIP(dim)  # Cosine similarity (if embeddings are normalized)
-    index.add(x=embeddings)
-    faiss.write_index(index, INDEX_PATH)
+    # Using inner product; with normalized embeddings this corresponds to cosine similarity
+    index = faiss.IndexFlatIP(dim)
+    index.add(embeddings)
     faiss.write_index(index, INDEX_PATH)
     return len(products)
 

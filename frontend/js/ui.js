@@ -363,13 +363,13 @@ export function renderQuickViewModal(product) {
                 <button class="modal-close-btn" aria-label="Close quick view">&times;</button>
                 <div class="product-detail-layout">
                     <div class="product-gallery">
-                        <img src="${productImage}" alt="${productNameEsc}">
+                        <img src="${productImage}" alt="${productNameEsc}" loading="lazy">
                     </div>
                     <div class="product-detail-info">
                         <h2 id="modal-title">${productNameEsc}</h2>
                         <p class="price">$${parseFloat(product.price).toFixed(2)}</p>
                         <p>${escapeHtml(desc)}</p>
-                        <button class="btn btn--primary add-to-cart-modal-btn" data-product-id="${product.id}">
+                        <button class="btn btn--primary add-to-cart-modal-btn" data-product-id="${product.id}" aria-label="Add ${productNameEsc} to cart">
                             <i class="fas fa-shopping-cart"></i> Add to Cart
                         </button>
                         <a href="product.html?id=${product.id}" class="view-full-details">View full details &rarr;</a>
@@ -468,6 +468,9 @@ export function renderProductDetail(product, container) {
     // Set the browser tab title
     document.title = `${escapeHtml(product.name)} - SoundLightPro`;
 
+    // Update structured data for SEO
+    updateProductSchema(product);
+
     const hasImages = product.images && product.images.length > 0;
     const mainImageSrc = hasImages ? product.images[0].image : 'https://via.placeholder.com/600x400.png?text=No+Image';
     const isOutOfStock = product.stock === 0;
@@ -480,7 +483,7 @@ export function renderProductDetail(product, container) {
         thumbnailsHTML = `
             <div class="product-thumbnails">
                 ${product.images.map((img, index) => `
-                    <img src="${img.image}" alt="${escapeHtml(img.alt_text || product.name)}" class="thumbnail-img ${index === 0 ? 'active' : ''}" width="300" height="300" />
+                    <img src="${img.image}" alt="${escapeHtml(img.alt_text || product.name)}" class="thumbnail-img ${index === 0 ? 'active' : ''}" width="300" height="300" loading="lazy" />
                 `).join('')}
             </div>
         `;
@@ -490,7 +493,7 @@ export function renderProductDetail(product, container) {
         <div class="product-detail-layout">
             <div class="product-gallery">
                 <div class="main-image-container">
-                    <img id="main-product-image" src="${mainImageSrc}" alt="${escapeHtml(product.name)}" width="800" height="500">
+                    <img id="main-product-image" src="${mainImageSrc}" alt="${escapeHtml(product.name)}" width="800" height="500" loading="lazy">
                 </div>
                 ${thumbnailsHTML}
             </div>
@@ -523,7 +526,7 @@ export function renderProductDetail(product, container) {
     sticky.innerHTML = `
         <p class="price">$${parseFloat(product.price).toFixed(2)}</p>
         <input type="number" class="qty" id="sticky-qty" value="1" min="1" max="${product.stock || 1}" aria-label="Quantity">
-        <button class="btn btn--primary btn--full-width" id="sticky-add" ${addBtnDisabledAttr}>
+        <button class="btn btn--primary btn--full-width" id="sticky-add" ${addBtnDisabledAttr} aria-label="Add to cart">
             <i class="fas fa-shopping-cart"></i> ${addBtnLabel}
         </button>
     `;
@@ -547,7 +550,7 @@ export function renderMiniCart(items = []) {
           ])]
         : items.map(i =>
               createElement('div', { class: 'mini-cart-item', 'data-id': i.id }, [
-                  createElement('img', { class: 'mini-cart-thumb', src: i.image || 'https://via.placeholder.com/64', alt: i.name }),
+                  createElement('img', { class: 'mini-cart-thumb', src: i.image || 'https://via.placeholder.com/64', alt: i.name, loading: 'lazy' }),
                   createElement('div', {}, [
                       createElement('p', { class: 'mini-cart-name' }, [i.name]),
                       createElement('p', { class: 'mini-cart-meta' }, [`$${i.price.toFixed(2)} • Qty: ${i.quantity}`]),
@@ -669,7 +672,7 @@ export function renderSearchSuggestions(products, container) {
             <span class="header-title">Products</span>
             <span class="header-count">${count}${products.length > 8 ? '+' : ''}</span>
         </div>
-        <ul role="listbox">
+        <ul role="listbox" aria-label="Product search suggestions">
             ${products.slice(0, 8).map((p, idx) => `
                 <li class="search-result-item ${idx===0?'highlighted':''}" role="option" data-index="${idx}">
                     <a class="result-link" href="product.html?id=${p.id}">
@@ -796,4 +799,47 @@ export function getCartLayoutHTML(items) {
     ]);
 
     return { cartLayout, summary };
+}
+
+/**
+ * Updates the product structured data for SEO
+ * @param {Object} product - The product object
+ */
+function updateProductSchema(product) {
+    const schemaScript = document.getElementById('product-schema');
+    if (!schemaScript) return;
+
+    const hasImages = product.images && product.images.length > 0;
+    const imageUrl = hasImages ? product.images[0].image : 'https://soundlightpro.com/images/logo/logoslp.jpg';
+    const availability = product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock';
+
+    const schema = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": product.name,
+        "description": product.description || product.name,
+        "image": imageUrl,
+        "brand": {
+            "@type": "Brand",
+            "name": product.brand ? product.brand.name : "SoundLightPro"
+        },
+        "offers": {
+            "@type": "Offer",
+            "price": parseFloat(product.price).toFixed(2),
+            "priceCurrency": "USD",
+            "availability": availability,
+            "url": `https://soundlightpro.com/product.html?id=${product.id}`,
+            "seller": {
+                "@type": "Organization",
+                "name": "SoundLightPro"
+            }
+        },
+        "sku": product.id.toString(),
+        "category": product.category || "Audio & Lighting Equipment"
+    };
+
+    // Add aggregateRating if we have ratings in the future
+    // Add review if we have reviews in the future
+
+    schemaScript.textContent = JSON.stringify(schema, null, 2);
 }

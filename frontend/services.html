@@ -6,15 +6,94 @@
     <meta name="description" content="Services offered by SoundLightPro, including consultation and system design.">
     <title>Services - SoundLightPro</title>
     
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://soundlightpro.com/services.html">
+    <meta property="og:title" content="Our Services - SoundLightPro">
+    <meta property="og:description" content="Professional audio and lighting services including equipment rental, installation, technical support, and event production in Cameroon.">
+    <meta property="og:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
+    <meta property="og:site_name" content="SoundLightPro">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://soundlightpro.com/services.html">
+    <meta name="twitter:title" content="Our Services - SoundLightPro">
+    <meta name="twitter:description" content="Professional audio and lighting services including equipment rental, installation, and technical support.">
+    <meta name="twitter:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
+    
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="css/main.css" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/main.css">
 </head>
 
 <body>
+    <!-- Structured Data for Services -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "serviceType": "Professional Audio and Lighting Services",
+      "provider": {
+        "@type": "LocalBusiness",
+        "name": "SoundLightPro",
+        "url": "https://soundlightpro.com",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "1451, 63 Bd de la République",
+          "addressLocality": "Douala",
+          "addressCountry": "CM"
+        },
+        "telephone": "+237680494949"
+      },
+      "areaServed": {
+        "@type": "Country",
+        "name": "Cameroon"
+      },
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Audio and Lighting Services",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Equipment Rental",
+              "description": "Professional audio and lighting equipment rental for events"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Technical Support",
+              "description": "Expert technical support and consultation"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Installation Services",
+              "description": "Professional installation and setup services"
+            }
+          }
+        ]
+      }
+    }
+    </script>
+    
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <!-- Header -->
@@ -22,7 +101,16 @@
         <div class="container">
             <!-- Le conteneur .header-wrapper est utilisé par main.js pour injecter le bouton du menu mobile -->
             <div class="header-wrapper">
-                <a href="index.html" class="logo" aria-label="SoundLightPro Home">SoundLightPro</a>
+                <a href="index.html" class="logo" aria-label="SoundLightPro Home">
+                    <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
+                </a>
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-nav-panel">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
                 <!-- Navigation updated for main navigation -->
                 <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
@@ -68,8 +156,6 @@
                                     <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
                                 </button>
                                 <div id="user-dropdown-menu" class="user-dropdown">
-                                    <a href="#"><i class="fas fa-user"></i> Profile</a>
-                                    <a href="#"><i class="fas fa-box"></i> Orders</a>
                                     <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
                                 </div>
                             </div>

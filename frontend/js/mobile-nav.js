@@ -38,13 +38,19 @@ class MobileNavigation {
         // Fail gracefully if the header doesn't exist on the page.
         if (!headerWrapper) return;
 
-        // Create the hamburger toggle button
-        const toggleButton = document.createElement('button');
-        toggleButton.className = 'mobile-menu-toggle';
-        toggleButton.setAttribute('aria-label', 'Toggle mobile menu');
-        toggleButton.setAttribute('aria-expanded', 'false');
-        toggleButton.setAttribute('aria-controls', 'mobile-nav-panel');
-        toggleButton.innerHTML = `<div class="hamburger"><span></span><span></span><span></span></div>`;
+        // Check if toggle button already exists in HTML
+        let toggleButton = headerWrapper.querySelector('.mobile-menu-toggle');
+        
+        // Only create toggle button if it doesn't exist (backward compatibility)
+        if (!toggleButton) {
+            toggleButton = document.createElement('button');
+            toggleButton.className = 'mobile-menu-toggle';
+            toggleButton.setAttribute('aria-label', 'Toggle mobile menu');
+            toggleButton.setAttribute('aria-expanded', 'false');
+            toggleButton.setAttribute('aria-controls', 'mobile-nav-panel');
+            toggleButton.innerHTML = `<span class="hamburger-icon"><span></span><span></span><span></span></span>`;
+            headerWrapper.appendChild(toggleButton);
+        }
 
         // Create the semi-transparent overlay
         const overlay = document.createElement('div');
@@ -77,11 +83,10 @@ class MobileNavigation {
             </div>
         `;
 
-        headerWrapper.appendChild(toggleButton);
         document.body.appendChild(overlay);
         document.body.appendChild(navPanel);
 
-        // Store references to the created elements
+        // Store references to the elements
         this.toggleButton = toggleButton;
         this.overlay = overlay;
         this.navPanel = navPanel;
@@ -132,7 +137,7 @@ class MobileNavigation {
             
             container.innerHTML = parentCategories.map(category => `
                 <div class="mobile-category-item">
-                    <button class="mobile-category-toggle" data-category-slug="${category.slug}" aria-expanded="false">
+                    <button class="mobile-category-toggle" data-category-slug="${category.slug}" aria-expanded="false" aria-label="Toggle ${category.name} subcategories">
                         <span><i class="fas fa-cube"></i>${category.name}</span>
                         <i class="fas fa-chevron-down chevron"></i>
                     </button>

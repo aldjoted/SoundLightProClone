@@ -6,23 +6,74 @@
     <meta name="description" content="SoundLightPro Returns Policy - Easy 30-day returns for professional audio and lighting equipment.">
     <title>Returns Policy - SoundLightPro</title>
     
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://soundlightpro.com/returns.html">
+    <meta property="og:title" content="Returns & Refunds - SoundLightPro">
+    <meta property="og:description" content="Learn about our 30-day return policy and how to return or exchange products.">
+    <meta property="og:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
+    <meta property="og:site_name" content="SoundLightPro">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Returns & Refunds - SoundLightPro">
+    <meta name="twitter:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
+    
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="css/main.css" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/main.css">
 </head>
 
 <body>
+    <!-- Structured Data for Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "SoundLightPro",
+      "url": "https://soundlightpro.com",
+      "logo": "https://soundlightpro.com/images/logo/logoslp.jpg",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "1451, 63 Bd de la République",
+        "addressLocality": "Douala",
+        "addressCountry": "CM"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+237680494949",
+        "contactType": "customer service"
+      }
+    }
+    </script>
+    
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <header class="main-header" role="banner">
+    <header class="main-header has-overlay" role="banner">
         <div class="container">
-            <header class="main-header has-overlay" role="banner">
-                <div class="container">
-                    <div class="header-wrapper">
-                        <a href="index.html" class="logo" aria-label="SoundLightPro Home">SoundLightPro</a>
+            <div class="header-wrapper">
+                <a href="index.html" class="logo" aria-label="SoundLightPro Home">
+                    <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
+                </a>
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-nav-panel">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
                         <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                             <ul>
                                 <li><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
@@ -65,8 +116,6 @@
                                             <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
                                         </button>
                                         <div id="user-dropdown-menu" class="user-dropdown">
-                                            <a href="#"><i class="fas fa-user"></i> Profile</a>
-                                            <a href="#"><i class="fas fa-box"></i> Orders</a>
                                             <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
                                         </div>
                                     </div>
@@ -173,14 +222,14 @@
         <section class="return-categories">
             <h2 class="section-title">Return Categories</h2>
             
-            <div class="category-tabs">
-                <button class="tab-button active" data-tab="standard">Standard Returns</button>
-                <button class="tab-button" data-tab="defective">Defective Items</button>
-                <button class="tab-button" data-tab="wrong">Wrong Item</button>
-                <button class="tab-button" data-tab="damaged">Damaged in Transit</button>
+            <div class="category-tabs" role="tablist" aria-label="Return categories">
+                <button class="tab-button active" data-tab="standard" role="tab" aria-selected="true" aria-controls="standard" id="tab-standard">Standard Returns</button>
+                <button class="tab-button" data-tab="defective" role="tab" aria-selected="false" aria-controls="defective" id="tab-defective">Defective Items</button>
+                <button class="tab-button" data-tab="wrong" role="tab" aria-selected="false" aria-controls="wrong" id="tab-wrong">Wrong Item</button>
+                <button class="tab-button" data-tab="damaged" role="tab" aria-selected="false" aria-controls="damaged" id="tab-damaged">Damaged in Transit</button>
             </div>
 
-            <div class="tab-content active" id="standard">
+            <div class="tab-content active" id="standard" role="tabpanel" aria-labelledby="tab-standard">
                 <h3>Standard Returns</h3>
                 <ul>
                     <li><strong>Reason:</strong> Changed mind, not what expected, found better price elsewhere</li>
@@ -192,7 +241,7 @@
                 </ul>
             </div>
 
-            <div class="tab-content" id="defective">
+            <div class="tab-content" id="defective" role="tabpanel" aria-labelledby="tab-defective">
                 <h3>Defective Items</h3>
                 <ul>
                     <li><strong>Reason:</strong> Manufacturing defect, doesn't work as intended</li>
@@ -216,7 +265,7 @@
                 </ul>
             </div>
 
-            <div class="tab-content" id="damaged">
+            <div class="tab-content" id="damaged" role="tabpanel" aria-labelledby="tab-damaged">
                 <h3>Damaged in Transit</h3>
                 <ul>
                     <li><strong>Reason:</strong> Package damaged during shipping</li>

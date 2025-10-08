@@ -16,11 +16,13 @@
     <meta property="og:title" content="Contact Us - SoundLightPro">
     <meta property="og:description" content="Contact SoundLightPro for sales, support, and inquiries. Located in Douala, Cameroon.">
     <meta property="og:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
+    <meta property="og:site_name" content="SoundLightPro">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary">
     <meta property="twitter:title" content="Contact Us - SoundLightPro">
     <meta property="twitter:description" content="Contact SoundLightPro for sales, support, and inquiries.">
+    <meta property="twitter:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
     
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,12 +38,57 @@
 </head>
 
 <body>
+    <!-- Structured Data for Contact Page -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ContactPage",
+      "mainEntity": {
+        "@type": "LocalBusiness",
+        "name": "SoundLightPro",
+        "url": "https://soundlightpro.com",
+        "logo": "https://soundlightpro.com/images/logo/logoslp.jpg",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "1451, 63 Bd de la République",
+          "addressLocality": "Douala",
+          "addressCountry": "CM"
+        },
+        "contactPoint": [
+          {
+            "@type": "ContactPoint",
+            "telephone": "+237680494949",
+            "contactType": "customer service",
+            "email": "info@soundlightpro.com",
+            "availableLanguage": ["English", "French"]
+          },
+          {
+            "@type": "ContactPoint",
+            "telephone": "+237680494949",
+            "contactType": "sales",
+            "email": "info@soundlightpro.com",
+            "availableLanguage": ["English", "French"]
+          }
+        ]
+      }
+    }
+    </script>
+    
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <header class="main-header has-overlay" role="banner">
         <div class="container">
             <div class="header-wrapper">
-                <a href="index.html" class="logo" aria-label="SoundLightPro Home">SoundLightPro</a>
+                <a href="index.html" class="logo" aria-label="SoundLightPro Home">
+                    <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
+                </a>
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-nav-panel">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
                 <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
                         <li><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
@@ -84,8 +131,6 @@
                                     <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
                                 </button>
                                 <div id="user-dropdown-menu" class="user-dropdown">
-                                    <a href="#"><i class="fas fa-user"></i> Profile</a>
-                                    <a href="#"><i class="fas fa-box"></i> Orders</a>
                                     <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
                                 </div>
                             </div>
@@ -164,7 +209,7 @@
                         <label for="contact-message">Your Message</label>
                         <textarea id="contact-message" name="message" rows="6" required></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Send</button>
+                    <button type="submit" class="btn btn-primary" aria-label="Send contact form">Send</button>
                 </form>
             </div>
         </section>
