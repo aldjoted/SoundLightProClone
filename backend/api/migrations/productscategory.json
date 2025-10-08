@@ -1,0 +1,211 @@
+{
+  "categories": [
+    {
+      "id": "cables-connectors",
+      "name": "CABLES & CONNECTORS",
+      "subcategories": [
+        {
+          "id": "adapters",
+          "name": "Adapters",
+          "subcategories": []
+        },
+        {
+          "id": "microphone-cables",
+          "name": "Microphone cables",
+          "subcategories": []
+        },
+        {
+          "id": "assembled-cabled",
+          "name": "Assembled Cabled",
+          "subcategories": []
+        },
+        {
+          "id": "cables-on-reel",
+          "name": "Cables on reel",
+          "subcategories": []
+        },
+        {
+          "id": "connectors",
+          "name": "Connectors",
+          "subcategories": []
+        },
+        {
+          "id": "hose-cable-protectors",
+          "name": "Hose & Cable Protectors",
+          "subcategories": []
+        }
+      ]
+    },
+    {
+      "id": "effect-machines",
+      "name": "EFFECT MACHINES",
+      "subcategories": [
+        {
+          "id": "accessories-liquids",
+          "name": "Accessories & Liquids",
+          "subcategories": []
+        },
+        {
+          "id": "fazers",
+          "name": "Fazers",
+          "subcategories": []
+        },
+        {
+          "id": "foggers",
+          "name": "Foggers",
+          "subcategories": []
+        },
+        {
+          "id": "hazers",
+          "name": "Hazers",
+          "subcategories": []
+        },
+        {
+          "id": "snow-machines",
+          "name": "Snow Machines",
+          "subcategories": []
+        }
+      ]
+    },
+    {
+      "id": "flightcases",
+      "name": "FLIGHTCASES",
+      "subcategories": [
+        {
+          "id": "accessories-flightcases",
+          "name": "Accessories flightcases",
+          "subcategories": []
+        },
+        {
+          "id": "light-cases",
+          "name": "Light cases",
+          "subcategories": []
+        },
+        {
+          "id": "multifunctional-cases",
+          "name": "Multifunctional cases",
+          "subcategories": []
+        },
+        {
+          "id": "rack-cases",
+          "name": "Rack cases",
+          "subcategories": []
+        }
+      ]
+    },
+    {
+      "id": "light",
+      "name": "LIGHT",
+      "subcategories": []
+    },
+    {
+      "id": "stands-truss",
+      "name": "STANDS & TRUSS",
+      "subcategories": [
+        {
+          "id": "clamps-safety",
+          "name": "Clamps & Safety",
+          "subcategories": []
+        },
+        {
+          "id": "podiums",
+          "name": "Podiums",
+          "subcategories": []
+        },
+        {
+          "id": "stands",
+          "name": "Stands",
+          "subcategories": []
+        },
+        {
+          "id": "truss",
+          "name": "Truss",
+          "subcategories": []
+        }
+      ]
+    },
+    {
+      "id": "various",
+      "name": "VARIOUS",
+      "subcategories": [
+        {
+          "id": "safety",
+          "name": "Safety",
+          "subcategories": []
+        },
+        {
+          "id": "tape",
+          "name": "Tape",
+          "subcategories": []
+        }
+      ]
+    },
+    {
+      "id": "sound",
+      "name": "SOUND",
+      "subcategories": [
+        {
+          "id": "microphones",
+          "name": "Microphones",
+          "subcategories": []
+        },
+        {
+          "id": "loudspeakers",
+          "name": "Loudspeakers",
+          "subcategories": []
+        },
+        {
+          "id": "speakers-sound-systems",
+          "name": "SPEAKERS AND SOUND SYSTEMS",
+          "subcategories": []
+        },
+        {
+          "id": "pa-sound-equipment",
+          "name": "PA & Sound Equipment",
+          "subcategories": []
+        }
+      ]
+    },
+    {
+      "id": "audio",
+      "name": "AUDIO",
+      "subcategories": [
+        {
+          "id": "amplifiers",
+          "name": "Amplifiers",
+          "subcategories": []
+        },
+        {
+          "id": "audio-processing",
+          "name": "Audio Processing",
+          "subcategories": []
+        },
+        {
+          "id": "audio-players",
+          "name": "Audio Players",
+          "subcategories": []
+        },
+        {
+          "id": "headphones",
+          "name": "Headphones",
+          "subcategories": []
+        },
+        {
+          "id": "mixers",
+          "name": "Mixers",
+          "subcategories": []
+        },
+        {
+          "id": "speakers",
+          "name": "Speakers",
+          "subcategories": []
+        },
+        {
+          "id": "turntables",
+          "name": "Turntables",
+          "subcategories": []
+        }
+      ]
+    }
+  ]
+}

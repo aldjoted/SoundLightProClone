@@ -1,9 +1,31 @@
-# Changelog - SoundLightPro JavaScript Improvements
+# Changelog - SoundLightPro
 
-All notable changes to the JavaScript codebase are documented in this file.
+All notable changes to the project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## [2.1.0] - 2025-10-08
+
+### Added
+
+#### Database Management
+- **Category Population System** (`backend/api/management/commands/populate_categories.py`)
+  - Django management command to populate categories from JSON
+  - Reads `productscategory.json` with 8 main categories and 32 subcategories
+  - Creates hierarchical MPTT tree structure
+  - Idempotent operation (safe to run multiple times)
+  - Total: 40 categories populated (CABLES & CONNECTORS, EFFECT MACHINES, FLIGHTCASES, LIGHT, STANDS & TRUSS, VARIOUS, SOUND, AUDIO)
+
+- **Standalone Category Reader** (`backend/read_categories.py`)
+  - Python script to read and display category hierarchy
+  - No Django dependencies required
+  - Useful for testing JSON structure
+
+### Changed
+- Updated version to 2.1.0 to reflect database management features
 
 ---
 

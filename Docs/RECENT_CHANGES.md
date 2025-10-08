@@ -609,13 +609,67 @@ These changes represent a comprehensive optimization effort focusing on:
 
 ---
 
-## 📅 Change Log
+## �️ Database Management
+
+### 14. Category Population System
+**Status:** ✅ Completed
+
+Implemented automated category and subcategory population from JSON configuration.
+
+**Components:**
+1. **Management Command:** `backend/api/management/commands/populate_categories.py`
+   - Reads from `productscategory.json`
+   - Creates/updates categories with MPTT tree structure
+   - Handles 8 main categories + 32 subcategories
+   - Idempotent (safe to run multiple times)
+
+2. **Standalone Script:** `backend/read_categories.py`
+   - Standalone Python script for testing
+   - Reads and displays category hierarchy
+   - No Django dependencies required
+
+**Categories Populated:**
+```
+✓ CABLES & CONNECTORS (6 subcategories)
+✓ EFFECT MACHINES (5 subcategories)
+✓ FLIGHTCASES (4 subcategories)
+✓ LIGHT (no subcategories)
+✓ STANDS & TRUSS (4 subcategories)
+✓ VARIOUS (2 subcategories)
+✓ SOUND (4 subcategories)
+✓ AUDIO (7 subcategories)
+```
+
+**Usage:**
+```bash
+# Populate database
+python manage.py populate_categories
+
+# Test JSON reading
+python read_categories.py
+```
+
+**Benefits:**
+- 🗄️ Automated database seeding
+- 🔄 Repeatable category setup
+- 🌳 Proper hierarchical structure (MPTT)
+- ✅ 40 total categories ready for use
+- 🛡️ Safe re-runs (no duplicates)
+
+**Files Created:**
+- `backend/api/management/commands/populate_categories.py`
+- `backend/read_categories.py`
+- `backend/api/migrations/productscategory.json` (data source)
+
+---
+
+## �📅 Change Log
 
 **Date:** October 8, 2025
 
-**Version:** 2.0.0 (Major optimization release)
+**Version:** 2.1.0 (Database management + optimization release)
 
-**Summary:** Comprehensive website optimization including performance enhancements, SEO improvements, accessibility upgrades, security hardening, and code quality refinements.
+**Summary:** Added automated category population system + comprehensive website optimization including performance enhancements, SEO improvements, accessibility upgrades, security hardening, and code quality refinements.
 
 ---
 
