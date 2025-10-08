@@ -1,0 +1,103 @@
+/* --- Page: Cart --- */
+
+/* Cart Layout */
+.cart-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-2xl);
+}
+
+/* Cart Items Container */
+.cart-items-container {
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    padding: var(--spacing-xl);
+}
+
+/* Cart Summary */
+.cart-summary {
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    padding: var(--spacing-xl);
+    position: sticky;
+    top: calc(var(--header-height) + var(--spacing-lg));
+}
+
+.cart-summary h2 {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+    padding-top: var(--spacing-md);
+}
+
+.cart-summary-header {
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: var(--spacing-md);
+}
+
+.cart-summary-title {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.cart-summary-body {
+    display: grid;
+    gap: var(--spacing-sm);
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+}
+
+.summary-row.total {
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+}
+
+.summary-value {
+    font-weight: 700;
+}
+
+.cart-summary-actions {
+    margin-top: var(--spacing-md);
+}
+
+/* Empty Cart State */
+.empty-cart-message {
+    text-align: center;
+    padding: var(--spacing-3xl) var(--spacing-xl);
+}
+
+.empty-cart-message .empty-cart-icon {
+    font-size: 4rem;
+    color: var(--gray-300);
+    margin-bottom: var(--spacing-lg);
+}
+
+.empty-cart-message h2 {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.empty-cart-message p {
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xl);
+}
+
+/* Responsive */
+@media (min-width: 1024px) {
+    .cart-layout {
+        grid-template-columns: 2fr 1fr;
+        align-items: flex-start;
+    }
+}

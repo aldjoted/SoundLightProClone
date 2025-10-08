@@ -1,19 +1,21 @@
 /* --- Base: Resets and Global Styles --- */
 
-*,
-*::before,
-*::after {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
+/* PERFORMANCE: Use inheritance pattern for box-sizing (more efficient than universal selector) */
 html {
+    box-sizing: border-box;
     /* PERFORMANCE: Use fluid font size for better responsiveness */
     font-size: clamp(1rem, 0.96rem + 0.2vw, 1.125rem); /* 16px -> 18px */
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: inherit;
 }
 
 body {
@@ -64,7 +66,7 @@ a:hover {
     font-weight: 600;
     border-radius: 0 0 var(--radius-md) 0;
     box-shadow: var(--shadow-lg);
-    z-index: 9999; /* Maximum z-index for accessibility - must be above all content */
+    z-index: var(--z-skip-link); /* A11Y: Highest z-index for accessibility */
     opacity: 0;
     pointer-events: none;
 }
@@ -79,7 +81,7 @@ a:hover {
     position: absolute;
     top: 10px;
     left: 10px;
-    z-index: 9999;
+    z-index: var(--z-skip-link);
     opacity: 1;
     pointer-events: auto;
     outline: 3px solid var(--accent-color);

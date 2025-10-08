@@ -49,6 +49,25 @@
     aspect-ratio: 4 / 3;
 }
 
+/* Reusable Grid Utilities */
+.grid-auto-fit-250 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-xl);
+}
+
+.grid-auto-fit-280 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-xl);
+}
+
+.grid-auto-fit-300 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+}
+
 /* Helper Classes */
 .hidden {
     display: none !important;
@@ -121,7 +140,8 @@
 }
 
 /* A11Y: Hides content visually but keeps it accessible to screen readers */
-.visually-hidden {
+.visually-hidden,
+.sr-only {
     border: 0;
     clip: rect(0 0 0 0);
     height: 1px;
@@ -153,6 +173,8 @@ body.no-scroll {
     width: 100%;
     height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    /* PERFORMANCE: Use transform instead of left for better animation */
+    transform: translateX(0);
 }
 .skeleton-card {
     width: 100%;
@@ -182,7 +204,10 @@ body.no-scroll {
     .skeleton-shimmer {
         animation: shimmer 1.5s infinite;
     }
-    @keyframes shimmer { 100% { left: 100%; } }
+    /* PERFORMANCE: Optimized shimmer using transform */
+    @keyframes shimmer { 
+        100% { transform: translateX(200%); } 
+    }
 
     .spinner {
         animation: spin 1s linear infinite;

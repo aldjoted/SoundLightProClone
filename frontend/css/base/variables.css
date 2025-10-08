@@ -34,7 +34,11 @@
     --text-secondary: var(--gray-600);
     --text-light: var(--gray-400);
     --text-inverse: #ffffff;
+    --text-category: #3730a3; /* Darker shade for better WCAG contrast */
     --border-color: var(--gray-200);
+    
+    /* RGB color values for modern color functions */
+    --primary-color-rgb: 99 102 241;
 
     /* ============================================= */
     /* Breakpoints                                   */
@@ -60,6 +64,11 @@
     /* Typography                                    */
     /* ============================================= */
     --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    
+    /**
+     * IMPORTANT: Always use rem for font-size to respect user preferences
+     * Never use px for font sizes - it prevents users from adjusting text size
+     */
 
     /* ============================================= */
     /* Borders & Shadows                             */
@@ -81,6 +90,19 @@
     --transition-fast: 150ms ease;
     --transition-base: 250ms ease;
     --transition-slow: 350ms ease;
+    
+    /* Common transition combinations */
+    --transition-button: background-color var(--transition-base), 
+                         transform var(--transition-base), 
+                         box-shadow var(--transition-base),
+                         border-color var(--transition-base);
+    --transition-colors: background-color var(--transition-base), 
+                        color var(--transition-base), 
+                        border-color var(--transition-base);
+
+    /* Badge positioning */
+    --badge-offset: -6px;
+    --badge-border-width: 2px;
 
     /* Z-Index Scale */
     --z-base: 1000;
@@ -89,8 +111,23 @@
     --z-overlay: calc(var(--z-base) + 300);
     --z-modal: calc(var(--z-base) + 400);
     --z-toast: calc(var(--z-base) + 500);
+    --z-skip-link: calc(var(--z-base) + 600); /* Highest - for accessibility */
 
     /* Legacy z-index values for compatibility */
     --z-mobile-overlay: var(--z-overlay);
     --z-mobile-panel: calc(var(--z-overlay) + 10);
 }
+
+/* ============================================= */
+/* IMAGE PATHS (for reference)                  */
+/* Update these paths if directory structure    */
+/* changes                                       */
+/* ============================================= */
+/**
+ * IMAGE PATHS (for reference - update if directory structure changes)
+ * Logo: /images/logo/
+ * Products: /images/products/
+ * Hero: /images/hero/
+ * Team: /images/team/
+ * Brands: /media/brands/
+ */

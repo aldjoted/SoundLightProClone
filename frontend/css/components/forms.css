@@ -44,7 +44,8 @@
     background: transparent;
     border: none;
     padding: 0.75rem 1.25rem;
-    width: 190px; /* slightly wider default */
+    /* PERFORMANCE: Use clamp for fluid responsive width */
+    width: clamp(100px, 15vw, 190px);
     outline: none;
     font-size: 0.95rem;
     color: var(--text-primary);
@@ -68,7 +69,7 @@
 
 .search-btn:hover {
     color: var(--primary-color);
-    background: rgba(99, 102, 241, 0.08);
+    background: rgb(99 102 241 / 0.08); /* Modern color syntax */
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -78,7 +79,8 @@
 }
 
 #search-input:focus {
-    width: 340px; /* Expand more when focused */
+    /* PERFORMANCE: Use clamp for fluid expanded width */
+    width: clamp(160px, 30vw, 340px);
 }
 
 /* Search Suggestions Dropdown */
@@ -288,37 +290,8 @@
 
 
 /* Responsive Search Form */
-@media (max-width: 1200px) {
-    #search-input { 
-        width: 150px; 
-    }
-    #search-input:focus { 
-        width: 260px; 
-    }
-}
-
-@media (max-width: 1024px) {
-    #search-input { 
-        width: 130px; 
-    }
-    #search-input:focus { 
-        width: 210px; 
-    }
-}
-
-@media (max-width: 900px) {
-    .search-container {
-        flex-shrink: 1;
-        min-width: 0;
-    }
-    #search-input {
-        width: 120px;
-        min-width: 80px;
-    }
-    #search-input:focus {
-        width: 180px;
-    }
-}
+/* Note: Search input widths now use clamp() for fluid responsiveness */
+/* Individual breakpoints below handle layout changes only */
 
 @media (max-width: 768px) {
     .search-container {

@@ -1,0 +1,22 @@
+/* --- Page: About --- */
+
+/* Team Section */
+.team-section {
+    padding: var(--spacing-3xl) 0;
+}
+
+.team-section .section-title {
+    margin-bottom: var(--spacing-2xl);
+}
+
+/* Key Figures Section */
+.key-figures-section {
+    background-color: var(--bg-secondary);
+    padding: var(--spacing-3xl) 0;
+    margin-top: var(--spacing-2xl);
+}
+
+.key-figures-section .section-title {
+    margin-bottom: var(--spacing-2xl);
+    color: var(--text-primary);
+}
