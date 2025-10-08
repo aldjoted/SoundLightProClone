@@ -1,13 +1,56 @@
 /**
- * advanced-search.js (Simplified)
+ * advanced-search.js (Enhanced)
  *
- * Lean, efficient live search: debounced suggestions and full search redirect.
- * Removed voice search, history, and filter panel to keep UX simple.
+ * Lean, efficient live search with adaptive debouncing for better UX.
+ * Features: debounced suggestions, full search redirect, and adaptive timing.
  */
 import * as apiService from './apiService.js';
 import * as cart from './cart.js';
 import { renderSearchSuggestions, showToast } from './ui.js';
 import { debounce } from './utils.js';
+
+/**
+ * Adaptive Debouncer - Adjusts delay based on typing speed
+ * Fast typing = shorter delay for better responsiveness
+ * Slow typing = longer delay to save API calls
+ */
+class AdaptiveDebouncer {
+    constructor(minDelay = 150, maxDelay = 400) {
+        this.minDelay = minDelay;
+        this.maxDelay = maxDelay;
+        this.recentInputs = [];
+    }
+    
+    /**
+     * Calculates appropriate delay based on typing speed
+     * @returns {number} The delay in milliseconds
+     */
+    getDelay() {
+        const now = Date.now();
+        // Keep only inputs from the last second
+        this.recentInputs = this.recentInputs.filter(t => now - t < 1000);
+        
+        // If user is typing rapidly (3+ inputs in last second), use shorter delay
+        if (this.recentInputs.length > 3) {
+            return this.minDelay; // Fast typing = fast response
+        }
+        return this.maxDelay; // Slow typing = save API calls
+    }
+    
+    /**
+     * Creates a debounced function with adaptive timing
+     * @param {Function} fn - Function to debounce
+     * @returns {Function} Debounced function
+     */
+    debounce(fn) {
+        let timeout;
+        return (...args) => {
+            this.recentInputs.push(Date.now());
+            clearTimeout(timeout);
+            timeout = setTimeout(() => fn(...args), this.getDelay());
+        };
+    }
+}
 
 class AdvancedSearch {
     constructor() {
@@ -27,8 +70,9 @@ class AdvancedSearch {
         this.input.setAttribute('aria-expanded', 'false');
         this.input.setAttribute('aria-haspopup', 'listbox');
         
-        // Use improved debounce function with immediate option
-        this.debouncedSearch = debounce(() => this.search(), 250);
+        // ✅ Use adaptive debouncer for better UX
+        const adaptiveDebouncer = new AdaptiveDebouncer();
+        this.debouncedSearch = adaptiveDebouncer.debounce(() => this.search());
 
         this.bindEvents();
     }

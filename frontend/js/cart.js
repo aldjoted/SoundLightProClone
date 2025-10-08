@@ -143,6 +143,23 @@ export function clearCart() {
 }
 
 /**
+ * Cleans up metadata from cart items (timestamps, etc.).
+ * Use this before checkout or periodically to reduce storage size.
+ * Keeps only essential product data (id, name, price, image, quantity).
+ */
+export function cleanupCartMetadata() {
+    const items = getCart();
+    const cleanedItems = items.map(({ id, name, price, image, quantity }) => ({
+        id,
+        name,
+        price,
+        image,
+        quantity
+    }));
+    updateCartState(cleanedItems);
+}
+
+/**
  * Calculates the total number of items in the cart.
  * @returns {number} The total count of all items.
  */

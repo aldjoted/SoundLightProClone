@@ -31,27 +31,102 @@ const appState = {
     categories: [],
 };
 
-const cache = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+/**
+ * Smart cache with strategy-based TTL and stale-while-revalidate support
+ * ✅ Improved: Different strategies for different data types
+ */
+class SmartCache {
+    constructor() {
+        this.cache = new Map();
+        // Define cache strategies for different data types
+        this.strategies = {
+            products: { ttl: 5 * 60 * 1000, staleWhileRevalidate: true }, // 5 min, SWR enabled
+            categories: { ttl: 30 * 60 * 1000, staleWhileRevalidate: false }, // 30 min, no SWR (changes rarely)
+            userProfile: { ttl: 2 * 60 * 1000, staleWhileRevalidate: false } // 2 min, no SWR (sensitive data)
+        };
+    }
+    
+    /**
+     * Gets data from cache or fetches it
+     * @param {string} key - Cache key
+     * @param {Function} fetcher - Async function to fetch data
+     * @param {string} strategyName - Name of the cache strategy to use
+     * @returns {Promise<any>} The cached or fetched data
+     */
+    async get(key, fetcher, strategyName = 'products') {
+        const strategy = this.strategies[strategyName] || this.strategies.products;
+        const cached = this.cache.get(key);
+        const now = Date.now();
+        
+        if (cached) {
+            const age = now - cached.timestamp;
+            
+            // Return immediately if fresh
+            if (age < strategy.ttl) {
+                return cached.data;
+            }
+            
+            // Stale-while-revalidate: return stale data
+            // while refreshing in background
+            if (strategy.staleWhileRevalidate) {
+                this.refreshInBackground(key, fetcher, strategyName);
+                return cached.data;
+            }
+        }
+        
+        // No cache or expired without SWR - fetch fresh data
+        const data = await fetcher();
+        this.cache.set(key, { data, timestamp: now });
+        return data;
+    }
+    
+    /**
+     * Refreshes cache in background (for stale-while-revalidate)
+     * @param {string} key - Cache key
+     * @param {Function} fetcher - Async function to fetch data
+     * @param {string} strategyName - Name of the cache strategy
+     */
+    async refreshInBackground(key, fetcher, strategyName) {
+        try {
+            const data = await fetcher();
+            this.cache.set(key, { data, timestamp: Date.now() });
+        } catch (error) {
+            console.warn(`Background refresh failed for ${key}:`, error);
+            // Keep stale data on error
+        }
+    }
+    
+    /**
+     * Manually invalidates a cache entry
+     * @param {string} key - Cache key to invalidate
+     */
+    invalidate(key) {
+        this.cache.delete(key);
+    }
+    
+    /**
+     * Clears all cache entries
+     */
+    clear() {
+        this.cache.clear();
+    }
+}
+
+const cache = new SmartCache();
 
 // Global resource managers
 const globalListenerManager = new ListenerManager();
 const globalRequestManager = new RequestManager();
 
 /**
- * Retrieves data from a local cache or fetches it if stale or absent.
+ * Retrieves data from cache or fetches it if stale or absent.
  * @param {string} key - The cache key.
  * @param {Function} fetcher - An async function that fetches the data.
+ * @param {string} strategy - The cache strategy to use ('products', 'categories', 'userProfile').
  * @returns {Promise<any>}
  */
-async function getCached(key, fetcher) {
-    const cached = cache.get(key);
-    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
-        return Promise.resolve(cached.data);
-    }
-    const data = await fetcher();
-    cache.set(key, { data, timestamp: Date.now() });
-    return data;
+async function getCached(key, fetcher, strategy = 'products') {
+    return cache.get(key, fetcher, strategy);
 }
 
 // --- Initialization & Routing ---
@@ -321,8 +396,8 @@ async function initHomePage(signal) {
 
     try {
         const [products, categories] = await Promise.all([
-            getCached('products', () => apiService.getProducts('', { signal })),
-            getCached('categories', () => apiService.getCategories({ signal }))
+            getCached('products', () => apiService.getProducts('', { signal }), 'products'),
+            getCached('categories', () => apiService.getCategories({ signal }), 'categories')
         ]);
 
         appState.products = products;

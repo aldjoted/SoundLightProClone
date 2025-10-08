@@ -263,7 +263,7 @@ const ChatbotModule = (() => {
     }
 
     /**
-     * Generate API response with enhanced error handling
+     * Generate API response with enhanced granular error handling
      * @param {HTMLElement} incomingChatLi - Incoming message element
      * @param {string} userMessage - The user's message to send to the API
      */
@@ -272,11 +272,11 @@ const ChatbotModule = (() => {
 
         try {
             if (!validateInput(userMessage)) {
-                throw new Error('Invalid input message');
+                throw new Error('INVALID_INPUT');
             }
 
             if (!checkRateLimit()) {
-                throw new Error('Please wait before sending another message');
+                throw new Error('RATE_LIMIT');
             }
 
             const data = await apiFetch(CONFIG.API_ENDPOINT, {
@@ -289,18 +289,39 @@ const ChatbotModule = (() => {
                 messageElement.appendChild(secureMarkdownToHtml(data.reply));
                 announceToScreenReader('Chatbot responded');
             } else {
-                throw new Error('No response received');
+                throw new Error('NO_RESPONSE');
             }
         } catch (error) {
-            console.error('Chatbot API error:', error);
+            let userMessage;
+            
+            // ✅ Granular error classification for better UX
+            if (error.name === 'AbortError') {
+                // Silent for user-initiated cancellations
+                return;
+            } else if (error.message === 'INVALID_INPUT') {
+                userMessage = 'Please enter a valid message without special characters.';
+            } else if (error.message === 'RATE_LIMIT') {
+                userMessage = 'Please wait a moment before sending another message.';
+            } else if (error.message === 'NO_RESPONSE') {
+                userMessage = 'I received an empty response. Please try rephrasing your question.';
+            } else if (error.status === 429) {
+                userMessage = 'I\'m receiving too many requests. Please wait a moment before trying again.';
+            } else if (error.status >= 500) {
+                userMessage = 'My systems are experiencing issues. Please try again in a few minutes.';
+            } else if (error.code === 'NETWORK_ERROR' || error.name === 'TypeError') {
+                userMessage = 'I can\'t reach my servers. Please check your internet connection.';
+            } else {
+                userMessage = 'I apologize, but I\'m having trouble responding right now. Please try again.';
+            }
             
             messageElement.innerHTML = '';
             const errorP = document.createElement('p');
-            errorP.textContent = 'I apologize, but I\'m having trouble responding right now. Please try again in a moment.';
+            errorP.textContent = userMessage;
             errorP.className = CONFIG.CLASSES.error;
             messageElement.appendChild(errorP);
             
-            announceToScreenReader('Chatbot encountered an error');
+            announceToScreenReader(`Error: ${userMessage}`);
+            console.error('Chatbot error:', error);
         } finally {
             smoothScrollToBottom();
         }

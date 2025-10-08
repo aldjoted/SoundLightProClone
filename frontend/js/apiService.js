@@ -27,8 +27,23 @@ function resolveLoginUrl() {
 }
 
 /**
- * Manages JWT access tokens in memory and refresh tokens via httpOnly cookies.
- * This approach prevents XSS attacks by keeping access tokens out of localStorage.
+ * Manages JWT access tokens in memory and refresh tokens.
+ * 
+ * SECURITY ARCHITECTURE:
+ * - Access tokens: Stored in memory (secure, lost on page reload)
+ * - Refresh tokens: Currently in localStorage (temporary implementation)
+ * 
+ * ⚠️ SECURITY LIMITATION:
+ * Using localStorage for refresh tokens instead of httpOnly cookies.
+ * 
+ * RISK: Vulnerable to XSS attacks - malicious scripts can read localStorage
+ * 
+ * TODO: Migrate to httpOnly cookies when backend supports it
+ * Required backend changes:
+ * 1. Set refresh token as httpOnly cookie in login response
+ * 2. Add endpoint to clear cookies on logout
+ * 3. Handle CORS with credentials: 'include'
+ * 
  * @namespace tokenManager
  */
 const tokenManager = (() => {
@@ -37,26 +52,40 @@ const tokenManager = (() => {
     return {
         /** @returns {string|null} */
         getAccessToken: () => accessToken,
+        
         /** @param {string} token */
         setAccessToken: (token) => { 
             accessToken = token; 
         },
-        /** @returns {string|null} */
+        
+        /** 
+         * Gets the refresh token.
+         * ⚠️ Currently reads from localStorage - not secure against XSS
+         * @returns {string|null} 
+         */
         getRefreshToken: () => {
-            // Refresh token should be handled via httpOnly cookie on server
-            // For backward compatibility, check localStorage temporarily
+            // ⚠️ SECURITY LIMITATION: Using localStorage instead of httpOnly cookies
+            // TODO: Migrate to httpOnly cookies when backend supports it
+            // Risk: Vulnerable to XSS attacks
             return localStorage.getItem('refreshToken');
         },
-        /** @param {string} token */
+        
+        /** 
+         * Sets the refresh token.
+         * ⚠️ Currently stores in localStorage - not secure against XSS
+         * @param {string} token 
+         */
         setRefreshToken: (token) => {
-            // Store in localStorage temporarily for backward compatibility
-            // TODO: Implement httpOnly cookie storage on server side
+            // ⚠️ SECURITY LIMITATION: Using localStorage instead of httpOnly cookies
+            // TODO: Migrate to httpOnly cookies when backend supports it
+            // Risk: Vulnerable to XSS attacks
             localStorage.setItem('refreshToken', token);
         },
+        
         clearTokens: () => {
             accessToken = null;
             localStorage.removeItem('refreshToken');
-            // Server should clear httpOnly cookie when this is called
+            // TODO: When httpOnly cookies are implemented, call backend to clear cookie
         }
     };
 })();
@@ -111,24 +140,37 @@ const handleResponse = async (response) => {
 };
 
 // --- Single-flight token refresh management ---
-let refreshInFlight = null;
+// ✅ Improved: Better race condition handling with synchronous reset
+let refreshPromise = null;
+
+/**
+ * Refreshes the access token using the refresh token.
+ * Implements single-flight pattern to prevent multiple concurrent refresh requests.
+ * @param {Function} getRefreshToken - Function that returns the refresh token.
+ * @returns {Promise<Object>} Promise that resolves with new tokens.
+ */
 async function refreshAccessToken(getRefreshToken) {
-    if (!refreshInFlight) {
-        const refreshToken = getRefreshToken();
-        refreshInFlight = (async () => {
+    // If a refresh is already in progress, return the existing promise
+    if (refreshPromise) {
+        return refreshPromise;
+    }
+    
+    refreshPromise = (async () => {
+        try {
+            const refreshToken = getRefreshToken();
             const res = await fetch(`${API_BASE_URL}/token/refresh/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ refresh: refreshToken }),
             });
-            const data = await handleResponse(res);
-            return data;
-        })().finally(() => {
-            // Allow a new refresh in future after resolution
-            setTimeout(() => { refreshInFlight = null; }, 0);
-        });
-    }
-    return refreshInFlight;
+            return await handleResponse(res);
+        } finally {
+            // Reset after a short delay to avoid rapid successive requests
+            setTimeout(() => { refreshPromise = null; }, 100);
+        }
+    })();
+    
+    return refreshPromise;
 }
 
 /**

@@ -128,11 +128,23 @@ export class ResourceHints {
 }
 
 /**
- * Performance monitoring utility
+ * Performance monitoring utility (Enhanced)
+ * ✅ Improved: Comprehensive monitoring with aggregation and thresholds
  */
 export class PerformanceMonitor {
   constructor() {
-    this.metrics = {};
+    this.metrics = {
+      pageLoads: [],
+      apiCalls: [],
+      userInteractions: [],
+      errors: []
+    };
+    this.thresholds = {
+      lcp: 2500,      // Good < 2.5s (Largest Contentful Paint)
+      fid: 100,       // Good < 100ms (First Input Delay)
+      cls: 0.1,       // Good < 0.1 (Cumulative Layout Shift)
+      apiCall: 1000   // Good < 1s
+    };
     this.init();
   }
 
@@ -143,12 +155,129 @@ export class PerformanceMonitor {
     }
   }
 
+  /**
+   * Records a metric with category-based storage
+   * @param {string} category - Metric category
+   * @param {Object} data - Metric data
+   */
+  recordMetric(category, data) {
+    if (!this.metrics[category]) {
+      this.metrics[category] = [];
+    }
+    
+    const metric = {
+      ...data,
+      timestamp: Date.now(),
+      url: window.location.pathname
+    };
+    
+    this.metrics[category].push(metric);
+    
+    // Check thresholds
+    this.checkThresholds(category, metric);
+    
+    // Limit storage size (keep last 100, then trim to 50)
+    if (this.metrics[category].length > 100) {
+      this.metrics[category] = this.metrics[category].slice(-50);
+    }
+  }
+
+  /**
+   * Checks if metrics exceed defined thresholds
+   * @param {string} category - Metric category
+   * @param {Object} metric - Metric data
+   */
+  checkThresholds(category, metric) {
+    let threshold;
+    let value;
+    
+    switch(category) {
+      case 'pageLoads':
+        threshold = this.thresholds.lcp;
+        value = metric.lcp;
+        break;
+      case 'apiCalls':
+        threshold = this.thresholds.apiCall;
+        value = metric.duration;
+        break;
+      default:
+        return;
+    }
+    
+    if (value > threshold) {
+      console.warn(`Performance threshold exceeded for ${category}:`, {
+        value,
+        threshold,
+        metric
+      });
+      
+      // Send to analytics if in production
+      if (IS_PRODUCTION && window.gtag) {
+        window.gtag('event', 'performance_issue', {
+          category,
+          value: Math.round(value),
+          threshold
+        });
+      }
+    }
+  }
+
+  /**
+   * Generates a performance report with statistics
+   * @returns {Object} Performance report
+   */
+  getReport() {
+    const report = {};
+    
+    Object.entries(this.metrics).forEach(([category, metrics]) => {
+      if (metrics.length === 0) return;
+      
+      const values = metrics.map(m => m.value || m.duration || 0);
+      report[category] = {
+        count: metrics.length,
+        avg: values.reduce((a, b) => a + b, 0) / values.length,
+        min: Math.min(...values),
+        max: Math.max(...values),
+        p95: this.calculatePercentile(values, 95)
+      };
+    });
+    
+    return report;
+  }
+
+  /**
+   * Calculates percentile value
+   * @param {Array<number>} values - Array of values
+   * @param {number} percentile - Percentile to calculate (0-100)
+   * @returns {number} Percentile value
+   */
+  calculatePercentile(values, percentile) {
+    const sorted = [...values].sort((a, b) => a - b);
+    const index = Math.ceil((percentile / 100) * sorted.length) - 1;
+    return sorted[index];
+  }
+
+  /**
+   * Exports all metrics for external analysis
+   * @returns {Object} Complete metrics export
+   */
+  exportMetrics() {
+    return {
+      report: this.getReport(),
+      raw: this.metrics,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      url: window.location.href,
+      thresholds: this.thresholds
+    };
+  }
+
   observeWebVitals() {
     // Largest Contentful Paint
     new PerformanceObserver((entryList) => {
       const entries = entryList.getEntries();
       const lastEntry = entries[entries.length - 1];
-      this.metrics.lcp = lastEntry.startTime;
+      this.recordMetric('pageLoads', { lcp: lastEntry.startTime });
       this.reportMetric('lcp', lastEntry.startTime);
     }).observe({ entryTypes: ['largest-contentful-paint'] });
 
@@ -156,8 +285,9 @@ export class PerformanceMonitor {
     new PerformanceObserver((entryList) => {
       const firstInput = entryList.getEntries()[0];
       if (firstInput) {
-        this.metrics.fid = firstInput.processingStart - firstInput.startTime;
-        this.reportMetric('fid', this.metrics.fid);
+        const fid = firstInput.processingStart - firstInput.startTime;
+        this.recordMetric('userInteractions', { fid });
+        this.reportMetric('fid', fid);
       }
     }).observe({ entryTypes: ['first-input'] });
 
@@ -169,7 +299,7 @@ export class PerformanceMonitor {
           clsValue += entry.value;
         }
       }
-      this.metrics.cls = clsValue;
+      this.recordMetric('pageLoads', { cls: clsValue });
       this.reportMetric('cls', clsValue);
     }).observe({ entryTypes: ['layout-shift'] });
   }
@@ -179,6 +309,11 @@ export class PerformanceMonitor {
       for (const entry of entryList.getEntries()) {
         if (entry.duration > 1000) { // Resources taking more than 1s
           console.warn(`Slow resource: ${entry.name} took ${entry.duration}ms`);
+          this.recordMetric('apiCalls', {
+            name: entry.name,
+            duration: entry.duration,
+            type: entry.initiatorType
+          });
         }
       }
     }).observe({ entryTypes: ['resource'] });

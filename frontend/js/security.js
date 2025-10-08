@@ -130,13 +130,113 @@ export class SecurityHeaders {
 }
 
 /**
- * Input Sanitization
+ * Input Sanitization (Enhanced)
+ * ✅ Improved: Multi-layer validation with better security
  */
 export class InputSanitizer {
   static sanitizeHTML(input) {
     const div = document.createElement('div');
     div.textContent = input;
     return div.innerHTML;
+  }
+
+  /**
+   * Enhanced HTML sanitization with optional allowed tags
+   * @param {string} input - Input to sanitize
+   * @param {Object} options - Sanitization options
+   * @returns {string} Sanitized HTML
+   */
+  static sanitizeHTMLAdvanced(input, options = {}) {
+    const allowedTags = options.allowedTags || [];
+    const div = document.createElement('div');
+    div.textContent = input;
+    
+    // If tags are allowed, use DOMParser
+    if (allowedTags.length > 0) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(div.innerHTML, 'text/html');
+      
+      // Remove all disallowed tags
+      const allElements = doc.body.querySelectorAll('*');
+      allElements.forEach(el => {
+        if (!allowedTags.includes(el.tagName.toLowerCase())) {
+          el.replaceWith(...el.childNodes);
+        }
+        
+        // Remove all event handler attributes
+        Array.from(el.attributes).forEach(attr => {
+          if (attr.name.startsWith('on')) {
+            el.removeAttribute(attr.name);
+          }
+        });
+      });
+      
+      return doc.body.innerHTML;
+    }
+    
+    return div.innerHTML;
+  }
+
+  /**
+   * Validates and sanitizes URLs with protocol checking
+   * @param {string} url - URL to validate
+   * @param {Array<string>} allowedProtocols - Allowed protocols
+   * @returns {string|null} Sanitized URL or null if invalid
+   */
+  static validateAndSanitizeURL(url, allowedProtocols = ['http:', 'https:']) {
+    try {
+      const urlObj = new URL(url);
+      
+      // Check protocol
+      if (!allowedProtocols.includes(urlObj.protocol)) {
+        throw new Error('Protocol not allowed');
+      }
+      
+      // Block dangerous URLs
+      const dangerousPatterns = [
+        /^javascript:/i,
+        /^data:/i,
+        /^vbscript:/i,
+        /^file:/i
+      ];
+      
+      if (dangerousPatterns.some(pattern => pattern.test(url))) {
+        throw new Error('Dangerous URL pattern detected');
+      }
+      
+      return urlObj.toString();
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Validates email with RFC 5322 compliance and disposable domain blocking
+   * @param {string} email - Email to validate
+   * @returns {Object} Validation result with valid flag and reason
+   */
+  static validateEmailAdvanced(email) {
+    // RFC 5322 compliant regex (simplified)
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    
+    if (!emailRegex.test(email)) {
+      return { valid: false, reason: 'Invalid format' };
+    }
+    
+    // Additional checks
+    const [localPart, domain] = email.split('@');
+    
+    if (localPart.length > 64 || domain.length > 255) {
+      return { valid: false, reason: 'Parts too long' };
+    }
+    
+    // Block known disposable email domains
+    const disposableDomains = ['tempmail.com', '10minutemail.com', 'guerrillamail.com', 'mailinator.com'];
+    if (disposableDomains.includes(domain.toLowerCase())) {
+      return { valid: false, reason: 'Disposable email not allowed' };
+    }
+    
+    return { valid: true };
   }
 
   static validateEmail(email) {
@@ -151,6 +251,34 @@ export class InputSanitizer {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Sanitizes search queries with SQL injection prevention
+   * @param {string} query - Search query to sanitize
+   * @param {Object} options - Sanitization options
+   * @returns {string} Sanitized query
+   */
+  static sanitizeSearchQueryAdvanced(query, options = {}) {
+    const maxLength = options.maxLength || 200;
+    
+    // Limit length
+    let sanitized = query.slice(0, maxLength);
+    
+    // Remove dangerous characters
+    sanitized = sanitized.replace(/[<>'"&\\/]/g, '');
+    
+    // Remove SQL injection attempts
+    const sqlPatterns = [
+      /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE|UNION|SCRIPT)\b)/gi,
+      /(--|;|\/\*|\*\/)/g
+    ];
+    
+    sqlPatterns.forEach(pattern => {
+      sanitized = sanitized.replace(pattern, '');
+    });
+    
+    return sanitized.trim();
   }
 
   static sanitizeSearchQuery(query) {
