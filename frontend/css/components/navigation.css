@@ -88,6 +88,15 @@
 .user-menu {
     position: relative;
 }
+
+/* Language switcher and header actions layout */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-wrap: nowrap;
+}
+
 .user-menu-toggle {
     display: flex;
     align-items: center;

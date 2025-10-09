@@ -35,15 +35,22 @@ class LanguageSwitcher {
     createSwitcher() {
         const switcher = document.createElement('div');
         switcher.className = 'language-switcher';
-    switcher.innerHTML = this.getSwitcherHTML();
+        switcher.innerHTML = this.getSwitcherHTML();
         
-        // Insert into navigation if it exists
-        const nav = document.querySelector('nav') || document.querySelector('.nav');
-        if (nav) {
-            nav.appendChild(switcher);
+        // Insert into header-actions area (before user actions) for better positioning
+        const headerActions = document.querySelector('.header-actions');
+        if (headerActions) {
+            // Insert at the beginning of header-actions for top-right placement
+            headerActions.insertBefore(switcher, headerActions.firstChild);
         } else {
-            // Fallback: insert at top of body
-            document.body.insertBefore(switcher, document.body.firstChild);
+            // Fallback: try navigation
+            const nav = document.querySelector('nav') || document.querySelector('.nav');
+            if (nav) {
+                nav.appendChild(switcher);
+            } else {
+                // Final fallback: insert at top of body
+                document.body.insertBefore(switcher, document.body.firstChild);
+            }
         }
         
         this.element = switcher;
@@ -141,11 +148,12 @@ class LanguageSwitcher {
 // CSS styles for the language switcher (pill buttons)
 const styles = `
 .language-switcher {
-    position: relative;
-    display: inline-block;
-    margin-left: var(--spacing-md);
+    display: inline-flex;
+    align-items: center;
+    margin-right: var(--spacing-md);
     z-index: 1000;
 }
+
 /* Pill buttons */
 .lang-toggle {
     display: inline-flex;
@@ -156,6 +164,7 @@ const styles = `
     gap: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
+
 .lang-pill {
     min-width: 44px;
     padding: 6px 10px;
@@ -166,31 +175,74 @@ const styles = `
     color: var(--text-primary, #1f2937);
     font-weight: 600;
     letter-spacing: 0.02em;
+    transition: all 0.2s ease;
 }
+
 .lang-pill.active {
     background: var(--primary-color, #6366f1);
     color: #fff;
     box-shadow: 0 4px 12px rgba(99,102,241,0.25);
 }
-.lang-pill:hover { background: rgba(99,102,241,0.08); }
+
+.lang-pill:hover:not(.active) { 
+    background: rgba(99,102,241,0.08); 
+}
+
+/* Header-specific styling for language switcher */
+.main-header .language-switcher {
+    margin-right: var(--spacing-md);
+}
+
+.main-header .lang-toggle {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.35);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.main-header .lang-pill {
+    color: #fff;
+    font-weight: 600;
+}
+
+.main-header .lang-pill.active {
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(255,255,255,0.15);
+}
+
+.main-header .lang-pill:hover:not(.active) { 
+    background: rgba(255,255,255,0.08); 
+}
 
 /* Responsive adjustments */
 @media (max-width: 1024px) {
     .language-switcher {
+        margin-right: var(--spacing-sm);
+    }
+}
+
+@media (max-width: 900px) {
+    .language-switcher {
+        order: 1;
+        margin-right: auto;
         margin-left: var(--spacing-sm);
     }
 }
 
 @media (max-width: 768px) {
     .language-switcher {
-        margin-left: 0;
         margin-right: var(--spacing-sm);
     }
 }
 
 @media (max-width: 480px) {
-    .lang-toggle { padding: 2px; }
-    .lang-pill { min-width: 40px; padding: 5px 8px; }
+    .lang-toggle { padding: 2px; gap: 2px; }
+    .lang-pill { 
+        min-width: 40px; 
+        padding: 5px 8px; 
+        font-size: 0.85rem;
+    }
 }
 `;
 

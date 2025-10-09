@@ -74,6 +74,12 @@
     margin-left: auto; /* Push to the right */
 }
 
+.user-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
 /* New: second row under nav for search */
 .header-search-row {
     width: 100%;
@@ -267,11 +273,16 @@
     .header-actions {
         order: 2;
         flex-wrap: nowrap;
+        gap: var(--spacing-xs);
     }
     .main-nav {
         order: 3;
         width: 100%;
         margin-top: var(--spacing-sm);
+    }
+    /* Ensure language switcher stays visible on mobile */
+    .language-switcher {
+        order: 0;
     }
 }
 
