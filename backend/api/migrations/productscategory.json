@@ -17,22 +17,56 @@
         {
           "id": "assembled-cabled",
           "name": "Assembled Cabled",
-          "subcategories": []
+          "subcategories": [
+            {
+              "id": "audio-dmx-cables",
+              "name": "Audio & DMX Cables",
+              "subcategories": []
+            },
+            {
+              "id": "combined-cables",
+              "name": "Combined Cables",
+              "subcategories": []
+            },
+            {
+              "id": "computer-cables",
+              "name": "Computer Cables",
+              "subcategories": []
+            }
+          ]
         },
         {
           "id": "cables-on-reel",
           "name": "Cables on reel",
-          "subcategories": []
+          "subcategories": [
+            {
+              "id": "signal-cables",
+              "name": "Signal Cables",
+              "subcategories": []
+            }
+          ]
         },
         {
           "id": "connectors",
           "name": "Connectors",
-          "subcategories": []
+          "subcategories": [
+            {
+              "id": "pro",
+              "name": "Pro",
+              "subcategories": []
+            }
+          ]
         },
         {
           "id": "hose-cable-protectors",
           "name": "Hose & Cable Protectors",
-          "subcategories": []
+          "subcategories": [
+            {
+              "id": "cable-protectors",
+              "name": "Cable Protectors",
+              "subcategories": []
+            }
+          ]
         }
       ]
     },

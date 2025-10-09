@@ -194,19 +194,45 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # Uncomment below when Redis is available
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://127.0.0.1:6379/1", # Your Redis instance
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#         }
+#     }
+# }
+
+# Use dummy cache when Redis is not available
 CACHES = {
     "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1", # Your Redis instance
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
+        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
     }
 }
 
-# Use dummy cache when Redis is not available
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django.core.cache.backends.dummy.DummyCache",
-#     }
-# }
+# --- Security Headers Configuration ---
+# These headers help protect against common web vulnerabilities
+
+# Prevent browsers from MIME-sniffing a response away from the declared content-type
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Enable the browser's XSS filtering and prevent rendering if attack is detected
+SECURE_BROWSER_XSS_FILTER = True
+
+# Prevent the site from being displayed in an iframe (clickjacking protection)
+X_FRAME_OPTIONS = 'DENY'
+
+# Production security settings (only apply when DEBUG=False)
+if not DEBUG:
+    # Redirect all HTTP requests to HTTPS
+    SECURE_SSL_REDIRECT = True
+    
+    # Use secure cookies
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    
+    # HTTP Strict Transport Security (HSTS)
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True

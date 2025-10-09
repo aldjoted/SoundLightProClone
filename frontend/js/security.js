@@ -111,20 +111,23 @@ export class CSPManager {
  */
 export class SecurityHeaders {
   static applyClientSideHeaders() {
-    // These would ideally be set by the server, but can be applied client-side as fallback
+    // Note: X-Frame-Options and X-XSS-Protection cannot be set via meta tags
+    // They must be set as HTTP headers by the server
+    // Only headers that work in meta tags are applied here
     const headers = {
       'X-Content-Type-Options': 'nosniff',
-      'X-Frame-Options': 'DENY',
-      'X-XSS-Protection': '1; mode=block',
-      'Referrer-Policy': 'strict-origin-when-cross-origin',
-      'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()'
+      'Referrer-Policy': 'strict-origin-when-cross-origin'
     };
 
     Object.entries(headers).forEach(([name, value]) => {
-      const meta = document.createElement('meta');
-      meta.setAttribute('http-equiv', name);
-      meta.setAttribute('content', value);
-      document.head.appendChild(meta);
+      // Check if meta tag already exists (from HTML)
+      const existingMeta = document.querySelector(`meta[http-equiv="${name}"]`);
+      if (!existingMeta) {
+        const meta = document.createElement('meta');
+        meta.setAttribute('http-equiv', name);
+        meta.setAttribute('content', value);
+        document.head.appendChild(meta);
+      }
     });
   }
 }
