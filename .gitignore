@@ -15,6 +15,8 @@ __pycache__/
 venv/
 ENV/
 env/
+backend/venv/
+backend/.venv/
 
 # Packaging / builds / caches
 pip-wheel-metadata/
@@ -59,16 +61,24 @@ frontend/pnpm-debug.log*
 
 # --- Environment files (secrets) ---
 .env
+.env.*
 *.env
 *.env.*
 backend/.env
+backend/.env.*
 frontend/.env
 frontend/.env.*
+!.env.example
+!backend/.env.example
+!frontend/.env.example
 
 # --- Editors / IDE ---
 .vscode/
 .idea/
 *.iml
+*.swp
+*.swo
+*~
 
 # --- Project-specific generated artifacts ---
 backend/product_faiss.index
