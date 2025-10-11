@@ -90,6 +90,12 @@ export const DISABLE_SW = (() => {
   return IS_LOCAL_HOST;
 })();
 
+// Stripe key
+export const STRIPE_PUBLISHABLE_KEY =
+  runtime.STRIPE_PUBLISHABLE_KEY ||
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
+  'pk_test_51SGlxnL3Yer4f974pQeRKB0AmIroFjZ4UPnvxGsHtm3bV5A6FOwP7Xbc6ZI8BiQO6FLW8cjNA9df3uHP5jrj19mC00XKUkds1P';
+
 export default {
   API_BASE_URL,
   SITE_URL,

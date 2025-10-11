@@ -83,6 +83,8 @@ frontend/.env.*
 # --- Project-specific generated artifacts ---
 backend/product_faiss.index
 backend/product_embeddings.npy
-
+backend/api/__pycache__/
+backend/api/management/__pycache__/
+backend/api/commands/__pycache__/
 # Redis dump (if ever present)
 dump.rdb

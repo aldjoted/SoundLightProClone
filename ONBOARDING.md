@@ -168,16 +168,26 @@ npm install
 
 2. **Verify API URL:**
 ```javascript
-export const API_BASE_URL = runtime.API_BASE_URL || 
-    import.meta.env.VITE_API_BASE_URL || 
-    'http://127.0.0.1:8000/api/v1';
+export const API_BASE_URL = (() => {
+  try {
+    const h = typeof window !== 'undefined' ? window.location.hostname : '';
+    if (h && isLanHost(h)) {
+      return `http://${h}:8000/api/v1`;
+    }
+  } catch {}
+  let api = runtime.API_BASE_URL;
+  if (!api) api = import.meta?.env?.VITE_API_BASE_URL;
+  if (!api) api = 'http://127.0.0.1:8000/api/v1';
+  return api;
+})();
 ```
 
 3. **Check Stripe key** (should match your `.env`):
 ```javascript
-export const STRIPE_PUBLISHABLE_KEY = runtime.STRIPE_PUBLISHABLE_KEY || 
-    import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 
-    'pk_test_your_key';
+export const STRIPE_PUBLISHABLE_KEY =
+  runtime.STRIPE_PUBLISHABLE_KEY ||
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
+  'pk_test_51SGlxnL3Yer4f974pQeRKB0AmIroFjZ4UPnvxGsHtm3bV5A6FOwP7Xbc6ZI8BiQO6FLW8cjNA9df3uHP5jrj19mC00XKUkds1P';
 ```
 
 ### ✅ Start Frontend Server
