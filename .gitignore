@@ -39,7 +39,6 @@ htmlcov/
 local_settings.py
 backend/*.sqlite3
 backend/staticfiles/
-backend/media/
 *.log
 
 # Compiled translations (keep .po, ignore .mo)

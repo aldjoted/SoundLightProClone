@@ -155,66 +155,43 @@ const styles = `
     flex-shrink: 0;
 }
 
-/* Pill buttons */
+/* Pill buttons - Default styling for black header */
 .lang-toggle {
     display: inline-flex;
-    background: rgba(255,255,255,0.95);
-    border: 1px solid rgba(0,0,0,0.08);
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: var(--radius-full, 999px);
     padding: 4px;
     gap: 4px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .lang-pill {
     min-width: 44px;
-    padding: 6px 10px;
+    padding: 6px 12px;
     border-radius: var(--radius-full, 999px);
     border: none;
     cursor: pointer;
     background: transparent;
-    color: var(--text-primary, #1f2937);
+    color: rgba(255, 255, 255, 0.85);
     font-weight: 600;
+    font-size: 0.875rem;
     letter-spacing: 0.02em;
     transition: all 0.2s ease;
     white-space: nowrap;
 }
 
 .lang-pill.active {
-    background: var(--primary-color, #6366f1);
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(99,102,241,0.25);
+    background: rgba(255, 255, 255, 0.9);
+    color: #000000;
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
 }
 
 .lang-pill:hover:not(.active) { 
-    background: rgba(99,102,241,0.08); 
-}
-
-/* Header-specific styling for language switcher */
-.main-header .language-switcher {
-    margin-right: var(--spacing-sm);
-}
-
-.main-header .lang-toggle {
-    background: rgba(255,255,255,0.12);
-    border: 1px solid rgba(255,255,255,0.35);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-}
-
-.main-header .lang-pill {
-    color: #fff;
-    font-weight: 600;
-}
-
-.main-header .lang-pill.active {
-    background: rgba(255,255,255,0.25);
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(255,255,255,0.15);
-}
-
-.main-header .lang-pill:hover:not(.active) { 
-    background: rgba(255,255,255,0.08); 
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
 }
 
 /* Responsive adjustments */
@@ -234,8 +211,8 @@ const styles = `
     }
     .lang-pill { 
         min-width: 40px; 
-        padding: 5px 8px; 
-        font-size: 0.875rem;
+        padding: 5px 10px; 
+        font-size: 0.8rem;
     }
 }
 
@@ -253,6 +230,12 @@ const styles = `
 
 @media (max-width: 480px) {
     .lang-toggle { padding: 2px; gap: 2px; }
+    .lang-pill { 
+        min-width: 38px; 
+        padding: 4px 8px; 
+        font-size: 0.75rem;
+    }
+}
     .lang-pill { 
         min-width: 38px; 
         padding: 4px 7px; 
