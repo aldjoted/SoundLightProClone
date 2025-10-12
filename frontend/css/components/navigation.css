@@ -12,8 +12,10 @@
     gap: var(--spacing-sm);
     margin: 0;
     padding: 0;
-    flex-wrap: nowrap;
-    overflow: hidden;
+    /* Allow wrapping so longer translations (e.g., French) don't get clipped */
+    flex-wrap: wrap;
+    /* Ensure items are visible even when they wrap */
+    overflow: visible;
 }
 
 .nav-link {
@@ -29,6 +31,8 @@
     text-decoration: none;
     position: relative;
     letter-spacing: -0.02em;
+    /* Keep each link on one line to avoid awkward internal breaks */
+    white-space: nowrap;
 }
 
 .nav-link:hover,
@@ -60,6 +64,9 @@
     position: relative;
     background: var(--gray-50);
     border: 1px solid var(--border-color);
+    margin-left: var(--spacing-sm); /* Add space from previous nav items */
+    /* Avoid shrinking so the cart remains fully visible */
+    flex: 0 0 auto;
 }
 
 .cart-link:hover {
@@ -228,20 +235,29 @@
 /* ============= Mobile Navigation ============= */
 .mobile-menu-toggle { display: none; background: transparent; border: none; color: var(--text-primary); font-size: 1.5rem; cursor: pointer; z-index: var(--z-mobile-panel); /* CODE QUALITY: Must be above panel and overlay when opening */ position: relative; width: 44px; height: 44px; border-radius: var(--radius-md); transition: background-color var(--transition-base); }
 .mobile-menu-toggle:hover { background-color: var(--gray-100); }
-.mobile-menu-toggle .hamburger { position: relative; width: 24px; height: 18px; margin: 0 auto; }
-.mobile-menu-toggle .hamburger span { display: block; position: absolute; height: 2px; width: 100%; background: var(--text-primary); border-radius: 2px; opacity: 1; left: 0; transform-origin: left center; }
+.mobile-menu-toggle .hamburger,
+.mobile-menu-toggle .hamburger-icon { position: relative; width: 24px; height: 18px; margin: 0 auto; }
+.mobile-menu-toggle .hamburger span,
+.mobile-menu-toggle .hamburger-icon span { display: block; position: absolute; height: 2px; width: 100%; background: #fff; border-radius: 2px; opacity: 1; left: 0; transform-origin: left center; }
 
 @media (prefers-reduced-motion: no-preference) {
-    .mobile-menu-toggle .hamburger span {
+    .mobile-menu-toggle .hamburger span,
+    .mobile-menu-toggle .hamburger-icon span {
         transition: transform var(--transition-base), opacity var(--transition-base), width var(--transition-base), top var(--transition-base), left var(--transition-base);
     }
 }
-.mobile-menu-toggle .hamburger span:nth-child(1) { top: 0px; }
-.mobile-menu-toggle .hamburger span:nth-child(2) { top: 8px; }
-.mobile-menu-toggle .hamburger span:nth-child(3) { top: 16px; }
-.mobile-menu-toggle.active .hamburger span:nth-child(1) { transform: rotate(45deg); top: 3px; left: 8px; }
-.mobile-menu-toggle.active .hamburger span:nth-child(2) { width: 0%; opacity: 0; }
-.mobile-menu-toggle.active .hamburger span:nth-child(3) { transform: rotate(-45deg); top: 15px; left: 8px; }
+.mobile-menu-toggle .hamburger span:nth-child(1),
+.mobile-menu-toggle .hamburger-icon span:nth-child(1) { top: 0px; }
+.mobile-menu-toggle .hamburger span:nth-child(2),
+.mobile-menu-toggle .hamburger-icon span:nth-child(2) { top: 8px; }
+.mobile-menu-toggle .hamburger span:nth-child(3),
+.mobile-menu-toggle .hamburger-icon span:nth-child(3) { top: 16px; }
+.mobile-menu-toggle.active .hamburger span:nth-child(1),
+.mobile-menu-toggle.active .hamburger-icon span:nth-child(1) { transform: rotate(45deg); top: 3px; left: 8px; }
+.mobile-menu-toggle.active .hamburger span:nth-child(2),
+.mobile-menu-toggle.active .hamburger-icon span:nth-child(2) { width: 0%; opacity: 0; }
+.mobile-menu-toggle.active .hamburger span:nth-child(3),
+.mobile-menu-toggle.active .hamburger-icon span:nth-child(3) { transform: rotate(-45deg); top: 15px; left: 8px; }
 
 .mobile-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); opacity: 0; visibility: hidden; transition: opacity var(--transition-base), visibility var(--transition-base); z-index: var(--z-mobile-overlay); /* CODE QUALITY: Below panel but above content */ }
 .mobile-overlay.active { opacity: 1; visibility: visible; }
@@ -436,8 +452,15 @@
 .main-header .search-container input:focus { border-color: #fff; }
 
 /* Mobile hamburger contrasting color */
-.main-header .mobile-menu-toggle { color: #fff; }
-.main-header .mobile-menu-toggle .hamburger span { background: #fff; }
+.main-header .mobile-menu-toggle {
+    color: #fff; /* Ensures any icon font inside would be white */
+}
+.main-header .mobile-menu-toggle .hamburger-icon span {
+    background: #fff !important; /* Makes the lines of the hamburger white */
+}
+.main-header .mobile-menu-toggle .hamburger span {
+    background: #fff !important; /* Fallback for .hamburger class if used */
+}
 
 /* Ensure dropdowns remain readable; keep existing light styles but raise stacking above overlay */
 .main-header .user-dropdown, .main-header .mega-menu { z-index: 10; }
@@ -656,24 +679,23 @@
     }
 }
 
-/* ===== Alternative Placement: Under Auth Buttons (Overrides previous floating style) ===== */
-/* Requested: place the search bar directly beneath the login/register buttons in the header's actions column. */
+/* ===== Desktop: keep search on its own row spanning full width (avoids collisions with nav/cart) ===== */
 @media (min-width: 821px) {
     .main-header { padding-bottom: var(--spacing-lg); }
     .main-header .header-search-row {
-        position: static; /* remove absolute positioning */
-        grid-column: 3; /* align under the actions (column 3 in grid) */
+        position: static;
+        grid-column: 1 / -1; /* span across under the entire header */
         grid-row: 2;
         width: 100% !important;
         max-width: none;
-        justify-content: flex-end;
+        justify-content: center;
         pointer-events: auto;
         margin-top: var(--spacing-xs);
     }
     .main-header .header-search-row #search-form {
         width: 100%;
-        max-width: 420px; /* reasonable width below buttons */
-        margin: 0 0 0 auto; /* align right */
+        max-width: 720px; /* wider center search under nav */
+        margin: 0 auto;
         background: rgba(0,0,0,0.55);
         backdrop-filter: blur(6px);
         -webkit-backdrop-filter: blur(6px);
@@ -682,7 +704,5 @@
         padding: 4px 6px 4px 10px;
         box-shadow: 0 4px 14px -4px rgba(0,0,0,0.55);
     }
-    .main-header .header-search-row #search-suggestions {
-        width: 100%;
-    }
+    .main-header .header-search-row #search-suggestions { width: 100%; }
 }

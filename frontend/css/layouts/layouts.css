@@ -70,7 +70,8 @@
     align-items: center;
     gap: var(--spacing-md);
     flex-shrink: 0;
-    min-width: 0; /* Allow shrinking when needed */
+    flex-wrap: nowrap; /* Prevent wrapping to keep items on one line */
+    min-width: max-content; /* Ensure enough space for all items */
     margin-left: auto; /* Push to the right */
 }
 
@@ -78,6 +79,7 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
+    flex-wrap: nowrap;
 }
 
 /* New: second row under nav for search */
@@ -235,6 +237,10 @@
     .header-actions {
         gap: var(--spacing-sm);
     }
+    /* Ensure language switcher doesn't overlap cart */
+    .language-switcher {
+        margin-right: var(--spacing-xs);
+    }
 }
 
 @media (max-width: 1024px) {
@@ -259,6 +265,10 @@
     }
     .auth-links .btn span {
         display: none;
+    }
+    /* Compact language switcher on smaller screens */
+    .language-switcher {
+        margin-right: 0;
     }
 }
 

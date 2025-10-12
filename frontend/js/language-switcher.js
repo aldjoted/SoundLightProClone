@@ -150,8 +150,9 @@ const styles = `
 .language-switcher {
     display: inline-flex;
     align-items: center;
-    margin-right: var(--spacing-md);
-    z-index: 1000;
+    margin-right: var(--spacing-sm);
+    z-index: 10;
+    flex-shrink: 0;
 }
 
 /* Pill buttons */
@@ -176,6 +177,7 @@ const styles = `
     font-weight: 600;
     letter-spacing: 0.02em;
     transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .lang-pill.active {
@@ -190,7 +192,7 @@ const styles = `
 
 /* Header-specific styling for language switcher */
 .main-header .language-switcher {
-    margin-right: var(--spacing-md);
+    margin-right: var(--spacing-sm);
 }
 
 .main-header .lang-toggle {
@@ -216,32 +218,45 @@ const styles = `
 }
 
 /* Responsive adjustments */
+@media (max-width: 1200px) {
+    .language-switcher {
+        margin-right: var(--spacing-xs);
+    }
+}
+
 @media (max-width: 1024px) {
     .language-switcher {
-        margin-right: var(--spacing-sm);
+        margin-right: var(--spacing-xs);
+    }
+    .lang-toggle { 
+        padding: 3px; 
+        gap: 3px; 
+    }
+    .lang-pill { 
+        min-width: 40px; 
+        padding: 5px 8px; 
+        font-size: 0.875rem;
     }
 }
 
 @media (max-width: 900px) {
     .language-switcher {
-        order: 1;
-        margin-right: auto;
-        margin-left: var(--spacing-sm);
+        margin-right: var(--spacing-xs);
     }
 }
 
 @media (max-width: 768px) {
     .language-switcher {
-        margin-right: var(--spacing-sm);
+        margin-right: var(--spacing-xs);
     }
 }
 
 @media (max-width: 480px) {
     .lang-toggle { padding: 2px; gap: 2px; }
     .lang-pill { 
-        min-width: 40px; 
-        padding: 5px 8px; 
-        font-size: 0.85rem;
+        min-width: 38px; 
+        padding: 4px 7px; 
+        font-size: 0.8rem;
     }
 }
 `;
