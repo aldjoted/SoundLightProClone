@@ -181,7 +181,7 @@ export function renderMegaMenu(categories) {
         const btn = createElement('button', {
             class: `mega-menu-tab-btn ${index === 0 ? 'active' : ''}`,
             'data-target': `pane-${parent.slug}`
-        }, [escapeHtml(parent.name)]);
+        }, [parent.name]);
         header.appendChild(btn);
     });
 
@@ -195,9 +195,9 @@ export function renderMegaMenu(categories) {
 
         // Featured column
         const featured = createElement('div', { class: 'mega-menu-column featured' });
-        featured.appendChild(createElement('h4', {}, [escapeHtml(parent.name)]));
+        featured.appendChild(createElement('h4', {}, [parent.name]));
         const descText = parent.description || `Explore our full range of ${parent.name}.`;
-        featured.appendChild(createElement('p', {}, [escapeHtml(descText)]));
+        featured.appendChild(createElement('p', {}, [descText]));
         featured.appendChild(createElement('a', {
             href: `search-results.html?category=${encodeURIComponent(parent.slug)}`,
             class: 'btn btn--secondary'
@@ -208,7 +208,7 @@ export function renderMegaMenu(categories) {
         parent.children.forEach(child => {
             const col = createElement('div', { class: 'mega-menu-column' });
             const link = createElement('a', { href: `search-results.html?category=${encodeURIComponent(child.slug)}` });
-            link.appendChild(createElement('h5', {}, [escapeHtml(child.name)]));
+            link.appendChild(createElement('h5', {}, [child.name]));
             col.appendChild(link);
             pane.appendChild(col);
         });
@@ -284,7 +284,7 @@ export function renderCategoryFilters(categories) {
 
     frag.appendChild(createElement('button', { class: 'filter-btn active', 'data-category': 'all' }, ['All']));
     categories.forEach(category => {
-        const btn = createElement('button', { class: 'filter-btn', 'data-category': category.slug }, [escapeHtml(category.name)]);
+        const btn = createElement('button', { class: 'filter-btn', 'data-category': category.slug }, [category.name]);
         frag.appendChild(btn);
     });
 
@@ -311,9 +311,9 @@ export function renderProductGrid(products, container) {
             createElement('a', {
                 href: `product.html?id=${product.id}`,
                 class: 'product-card-image',
-                'aria-label': `View details for ${escapeHtml(product.name)}`
+                'aria-label': `View details for ${product.name}`
             }, [
-                createElement('img', { src: getProductImage(product), alt: escapeHtml(product.name), loading: 'lazy', width: '400', height: '250' }),
+                createElement('img', { src: getProductImage(product), alt: product.name, loading: 'lazy', width: '400', height: '250' }),
                 createElement('div', { class: 'product-card-overlay' }, [
                     createElement('button', { class: 'btn btn--secondary quick-view-btn', 'data-product-id': product.id }, [
                         createElement('i', { class: 'fas fa-eye' }),
@@ -323,9 +323,9 @@ export function renderProductGrid(products, container) {
             ]),
             createElement('div', { class: 'product-card-content' }, [
                 createElement('div', {}, [
-                    createElement('p', { class: 'product-card-category' }, [escapeHtml(product.category)]),
+                    createElement('p', { class: 'product-card-category' }, [product.category]),
                     createElement('h3', { class: 'product-card-title' }, [
-                        createElement('a', { href: `product.html?id=${product.id}` }, [escapeHtml(product.name)])
+                        createElement('a', { href: `product.html?id=${product.id}` }, [product.name])
                     ])
                 ]),
                 createElement('div', { class: 'product-card-footer' }, [
