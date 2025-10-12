@@ -199,7 +199,7 @@ export function renderMegaMenu(categories) {
         const descText = parent.description || `Explore our full range of ${parent.name}.`;
         featured.appendChild(createElement('p', {}, [escapeHtml(descText)]));
         featured.appendChild(createElement('a', {
-            href: `index.html#products?category=${encodeURIComponent(parent.slug)}`,
+            href: `search-results.html?category=${encodeURIComponent(parent.slug)}`,
             class: 'btn btn--secondary'
         }, ['View All']));
         pane.appendChild(featured);
@@ -207,7 +207,7 @@ export function renderMegaMenu(categories) {
         // Children columns
         parent.children.forEach(child => {
             const col = createElement('div', { class: 'mega-menu-column' });
-            const link = createElement('a', { href: `index.html#products?category=${encodeURIComponent(child.slug)}` });
+            const link = createElement('a', { href: `search-results.html?category=${encodeURIComponent(child.slug)}` });
             link.appendChild(createElement('h5', {}, [escapeHtml(child.name)]));
             col.appendChild(link);
             pane.appendChild(col);

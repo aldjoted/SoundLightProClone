@@ -220,6 +220,16 @@ async function initApp() {
             ui.updateUserAuthUI(null);
         }
 
+        // Load categories for mega menu on all pages
+        try {
+            const categories = await getCached('categories', () => apiService.getCategories(), 'categories');
+            appState.categories = categories;
+            ui.renderMegaMenu(categories);
+        } catch (error) {
+            console.error('Failed to load mega menu categories:', error);
+            // Don't throw - mega menu failure shouldn't break the entire page
+        }
+
         // --- Orchestration ---
         // Instantiate the imported modules to activate them.
         new AdvancedSearch();
@@ -395,13 +405,11 @@ async function initHomePage(signal) {
     ui.showSkeletonLoader(featuredGrid, 3);
 
     try {
-        const [products, categories] = await Promise.all([
-            getCached('products', () => apiService.getProducts('', { signal }), 'products'),
-            getCached('categories', () => apiService.getCategories({ signal }), 'categories')
-        ]);
-
+        // Categories are already loaded in appState from initApp
+        // Only fetch products here
+        const products = await getCached('products', () => apiService.getProducts('', { signal }, ''), 'products');
+        
         appState.products = products;
-        appState.categories = categories;
 
         ui.renderHeroSlider();
         
@@ -415,8 +423,7 @@ async function initHomePage(signal) {
         }
         
         ui.renderFeaturedGrid(products.slice(0, 3));
-        ui.renderCategoryFilters(categories.filter(c => !c.parent));
-        ui.renderMegaMenu(categories);
+        ui.renderCategoryFilters(appState.categories.filter(c => !c.parent));
         ui.renderProductGrid(products, productGrid);
         
         const filterControls = document.querySelector('.filter-controls');

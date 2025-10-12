@@ -61,6 +61,7 @@ class ProductList(generics.ListAPIView):
     API view to list all available products.
     Includes search functionality via a 'search' query parameter.
     Includes filtering by brand slug via a 'brand' query parameter.
+    Includes filtering by category slug via a 'category' query parameter.
     """
     serializer_class = ProductSerializer
     permission_classes = (permissions.AllowAny,)
@@ -75,13 +76,30 @@ class ProductList(generics.ListAPIView):
         """
         Optimized queryset that prevents N+1 issues.
         Optionally filters the products by a 'brand' query parameter in the URL.
+        Optionally filters the products by a 'category' query parameter in the URL.
+        When filtering by category, includes products from all descendant categories.
         Includes explicit ordering for consistent pagination results.
         """
         # Note: self.request is a DRF Request object, which has .query_params
         queryset = Product.objects.filter(available=True).select_related('brand', 'category').order_by('name')
+        
+        # Filter by brand if specified
         brand_slug = self.request.query_params.get('brand') # type: ignore
         if brand_slug is not None:
             queryset = queryset.filter(brand__slug=brand_slug)
+        
+        # Filter by category if specified (includes all descendant categories)
+        category_slug = self.request.query_params.get('category') # type: ignore
+        if category_slug is not None:
+            try:
+                category = Category.objects.get(slug=category_slug)
+                # Get the category and all its descendants using MPTT
+                descendant_categories = category.get_descendants(include_self=True)
+                queryset = queryset.filter(category__in=descendant_categories)
+            except Category.DoesNotExist:
+                # If category doesn't exist, return empty queryset
+                queryset = queryset.none()
+        
         return queryset
 
 

@@ -143,9 +143,9 @@ class MobileNavigation {
                     </button>
                     <div class="mobile-subcategories" data-category-slug="${category.slug}">
                         ${category.children.map(child => `
-                            <a href="index.html#products?category=${child.slug}" class="mobile-subcategory-link">${child.name}</a>
+                            <a href="search-results.html?category=${child.slug}" class="mobile-subcategory-link">${child.name}</a>
                         `).join('')}
-                        <a href="index.html#products?category=${category.slug}" class="mobile-subcategory-link">
+                        <a href="search-results.html?category=${category.slug}" class="mobile-subcategory-link">
                             <strong>View all ${category.name}</strong>
                         </a>
                     </div>

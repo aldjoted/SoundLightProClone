@@ -287,8 +287,29 @@ const normalizeProductsResponse = (response) => {
  * @param {boolean} [useRetry=true] - Whether to use retry logic.
  * @returns {Promise<Array<Object>>} A promise that resolves to an array of products.
  */
-export const getProducts = async (searchQuery = '', options = {}, useRetry = true) => {
-    const url = searchQuery ? `/products/?search=${encodeURIComponent(searchQuery)}` : '/products/';
+/**
+ * Fetches products from the API with optional search query and category filter.
+ * @param {string} [searchQuery=''] - The search term for filtering products.
+ * @param {Object} [options={}] - Additional fetch options like signal for abort.
+ * @param {string} [categorySlug=''] - The category slug for filtering products.
+ * @param {boolean} [useRetry=true] - Whether to use retry logic.
+ * @returns {Promise<Array<Object>>} A promise that resolves to an array of product objects.
+ */
+export const getProducts = async (searchQuery = '', options = {}, categorySlug = '', useRetry = true) => {
+    let url = '/products/';
+    const params = [];
+    
+    if (searchQuery) {
+        params.push(`search=${encodeURIComponent(searchQuery)}`);
+    }
+    
+    if (categorySlug) {
+        params.push(`category=${encodeURIComponent(categorySlug)}`);
+    }
+    
+    if (params.length > 0) {
+        url += `?${params.join('&')}`;
+    }
     
     try {
         const response = await executeFetch(url, options, useRetry);
