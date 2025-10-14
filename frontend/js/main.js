@@ -19,6 +19,10 @@ import { initSecurity } from './security.js';
 import { initAnalytics } from './analytics.js';
 import i18n from './i18n.js';
 import './language-switcher.js';
+// PWA imports
+import { initOfflineIndicator } from './offline-indicator.js';
+import { initSyncManager } from './sync-manager.js';
+import { initInstallPrompt } from './install-prompt.js';
 
 // --- State Management & Cache ---
 
@@ -196,6 +200,9 @@ async function initApp() {
         // Initialize analytics and monitoring
         initAnalytics();
         
+        // Initialize PWA features
+        initPWAFeatures();
+        
         // Initialize internationalization
         setupI18n();
         
@@ -240,6 +247,32 @@ async function initApp() {
     } catch (error) {
         console.error('Error in initApp:', error);
         throw error;
+    }
+}
+
+/**
+ * Initialize PWA features (offline support, sync, install prompt)
+ */
+function initPWAFeatures() {
+    try {
+        console.log('[PWA] Initializing PWA features...');
+        
+        // Initialize offline indicator
+        initOfflineIndicator();
+        console.log('[PWA] Offline indicator initialized');
+        
+        // Initialize sync manager
+        initSyncManager();
+        console.log('[PWA] Sync manager initialized');
+        
+        // Initialize install prompt
+        initInstallPrompt();
+        console.log('[PWA] Install prompt initialized');
+        
+        console.log('[PWA] All PWA features initialized successfully');
+    } catch (error) {
+        console.error('[PWA] Failed to initialize PWA features:', error);
+        // Don't throw - PWA features are enhancements, not critical
     }
 }
 
