@@ -522,3 +522,232 @@ export const createOrder = async (orderData) => {
         throw error;
     }
 };
+
+// --- Wishlist API Functions ---
+
+/**
+ * Fetches the user's wishlist.
+ * @returns {Promise<Object>} A promise that resolves to the wishlist object with items.
+ */
+export const getWishlist = async () => {
+    try {
+        return await apiFetch('/wishlist/');
+    } catch (error) {
+        console.error('Failed to fetch wishlist:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load wishlist: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Adds a product to the user's wishlist.
+ * @param {number} productId - The ID of the product to add.
+ * @returns {Promise<Object>} A promise that resolves to the wishlist item.
+ */
+export const addToWishlist = async (productId) => {
+    if (!productId) {
+        throw new APIError('Product ID is required', 400, 'INVALID_PRODUCT_ID');
+    }
+    
+    try {
+        return await apiFetch('/wishlist/', {
+            method: 'POST',
+            body: JSON.stringify({ product_id: productId }),
+        });
+    } catch (error) {
+        console.error('Failed to add to wishlist:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to add to wishlist: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Removes a product from the user's wishlist.
+ * @param {number} productId - The ID of the product to remove.
+ * @returns {Promise<Object>} A promise that resolves to the response.
+ */
+export const removeFromWishlist = async (productId) => {
+    if (!productId) {
+        throw new APIError('Product ID is required', 400, 'INVALID_PRODUCT_ID');
+    }
+    
+    try {
+        return await apiFetch('/wishlist/', {
+            method: 'DELETE',
+            body: JSON.stringify({ product_id: productId }),
+        });
+    } catch (error) {
+        console.error('Failed to remove from wishlist:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to remove from wishlist: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Syncs guest wishlist with authenticated user's wishlist.
+ * @param {Array<number>} productIds - Array of product IDs from guest wishlist.
+ * @returns {Promise<Object>} A promise that resolves to the synced wishlist.
+ */
+export const syncWishlist = async (productIds) => {
+    if (!Array.isArray(productIds)) {
+        throw new APIError('Product IDs must be an array', 400, 'INVALID_PRODUCT_IDS');
+    }
+    
+    try {
+        return await apiFetch('/wishlist/sync/', {
+            method: 'POST',
+            body: JSON.stringify({ product_ids: productIds }),
+        });
+    } catch (error) {
+        console.error('Failed to sync wishlist:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to sync wishlist: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+// --- Product Reviews API Functions ---
+
+/**
+ * Fetches reviews for a product.
+ * @param {number} productId - The ID of the product.
+ * @param {string} [sort='recent'] - Sort order (recent, highest, verified).
+ * @returns {Promise<Array>} A promise that resolves to an array of reviews.
+ */
+export const getProductReviews = async (productId, sort = 'recent') => {
+    if (!productId) {
+        throw new APIError('Product ID is required', 400, 'INVALID_PRODUCT_ID');
+    }
+    
+    try {
+        const url = `/products/${productId}/reviews/${sort ? `?sort=${sort}` : ''}`;
+        return await apiFetch(url);
+    } catch (error) {
+        console.error('Failed to fetch product reviews:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load reviews: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Fetches review statistics for a product.
+ * @param {number} productId - The ID of the product.
+ * @returns {Promise<Object>} A promise that resolves to review stats.
+ */
+export const getProductReviewStats = async (productId) => {
+    if (!productId) {
+        throw new APIError('Product ID is required', 400, 'INVALID_PRODUCT_ID');
+    }
+    
+    try {
+        return await apiFetch(`/products/${productId}/reviews/stats/`);
+    } catch (error) {
+        console.error('Failed to fetch product review stats:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load review stats: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Creates a new product review.
+ * @param {number} productId - The ID of the product.
+ * @param {Object} reviewData - The review data (rating, title, comment).
+ * @returns {Promise<Object>} A promise that resolves to the created review.
+ */
+export const createProductReview = async (productId, reviewData) => {
+    if (!productId) {
+        throw new APIError('Product ID is required', 400, 'INVALID_PRODUCT_ID');
+    }
+    
+    if (!reviewData?.rating || !reviewData?.comment) {
+        throw new APIError('Rating and comment are required', 400, 'INVALID_REVIEW_DATA');
+    }
+    
+    try {
+        return await apiFetch(`/products/${productId}/reviews/`, {
+            method: 'POST',
+            body: JSON.stringify(reviewData),
+        });
+    } catch (error) {
+        console.error('Failed to create product review:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to submit review: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+// --- Related Products API Function ---
+
+/**
+ * Fetches related products for a product.
+ * @param {number} productId - The ID of the product.
+ * @param {number} [limit=6] - Maximum number of related products to fetch.
+ * @returns {Promise<Array>} A promise that resolves to an array of related products.
+ */
+export const getRelatedProducts = async (productId, limit = 6) => {
+    if (!productId) {
+        throw new APIError('Product ID is required', 400, 'INVALID_PRODUCT_ID');
+    }
+    
+    try {
+        return await apiFetch(`/products/${productId}/related/?limit=${limit}`);
+    } catch (error) {
+        console.error('Failed to fetch related products:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load related products: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};

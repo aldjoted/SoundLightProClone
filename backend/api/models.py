@@ -93,6 +93,54 @@ class Product(models.Model):
         if language == 'fr' and self.description_fr:
             return self.description_fr
         return self.description
+    
+    def get_average_rating(self):
+        """Calculate the average rating from approved reviews"""
+        from django.db.models import Avg
+        result = self.reviews.filter(is_approved=True).aggregate(Avg('rating'))
+        return round(result['rating__avg'], 1) if result['rating__avg'] else None
+    
+    def get_review_count(self):
+        """Get the count of approved reviews"""
+        return self.reviews.filter(is_approved=True).count()
+    
+    def get_related_products(self, limit=6):
+        """
+        Get related products based on:
+        1. Same category
+        2. Similar price range (±30%)
+        3. Exclude the current product
+        """
+        if not self.price:
+            return Product.objects.none()
+        
+        price_min = self.price * Decimal('0.7')
+        price_max = self.price * Decimal('1.3')
+        
+        # Get products in the same category with similar price
+        related = Product.objects.filter(
+            category=self.category,
+            available=True,
+            price__gte=price_min,
+            price__lte=price_max
+        ).exclude(
+            id=self.id
+        ).select_related('brand', 'category')[:limit]
+        
+        # If we don't have enough products, add more from the same category
+        if related.count() < limit:
+            additional = Product.objects.filter(
+                category=self.category,
+                available=True
+            ).exclude(
+                id=self.id
+            ).exclude(
+                id__in=[p.id for p in related]
+            ).select_related('brand', 'category')[:limit - related.count()]
+            
+            related = list(related) + list(additional)
+        
+        return related
 
 class ProductImage(models.Model):
     """
@@ -149,3 +197,110 @@ class OrderItem(models.Model):
 
     def get_cost(self):
         return self.price * self.quantity
+
+
+class Wishlist(models.Model):
+    """
+    Model for user wishlists.
+    Each user has one wishlist that contains multiple products.
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='wishlist')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('-updated_at',)
+        verbose_name = _("Wishlist")
+        verbose_name_plural = _("Wishlists")
+
+    def __str__(self):
+        return f"Wishlist for {self.user.username}"
+
+    def get_item_count(self):
+        """Return the number of items in the wishlist"""
+        return self.items.count()
+
+
+class WishlistItem(models.Model):
+    """
+    Model for individual items in a wishlist.
+    Tracks when products were added to the wishlist.
+    """
+    wishlist = models.ForeignKey(Wishlist, related_name='items', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, related_name='wishlist_items', on_delete=models.CASCADE)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('-added_at',)
+        # Ensure a product can only be added once to a user's wishlist
+        unique_together = ('wishlist', 'product')
+        indexes = [
+            models.Index(fields=['wishlist', '-added_at']),
+        ]
+        verbose_name = _("Wishlist Item")
+        verbose_name_plural = _("Wishlist Items")
+
+    def __str__(self):
+        return f"{self.product.name} in {self.wishlist.user.username}'s wishlist"
+
+
+class ProductReview(models.Model):
+    """
+    Model for product reviews and ratings.
+    Allows customers to rate and review products they've purchased.
+    """
+    RATING_CHOICES = (
+        (1, '1 Star'),
+        (2, '2 Stars'),
+        (3, '3 Stars'),
+        (4, '4 Stars'),
+        (5, '5 Stars'),
+    )
+
+    product = models.ForeignKey(Product, related_name='reviews', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='reviews', on_delete=models.CASCADE)
+    rating = models.PositiveSmallIntegerField(choices=RATING_CHOICES, verbose_name=_("Rating"))
+    title = models.CharField(max_length=200, blank=True, verbose_name=_("Review Title"))
+    comment = models.TextField(verbose_name=_("Review Comment"))
+    is_verified_purchase = models.BooleanField(default=False, verbose_name=_("Verified Purchase"))
+    is_approved = models.BooleanField(default=True, verbose_name=_("Approved"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('-created_at',)
+        # Prevent users from reviewing the same product multiple times
+        unique_together = ('product', 'user')
+        indexes = [
+            models.Index(fields=['product', '-created_at']),
+            models.Index(fields=['product', 'is_approved']),
+            models.Index(fields=['user', '-created_at']),
+        ]
+        verbose_name = _("Product Review")
+        verbose_name_plural = _("Product Reviews")
+
+    def __str__(self):
+        return f"{self.rating}-star review by {self.user.username} for {self.product.name}"
+
+    def clean(self):
+        """Validate review data"""
+        from django.core.exceptions import ValidationError
+        if self.rating not in [1, 2, 3, 4, 5]:
+            raise ValidationError(_("Rating must be between 1 and 5."))
+        if len(self.comment.strip()) < 10:
+            raise ValidationError(_("Review comment must be at least 10 characters long."))
+
+    def save(self, *args, **kwargs):
+        """Override save to check if user has purchased the product"""
+        self.full_clean()
+        
+        # Check if this is a verified purchase
+        if not self.pk:  # Only check on creation
+            has_purchased = OrderItem.objects.filter(
+                order__user=self.user,
+                order__paid=True,
+                product=self.product
+            ).exists()
+            self.is_verified_purchase = has_purchased
+        
+        super().save(*args, **kwargs)

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Brand, Product, ProductImage, Order, OrderItem
+from .models import Category, Brand, Product, ProductImage, Order, OrderItem, Wishlist, WishlistItem, ProductReview
 
 # Register your models here.
 
@@ -64,3 +64,56 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ['id', 'first_name', 'last_name', 'email']
     # Include the OrderItemInline to show order items on the order detail page
     inlines = [OrderItemInline]
+
+
+class WishlistItemInline(admin.TabularInline):
+    """
+    Allows viewing and editing WishlistItems directly within the Wishlist admin page.
+    """
+    model = WishlistItem
+    raw_id_fields = ['product']
+    extra = 0
+    readonly_fields = ['added_at']
+
+
+@admin.register(Wishlist)
+class WishlistAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for the Wishlist model.
+    """
+    list_display = ['user', 'created_at', 'updated_at', 'item_count']
+    list_filter = ['created_at', 'updated_at']
+    search_fields = ['user__username', 'user__email']
+    readonly_fields = ['created_at', 'updated_at']
+    inlines = [WishlistItemInline]
+
+    def item_count(self, obj):
+        return obj.get_item_count()
+    item_count.short_description = 'Items'
+
+
+@admin.register(ProductReview)
+class ProductReviewAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for the ProductReview model.
+    Allows moderators to approve/reject reviews.
+    """
+    list_display = ['product', 'user', 'rating', 'is_verified_purchase', 'is_approved', 'created_at']
+    list_filter = ['rating', 'is_verified_purchase', 'is_approved', 'created_at']
+    search_fields = ['product__name', 'user__username', 'title', 'comment']
+    list_editable = ['is_approved']
+    readonly_fields = ['is_verified_purchase', 'created_at', 'updated_at']
+    raw_id_fields = ['product', 'user']
+    
+    fieldsets = (
+        ('Review Information', {
+            'fields': ('product', 'user', 'rating', 'title', 'comment')
+        }),
+        ('Status', {
+            'fields': ('is_verified_purchase', 'is_approved')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )

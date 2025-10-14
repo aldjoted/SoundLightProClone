@@ -30,5 +30,22 @@ urlpatterns = [
     # To list user's orders (GET) and create a new order (POST)
     path('orders/', views.OrderView.as_view(), name='order_list_create'),
 
+    # --- Wishlist Endpoints ---
+    # Get user's wishlist, add products, or remove products
+    path('wishlist/', views.WishlistView.as_view(), name='wishlist'),
+    # Sync guest wishlist with authenticated user's wishlist
+    path('wishlist/sync/', views.WishlistSyncView.as_view(), name='wishlist_sync'),
+
+    # --- Product Review Endpoints ---
+    # List reviews for a product and create new reviews
+    path('products/<int:product_id>/reviews/', views.ProductReviewListCreateView.as_view(), name='product_reviews'),
+    # Get review statistics for a product
+    path('products/<int:product_id>/reviews/stats/', views.ProductReviewStatsView.as_view(), name='product_review_stats'),
+    
+    # --- Related Products Endpoint ---
+    # Get related products for a product
+    path('products/<int:product_id>/related/', views.RelatedProductsView.as_view(), name='related_products'),
+
+    # --- Chatbot Endpoint ---
     path('chatbot/', views.ChatbotView.as_view(), name='chatbot'),
 ]

@@ -164,6 +164,49 @@
             <!-- Product details will be dynamically inserted here by JS -->
             <div class="loading-spinner"><div class="spinner"></div><p>Loading product...</p></div>
         </section>
+
+        <!-- Reviews Section -->
+        <section class="product-reviews" id="product-reviews-section">
+            <div class="container">
+                <div class="reviews-header">
+                    <h2 data-i18n="reviews_title">Customer Reviews</h2>
+                    <div id="review-stats-container">
+                        <!-- Review stats will be loaded here -->
+                    </div>
+                </div>
+                
+                <div class="reviews-controls">
+                    <button class="btn btn-primary" id="write-review-btn" data-i18n="write_review">
+                        <i class="fas fa-edit"></i> Write a Review
+                    </button>
+                    <div class="review-sort">
+                        <label for="review-sort-select" data-i18n="sort_by">Sort by:</label>
+                        <select id="review-sort-select" class="form-control">
+                            <option value="recent" data-i18n="sort_recent">Most Recent</option>
+                            <option value="highest" data-i18n="sort_highest">Highest Rated</option>
+                            <option value="verified" data-i18n="sort_verified">Verified Purchases</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="review-form-container" class="hidden">
+                    <!-- Review form will be loaded here -->
+                </div>
+                
+                <div id="reviews-list-container">
+                    <!-- Reviews will be loaded here -->
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <p data-i18n="loading_reviews">Loading reviews...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Related Products Section -->
+        <section id="related-products-section" class="container">
+            <!-- Related products will be loaded here -->
+        </section>
     </main>
 
     <footer class="main-footer" role="contentinfo">

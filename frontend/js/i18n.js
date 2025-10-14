@@ -111,7 +111,63 @@ const translations = {
         // Language switcher
         language_english: "English",
         language_french: "Français",
-        language_switch_to: "Switch to"
+        language_switch_to: "Switch to",
+        
+        // Wishlist
+        wishlist_title: "My Wishlist",
+        wishlist_subtitle: "Save your favorite items for later",
+        add_to_wishlist: "Add to Wishlist",
+        in_wishlist: "In Wishlist",
+        remove_from_wishlist: "Remove from Wishlist",
+        move_to_cart: "Move to Cart",
+        empty_wishlist: "Your wishlist is empty",
+        empty_wishlist_message: "Start adding products you love!",
+        continue_shopping: "Continue Shopping",
+        loading_wishlist: "Loading wishlist...",
+        added_to_wishlist: "Added to wishlist",
+        removed_from_wishlist: "Removed from wishlist",
+        moved_to_cart: "Moved to cart",
+        error_wishlist: "Wishlist error",
+        error_removing_wishlist: "Error removing from wishlist",
+        error_moving_to_cart: "Error moving to cart",
+        error_loading_wishlist: "Error loading wishlist",
+        
+        // Reviews
+        reviews_title: "Customer Reviews",
+        write_review: "Write a Review",
+        your_rating: "Your Rating",
+        review_title: "Review Title",
+        review_title_placeholder: "Summarize your experience",
+        review_comment: "Your Review",
+        review_comment_placeholder: "Share your thoughts about this product",
+        submit_review: "Submit Review",
+        sort_recent: "Most Recent",
+        sort_highest: "Highest Rated",
+        sort_lowest: "Lowest Rated",
+        sort_verified: "Verified Purchases",
+        verified_purchase: "Verified Purchase",
+        no_reviews: "No reviews yet",
+        be_first_review: "Be the first to review this product!",
+        loading_reviews: "Loading reviews...",
+        review_submitted: "Review submitted successfully!",
+        review_submit_error: "Error submitting review",
+        error_loading_reviews: "Error loading reviews",
+        rating_required: "Please select a rating",
+        title_required: "Please enter a title",
+        comment_required: "Please enter your review",
+        reviews_based_on: "based on",
+        reviews_count: "reviews",
+        
+        // Related Products
+        related_products: "You May Also Like",
+        related_products_subtitle: "Similar products you might be interested in",
+        loading_related_products: "Loading related products...",
+        no_related_products: "No related products found",
+        check_back_later: "Check back later for recommendations",
+        error_loading_related: "Error loading related products",
+        
+        // Common
+        retry: "Retry"
     },
     
     fr: {
@@ -216,7 +272,63 @@ const translations = {
         // Language switcher
         language_english: "English",
         language_french: "Français",
-        language_switch_to: "Basculer vers"
+        language_switch_to: "Basculer vers",
+        
+        // Wishlist
+        wishlist_title: "Ma Liste de Souhaits",
+        wishlist_subtitle: "Enregistrez vos articles préférés pour plus tard",
+        add_to_wishlist: "Ajouter à la Liste",
+        in_wishlist: "Dans la Liste",
+        remove_from_wishlist: "Retirer de la Liste",
+        move_to_cart: "Déplacer au Panier",
+        empty_wishlist: "Votre liste de souhaits est vide",
+        empty_wishlist_message: "Commencez à ajouter des produits que vous aimez !",
+        continue_shopping: "Continuer vos Achats",
+        loading_wishlist: "Chargement de la liste...",
+        added_to_wishlist: "Ajouté à la liste de souhaits",
+        removed_from_wishlist: "Retiré de la liste de souhaits",
+        moved_to_cart: "Déplacé au panier",
+        error_wishlist: "Erreur de liste de souhaits",
+        error_removing_wishlist: "Erreur lors de la suppression",
+        error_moving_to_cart: "Erreur lors du déplacement",
+        error_loading_wishlist: "Erreur de chargement de la liste",
+        
+        // Reviews
+        reviews_title: "Avis Clients",
+        write_review: "Écrire un Avis",
+        your_rating: "Votre Note",
+        review_title: "Titre de l'Avis",
+        review_title_placeholder: "Résumez votre expérience",
+        review_comment: "Votre Avis",
+        review_comment_placeholder: "Partagez vos impressions sur ce produit",
+        submit_review: "Soumettre l'Avis",
+        sort_recent: "Plus Récents",
+        sort_highest: "Mieux Notés",
+        sort_lowest: "Moins Bien Notés",
+        sort_verified: "Achats Vérifiés",
+        verified_purchase: "Achat Vérifié",
+        no_reviews: "Aucun avis pour le moment",
+        be_first_review: "Soyez le premier à donner votre avis !",
+        loading_reviews: "Chargement des avis...",
+        review_submitted: "Avis soumis avec succès !",
+        review_submit_error: "Erreur lors de l'envoi de l'avis",
+        error_loading_reviews: "Erreur de chargement des avis",
+        rating_required: "Veuillez sélectionner une note",
+        title_required: "Veuillez entrer un titre",
+        comment_required: "Veuillez entrer votre avis",
+        reviews_based_on: "basé sur",
+        reviews_count: "avis",
+        
+        // Related Products
+        related_products: "Vous Aimerez Aussi",
+        related_products_subtitle: "Produits similaires qui pourraient vous intéresser",
+        loading_related_products: "Chargement des produits similaires...",
+        no_related_products: "Aucun produit similaire trouvé",
+        check_back_later: "Revenez plus tard pour des recommandations",
+        error_loading_related: "Erreur de chargement des produits similaires",
+        
+        // Common
+        retry: "Réessayer"
     }
 };
 

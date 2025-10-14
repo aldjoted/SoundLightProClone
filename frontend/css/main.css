@@ -13,6 +13,9 @@
 @import url('components/forms.css');
 @import url('components/navigation.css');
 @import url('components/pwa.css');
+@import url('components/wishlist.css');
+@import url('components/reviews.css');
+@import url('components/related-products.css');
 
 /* 4. Pages Layer: Page-specific styles */
 @import url('pages/404.css');

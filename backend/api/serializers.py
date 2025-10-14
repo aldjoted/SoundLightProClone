@@ -1,7 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-from .models import Category, Brand, Product, ProductImage, Order, OrderItem
+from .models import (
+    Category, Brand, Product, ProductImage, Order, OrderItem,
+    Wishlist, WishlistItem, ProductReview
+)
 
 # --- Product Catalog Serializers ---
 
@@ -101,12 +104,15 @@ class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
     name = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
+    average_rating = serializers.SerializerMethodField()
+    review_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = [
             'id', 'category', 'brand', 'name', 'description', 
-            'price', 'images', 'stock', 'available'
+            'price', 'images', 'stock', 'available',
+            'average_rating', 'review_count'
         ]
     
     def get_name(self, obj):
@@ -126,6 +132,14 @@ class ProductSerializer(serializers.ModelSerializer):
             if language.startswith('fr'):
                 return obj.get_description('fr')
         return obj.get_description('en')
+    
+    def get_average_rating(self, obj):
+        """Return average rating from approved reviews"""
+        return obj.get_average_rating()
+    
+    def get_review_count(self, obj):
+        """Return count of approved reviews"""
+        return obj.get_review_count()
 
 # --- User Authentication Serializers ---
 
@@ -219,3 +233,138 @@ class OrderSerializer(serializers.ModelSerializer):
             'id', 'user', 'first_name', 'last_name', 'email', 'address',
             'postal_code', 'city', 'created_at', 'paid', 'stripe_id', 'total_paid', 'items'
         ]
+
+
+# --- Wishlist Serializers ---
+
+class WishlistItemSerializer(serializers.ModelSerializer):
+    """
+    Serializer for WishlistItem model.
+    Includes full product details for easy rendering.
+    """
+    product = ProductSerializer(read_only=True)
+    product_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = WishlistItem
+        fields = ['id', 'product', 'product_id', 'added_at']
+        read_only_fields = ['added_at']
+
+    def validate_product_id(self, value):
+        """Ensure product exists and is available"""
+        try:
+            product = Product.objects.get(id=value, available=True)
+            return value
+        except Product.DoesNotExist:
+            raise serializers.ValidationError("Product not found or not available.")
+
+
+class WishlistSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Wishlist model.
+    Includes nested wishlist items with product details.
+    """
+    items = WishlistItemSerializer(many=True, read_only=True)
+    item_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Wishlist
+        fields = ['id', 'user', 'items', 'item_count', 'created_at', 'updated_at']
+        read_only_fields = ['user', 'created_at', 'updated_at']
+
+    def get_item_count(self, obj):
+        return obj.get_item_count()
+
+
+class AddToWishlistSerializer(serializers.Serializer):
+    """
+    Serializer for adding a product to wishlist.
+    """
+    product_id = serializers.IntegerField()
+
+    def validate_product_id(self, value):
+        """Ensure product exists and is available"""
+        try:
+            Product.objects.get(id=value, available=True)
+            return value
+        except Product.DoesNotExist:
+            raise serializers.ValidationError("Product not found or not available.")
+
+
+# --- Product Review Serializers ---
+
+class ProductReviewSerializer(serializers.ModelSerializer):
+    """
+    Serializer for ProductReview model.
+    Includes user information for displaying reviews.
+    """
+    user = UserSerializer(read_only=True)
+    user_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProductReview
+        fields = [
+            'id', 'product', 'user', 'user_name', 'rating', 'title', 'comment',
+            'is_verified_purchase', 'is_approved', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['user', 'is_verified_purchase', 'is_approved', 'created_at', 'updated_at']
+
+    def get_user_name(self, obj):
+        """Return user's full name or username"""
+        if obj.user.first_name and obj.user.last_name:
+            return f"{obj.user.first_name} {obj.user.last_name}"
+        return obj.user.username
+
+    def validate_rating(self, value):
+        """Ensure rating is between 1 and 5"""
+        if value not in [1, 2, 3, 4, 5]:
+            raise serializers.ValidationError("Rating must be between 1 and 5.")
+        return value
+
+    def validate_comment(self, value):
+        """Ensure comment is at least 10 characters"""
+        if len(value.strip()) < 10:
+            raise serializers.ValidationError("Review comment must be at least 10 characters long.")
+        return value.strip()
+
+
+class CreateReviewSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating a new product review.
+    """
+    class Meta:
+        model = ProductReview
+        fields = ['product', 'rating', 'title', 'comment']
+
+    def validate_rating(self, value):
+        """Ensure rating is between 1 and 5"""
+        if value not in [1, 2, 3, 4, 5]:
+            raise serializers.ValidationError("Rating must be between 1 and 5.")
+        return value
+
+    def validate_comment(self, value):
+        """Ensure comment is at least 10 characters"""
+        if len(value.strip()) < 10:
+            raise serializers.ValidationError("Review comment must be at least 10 characters long.")
+        return value.strip()
+
+    def validate(self, data):
+        """Check if user has already reviewed this product"""
+        user = self.context['request'].user
+        product = data['product']
+        
+        if ProductReview.objects.filter(product=product, user=user).exists():
+            raise serializers.ValidationError(
+                "You have already reviewed this product. You can only review a product once."
+            )
+        
+        return data
+
+
+class ProductReviewStatsSerializer(serializers.Serializer):
+    """
+    Serializer for product review statistics.
+    """
+    average_rating = serializers.FloatField()
+    review_count = serializers.IntegerField()
+    rating_distribution = serializers.DictField(child=serializers.IntegerField())

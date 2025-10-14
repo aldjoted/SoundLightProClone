@@ -90,6 +90,16 @@ class SyncManager {
                     cartStore.createIndex('status', 'status', { unique: false });
                 }
                 
+                if (!db.objectStoreNames.contains('wishlist')) {
+                    const wishlistStore = db.createObjectStore('wishlist', { 
+                        keyPath: 'id', 
+                        autoIncrement: true 
+                    });
+                    wishlistStore.createIndex('timestamp', 'timestamp', { unique: false });
+                    wishlistStore.createIndex('status', 'status', { unique: false });
+                    wishlistStore.createIndex('operation', 'operation', { unique: false });
+                }
+                
                 if (!db.objectStoreNames.contains('forms')) {
                     const formsStore = db.createObjectStore('forms', { 
                         keyPath: 'id', 
@@ -156,6 +166,57 @@ class SyncManager {
             }));
         } catch (error) {
             console.error('[SyncManager] Failed to queue cart operation:', error);
+        }
+    }
+    
+    /**
+     * Queue a wishlist operation for sync
+     * @param {string} operation - 'add', 'remove', 'sync'
+     * @param {Object} data - Operation data
+     */
+    async queueWishlistOperation(operation, data) {
+        if (!this.isInitialized) {
+            console.warn('[SyncManager] Not initialized, cannot queue wishlist operation');
+            return;
+        }
+        
+        // If online and user is authenticated, attempt immediate sync
+        if (navigator.onLine) {
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken) {
+                try {
+                    await this.syncWishlistOperation(operation, data);
+                    return;
+                } catch (error) {
+                    console.log('[SyncManager] Immediate wishlist sync failed, queueing...', error);
+                }
+            }
+        }
+        
+        // Queue for later
+        const queueItem = {
+            operation,
+            data,
+            timestamp: Date.now(),
+            status: 'pending',
+            retryCount: 0
+        };
+        
+        try {
+            await this.addToQueue('wishlist', queueItem);
+            console.log('[SyncManager] Wishlist operation queued:', operation);
+            
+            // Show toast notification
+            if (ui && ui.showToast) {
+                ui.showToast('Wishlist saved locally. Will sync when online.', 'info');
+            }
+            
+            // Dispatch event for UI updates
+            window.dispatchEvent(new CustomEvent('sync-queued', {
+                detail: { type: 'wishlist', operation }
+            }));
+        } catch (error) {
+            console.error('[SyncManager] Failed to queue wishlist operation:', error);
         }
     }
     
@@ -368,6 +429,9 @@ class SyncManager {
             // Sync cart operations
             await this.syncQueuedCart();
             
+            // Sync wishlist operations
+            await this.syncQueuedWishlist();
+            
             // Sync form submissions
             await this.syncQueuedForms();
             
@@ -459,6 +523,92 @@ class SyncManager {
     }
     
     /**
+     * Sync queued wishlist operations
+     */
+    async syncQueuedWishlist() {
+        const queue = await this.getQueue('wishlist');
+        console.log(`[SyncManager] Syncing ${queue.length} wishlist operations...`);
+        
+        for (const item of queue) {
+            try {
+                await this.syncWishlistOperation(item.operation, item.data);
+                await this.removeFromQueue('wishlist', item.id);
+                console.log('[SyncManager] Wishlist operation synced:', item.operation);
+                
+                // Notify success
+                window.dispatchEvent(new CustomEvent('sync-item-complete', {
+                    detail: { type: 'wishlist', operation: item.operation }
+                }));
+            } catch (error) {
+                console.error('[SyncManager] Failed to sync wishlist operation:', error);
+                await this.updateQueueItemStatus('wishlist', item.id, 'failed');
+                
+                // Only retry a limited number of times
+                if (item.retryCount >= 3) {
+                    console.warn('[SyncManager] Max retries reached, removing from queue');
+                    await this.removeFromQueue('wishlist', item.id);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Sync a single wishlist operation
+     * @param {string} operation - Operation type ('add', 'remove', 'sync')
+     * @param {Object} data - Operation data
+     */
+    async syncWishlistOperation(operation, data) {
+        console.log('[SyncManager] Syncing wishlist operation:', operation, data);
+        
+        // Check if user is authenticated
+        const accessToken = localStorage.getItem('accessToken');
+        if (!accessToken) {
+            console.warn('[SyncManager] User not authenticated, cannot sync wishlist to backend');
+            throw new Error('Authentication required for wishlist sync');
+        }
+        
+        // Dynamically import apiService to avoid circular dependencies
+        const apiService = await import('./apiService.js');
+        
+        try {
+            switch (operation) {
+                case 'add':
+                    await apiService.addToWishlist(data.productId || data.product_id);
+                    break;
+                    
+                case 'remove':
+                    // Note: Backend expects item_id, not product_id
+                    if (data.itemId || data.item_id) {
+                        await apiService.removeFromWishlist(data.itemId || data.item_id);
+                    } else if (data.productId || data.product_id) {
+                        // If we only have product_id, fetch wishlist to get item_id
+                        const wishlist = await apiService.getWishlist();
+                        const item = wishlist.items?.find(i => 
+                            i.product.id === (data.productId || data.product_id)
+                        );
+                        if (item) {
+                            await apiService.removeFromWishlist(item.id);
+                        }
+                    }
+                    break;
+                    
+                case 'sync':
+                    // Sync entire wishlist from localStorage
+                    if (data.items && Array.isArray(data.items)) {
+                        await apiService.syncWishlist(data.items);
+                    }
+                    break;
+                    
+                default:
+                    console.warn('[SyncManager] Unknown wishlist operation:', operation);
+            }
+        } catch (error) {
+            console.error('[SyncManager] Wishlist sync error:', error);
+            throw error;
+        }
+    }
+    
+    /**
      * Sync queued form submissions
      */
     async syncQueuedForms() {
@@ -530,10 +680,11 @@ class SyncManager {
         
         try {
             const cartQueue = await this.getQueue('cart');
+            const wishlistQueue = await this.getQueue('wishlist');
             const formsQueue = await this.getQueue('forms');
             const apiQueue = await this.getQueue('api');
             
-            const total = cartQueue.length + formsQueue.length + apiQueue.length;
+            const total = cartQueue.length + wishlistQueue.length + formsQueue.length + apiQueue.length;
             
             if (total > 0) {
                 console.log(`[SyncManager] Found ${total} pending operations`);
@@ -613,7 +764,7 @@ class SyncManager {
      */
     handleStorageUpdate(event) {
         // Handle cross-tab synchronization
-        if (event.key === 'shoppingCart' || event.key === 'soundlightpro-sync') {
+        if (event.key === 'shoppingCart' || event.key === 'wishlist' || event.key === 'soundlightpro-sync') {
             console.log('[SyncManager] Storage updated in another tab');
             this.checkPendingSync();
         }
@@ -634,15 +785,17 @@ class SyncManager {
         
         try {
             const cartQueue = await this.getQueue('cart');
+            const wishlistQueue = await this.getQueue('wishlist');
             const formsQueue = await this.getQueue('forms');
             const apiQueue = await this.getQueue('api');
             
             return {
                 initialized: true,
-                pending: cartQueue.length + formsQueue.length + apiQueue.length,
+                pending: cartQueue.length + wishlistQueue.length + formsQueue.length + apiQueue.length,
                 inProgress: this.syncInProgress,
                 queues: {
                     cart: cartQueue.length,
+                    wishlist: wishlistQueue.length,
                     forms: formsQueue.length,
                     api: apiQueue.length
                 }
@@ -665,7 +818,7 @@ class SyncManager {
         console.warn('[SyncManager] Clearing all sync queues');
         
         try {
-            const stores = ['cart', 'forms', 'api'];
+            const stores = ['cart', 'wishlist', 'forms', 'api'];
             
             for (const store of stores) {
                 const transaction = this.db.transaction([store], 'readwrite');

@@ -843,3 +843,452 @@ function updateProductSchema(product) {
 
     schemaScript.textContent = JSON.stringify(schema, null, 2);
 }
+
+// ============= Wishlist UI Components =============
+
+/**
+ * Renders a wishlist button for a product
+ * @param {Object} product - The product object
+ * @param {boolean} isInWishlist - Whether product is in wishlist
+ * @returns {HTMLElement} Wishlist button element
+ */
+export function renderWishlistButton(product, isInWishlist = false) {
+    const button = createElement('button', {
+        class: `wishlist-btn ${isInWishlist ? 'in-wishlist' : ''}`,
+        'data-product-id': product.id,
+        'aria-label': isInWishlist ? 'Remove from wishlist' : 'Add to wishlist',
+        type: 'button'
+    }, [
+        createElement('i', { class: isInWishlist ? 'fas fa-heart' : 'far fa-heart' }),
+        createElement('span', { class: 'btn-text' }, [isInWishlist ? 'In Wishlist' : 'Add to Wishlist'])
+    ]);
+    
+    // Import wishlist module and add event listener
+    button.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        try {
+            const wishlist = await import('./wishlist.js');
+            const added = await wishlist.toggleWishlist(product.id);
+            
+            // Update button appearance
+            button.classList.toggle('in-wishlist', added);
+            const icon = button.querySelector('i');
+            const text = button.querySelector('.btn-text');
+            icon.className = added ? 'fas fa-heart' : 'far fa-heart';
+            text.textContent = added ? 'In Wishlist' : 'Add to Wishlist';
+            button.setAttribute('aria-label', added ? 'Remove from wishlist' : 'Add to wishlist');
+            
+            showToast(added ? 'Added to wishlist!' : 'Removed from wishlist', 'success');
+            
+            // Update wishlist count
+            updateWishlistCount(await wishlist.getWishlistCount());
+        } catch (error) {
+            console.error('Failed to toggle wishlist:', error);
+            showToast('Failed to update wishlist. Please try again.', 'error');
+        }
+    });
+    
+    return button;
+}
+
+/**
+ * Updates the wishlist count badge in the header
+ * @param {number} count - Number of items in wishlist
+ */
+export function updateWishlistCount(count) {
+    const badge = document.querySelector('.wishlist-count-badge');
+    if (badge) {
+        badge.textContent = count || '0';
+        badge.style.display = count > 0 ? 'inline-block' : 'none';
+    }
+}
+
+/**
+ * Renders a wishlist item card
+ * @param {Object} product - The product object
+ * @param {Function} onRemove - Callback for remove action
+ * @param {Function} onMoveToCart - Callback for move to cart action
+ * @returns {HTMLElement} Wishlist item element
+ */
+export function renderWishlistItem(product, onRemove, onMoveToCart) {
+    const imageUrl = getProductImage(product);
+    const inStock = product.stock > 0;
+    
+    const item = createElement('div', { class: 'wishlist-item', 'data-product-id': product.id }, [
+        createElement('a', { 
+            href: `product.html?id=${product.id}`,
+            class: 'wishlist-item-image-link'
+        }, [
+            createElement('img', {
+                src: imageUrl,
+                alt: product.name,
+                class: 'wishlist-item-image',
+                loading: 'lazy'
+            })
+        ]),
+        createElement('div', { class: 'wishlist-item-details' }, [
+            createElement('a', { 
+                href: `product.html?id=${product.id}`,
+                class: 'wishlist-item-name'
+            }, [product.name]),
+            product.brand ? createElement('p', { class: 'wishlist-item-brand' }, [product.brand.name]) : null,
+            createElement('p', { class: 'wishlist-item-price' }, [`$${parseFloat(product.price).toFixed(2)}`]),
+            createElement('p', { class: `wishlist-item-stock ${inStock ? 'in-stock' : 'out-of-stock'}` }, [
+                inStock ? '✓ In Stock' : '✗ Out of Stock'
+            ]),
+            createElement('div', { class: 'wishlist-item-actions' }, [
+                createElement('button', {
+                    class: 'btn btn-primary',
+                    disabled: !inStock
+                }, [
+                    createElement('i', { class: 'fas fa-shopping-cart' }),
+                    ' Move to Cart'
+                ]),
+                createElement('button', {
+                    class: 'btn btn-outline'
+                }, [
+                    createElement('i', { class: 'fas fa-trash' }),
+                    ' Remove'
+                ])
+            ])
+        ].filter(Boolean))
+    ]);
+    
+    // Add event listeners
+    const moveBtn = item.querySelector('.btn-primary');
+    const removeBtn = item.querySelector('.btn-outline');
+    
+    if (moveBtn) {
+        moveBtn.addEventListener('click', async () => {
+            if (await onMoveToCart(product.id, product)) {
+                item.remove();
+                showToast('Moved to cart!', 'success');
+            }
+        });
+    }
+    
+    if (removeBtn) {
+        removeBtn.addEventListener('click', async () => {
+            if (await onRemove(product.id)) {
+                item.remove();
+                showToast('Removed from wishlist', 'success');
+            }
+        });
+    }
+    
+    return item;
+}
+
+// ============= Review UI Components =============
+
+/**
+ * Renders a review submission form
+ * @param {number} productId - The product ID
+ * @returns {HTMLElement} Review form element
+ */
+export function renderReviewForm(productId) {
+    const form = createElement('form', { class: 'review-form', id: 'review-form' });
+    
+    // Star rating input
+    const ratingContainer = createElement('div', { class: 'form-group' }, [
+        createElement('label', {}, ['Your Rating *']),
+        createInteractiveStarRating()
+    ]);
+    
+    // Title input
+    const titleInput = createElement('input', {
+        type: 'text',
+        id: 'review-title',
+        name: 'title',
+        class: 'form-control',
+        placeholder: 'Review title (optional)',
+        maxlength: '200'
+    });
+    
+    // Comment textarea
+    const commentInput = createElement('textarea', {
+        id: 'review-comment',
+        name: 'comment',
+        class: 'form-control',
+        placeholder: 'Tell us about your experience with this product (minimum 10 characters) *',
+        required: 'true',
+        minlength: '10',
+        maxlength: '2000',
+        rows: '5'
+    });
+    
+    const charCount = createElement('small', { class: 'char-count' }, ['0 / 2000']);
+    
+    commentInput.addEventListener('input', () => {
+        const length = commentInput.value.length;
+        charCount.textContent = `${length} / 2000`;
+        charCount.style.color = length < 10 ? '#ef4444' : length > 1900 ? '#f59e0b' : '#6b7280';
+    });
+    
+    // Submit button
+    const submitBtn = createElement('button', {
+        type: 'submit',
+        class: 'btn btn-primary'
+    }, [
+        createElement('i', { class: 'fas fa-paper-plane' }),
+        ' Submit Review'
+    ]);
+    
+    form.appendChild(ratingContainer);
+    form.appendChild(createElement('div', { class: 'form-group' }, [
+        createElement('label', { for: 'review-title' }, ['Review Title']),
+        titleInput
+    ]));
+    form.appendChild(createElement('div', { class: 'form-group' }, [
+        createElement('label', { for: 'review-comment' }, ['Your Review *']),
+        commentInput,
+        charCount
+    ]));
+    form.appendChild(submitBtn);
+    
+    return form;
+}
+
+/**
+ * Creates an interactive star rating input
+ * @returns {HTMLElement} Star rating input element
+ */
+function createInteractiveStarRating() {
+    const container = createElement('div', { 
+        class: 'star-rating-input',
+        role: 'radiogroup',
+        'aria-label': 'Select rating'
+    });
+    let selectedRating = 0;
+    
+    for (let i = 1; i <= 5; i++) {
+        const star = createElement('i', {
+            class: 'far fa-star',
+            'data-rating': i,
+            role: 'radio',
+            'aria-checked': 'false',
+            tabindex: '0'
+        });
+        
+        star.addEventListener('click', () => {
+            selectedRating = i;
+            updateStarDisplay();
+        });
+        
+        star.addEventListener('mouseenter', () => {
+            updateStarDisplay(i);
+        });
+        
+        star.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                selectedRating = i;
+                updateStarDisplay();
+            }
+        });
+        
+        container.appendChild(star);
+    }
+    
+    container.addEventListener('mouseleave', () => {
+        updateStarDisplay();
+    });
+    
+    function updateStarDisplay(hoverRating = selectedRating) {
+        container.querySelectorAll('i').forEach((star, index) => {
+            const rating = index + 1;
+            star.className = (rating <= hoverRating) ? 'fas fa-star' : 'far fa-star';
+            star.setAttribute('aria-checked', rating <= selectedRating ? 'true' : 'false');
+        });
+    }
+    
+    // Add method to get selected rating
+    container.getSelectedRating = () => selectedRating;
+    
+    return container;
+}
+
+/**
+ * Renders a review card
+ * @param {Object} review - The review object
+ * @returns {HTMLElement} Review card element
+ */
+export function renderReviewCard(review) {
+    const { createStarRating, formatReviewDate } = getReviewHelpers();
+    
+    const card = createElement('div', { class: 'review-card' }, [
+        createElement('div', { class: 'review-header' }, [
+            createElement('div', { class: 'review-author' }, [
+                createElement('strong', {}, [escapeHtml(review.user_name || 'Anonymous')]),
+                review.is_verified_purchase ? 
+                    createElement('span', { class: 'verified-badge' }, [
+                        createElement('i', { class: 'fas fa-check-circle' }),
+                        ' Verified Purchase'
+                    ]) : null
+            ].filter(Boolean)),
+            createElement('div', { class: 'review-meta' }, [
+                createStarRating(review.rating),
+                createElement('span', { class: 'review-date' }, [formatReviewDate(review.created_at)])
+            ])
+        ]),
+        review.title ? createElement('h4', { class: 'review-title' }, [escapeHtml(review.title)]) : null,
+        createElement('p', { class: 'review-comment' }, [escapeHtml(review.comment)])
+    ].filter(Boolean));
+    
+    return card;
+}
+
+/**
+ * Renders review statistics with rating distribution
+ * @param {Object} stats - Review statistics object
+ * @returns {HTMLElement} Review stats element
+ */
+export function renderReviewStats(stats) {
+    if (!stats || stats.review_count === 0) {
+        return createElement('div', { class: 'no-reviews' }, [
+            createElement('i', { class: 'far fa-star', style: 'font-size: 3rem; color: #ccc; margin-bottom: 1rem;' }),
+            createElement('p', {}, ['No reviews yet. Be the first to review this product!'])
+        ]);
+    }
+    
+    const { createStarRating, getRatingColorClass } = getReviewHelpers();
+    const ratingClass = getRatingColorClass(stats.average_rating);
+    
+    return createElement('div', { class: 'review-stats' }, [
+        createElement('div', { class: 'rating-summary' }, [
+            createElement('div', { class: `average-rating ${ratingClass}` }, [
+                createElement('span', { class: 'rating-value' }, [stats.average_rating.toFixed(1)]),
+                createStarRating(Math.round(stats.average_rating)),
+                createElement('p', { class: 'review-count' }, [
+                    `Based on ${stats.review_count} ${stats.review_count === 1 ? 'review' : 'reviews'}`
+                ])
+            ])
+        ]),
+        renderRatingDistribution(stats)
+    ]);
+}
+
+/**
+ * Renders rating distribution bars
+ * @param {Object} stats - Review statistics object
+ * @returns {HTMLElement} Rating distribution element
+ */
+function renderRatingDistribution(stats) {
+    const container = createElement('div', { class: 'rating-distribution' });
+    
+    for (let rating = 5; rating >= 1; rating--) {
+        const count = stats.rating_distribution[rating] || 0;
+        const percentage = stats.review_count > 0 ? 
+            Math.round((count / stats.review_count) * 100) : 0;
+        
+        const row = createElement('div', { class: 'distribution-row' }, [
+            createElement('span', { class: 'star-label' }, [`${rating} ★`]),
+            createElement('div', { class: 'distribution-bar' }, [
+                createElement('div', {
+                    class: 'distribution-fill',
+                    style: `width: ${percentage}%`
+                })
+            ]),
+            createElement('span', { class: 'distribution-count' }, [`${count}`])
+        ]);
+        
+        container.appendChild(row);
+    }
+    
+    return container;
+}
+
+/**
+ * Helper function to get review utility functions
+ * @returns {Object} Review helper functions
+ */
+function getReviewHelpers() {
+    return {
+        createStarRating: (rating) => {
+            const container = createElement('div', { 
+                class: 'star-rating',
+                role: 'img',
+                'aria-label': `${rating} out of 5 stars`
+            });
+            
+            for (let i = 1; i <= 5; i++) {
+                const star = createElement('i', {
+                    class: i <= rating ? 'fas fa-star' : 'far fa-star'
+                });
+                container.appendChild(star);
+            }
+            
+            return container;
+        },
+        
+        formatReviewDate: (dateString) => {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0) return 'Today';
+            if (diffDays === 1) return 'Yesterday';
+            if (diffDays < 7) return `${diffDays} days ago`;
+            if (diffDays < 30) {
+                const weeks = Math.floor(diffDays / 7);
+                return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+            }
+            if (diffDays < 365) {
+                const months = Math.floor(diffDays / 30);
+                return `${months} ${months === 1 ? 'month' : 'months'} ago`;
+            }
+            const years = Math.floor(diffDays / 365);
+            return `${years} ${years === 1 ? 'year' : 'years'} ago`;
+        },
+        
+        getRatingColorClass: (rating) => {
+            if (rating >= 4.5) return 'rating-excellent';
+            if (rating >= 3.5) return 'rating-good';
+            if (rating >= 2.5) return 'rating-average';
+            if (rating >= 1.5) return 'rating-poor';
+            return 'rating-very-poor';
+        }
+    };
+}
+
+// ============= Related Products UI Component =============
+
+/**
+ * Renders a section of related products
+ * @param {Array} products - Array of related product objects
+ * @returns {HTMLElement} Related products section element
+ */
+export function renderRelatedProducts(products) {
+    if (!products || products.length === 0) {
+        return null;
+    }
+    
+    const section = createElement('section', { class: 'related-products' }, [
+        createElement('h2', {}, ['You May Also Like']),
+        createElement('div', { class: 'related-products-grid' })
+    ]);
+    
+    const grid = section.querySelector('.related-products-grid');
+    
+    products.forEach(product => {
+        const card = renderProductCard(product);
+        card.classList.add('related-product-card');
+        
+        // Track click for analytics
+        card.addEventListener('click', () => {
+            if (window.gtag) {
+                gtag('event', 'select_content', {
+                    content_type: 'related_product',
+                    item_id: product.id
+                });
+            }
+        });
+        
+        grid.appendChild(card);
+    });
+    
+    return section;
+}

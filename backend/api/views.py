@@ -16,12 +16,14 @@ from stripe.error import StripeError # type: ignore
 import google.generativeai as genai # type: ignore
 # from google import genai    # type: ignore
 
-from .models import Category, Product, Order, OrderItem
+from .models import Category, Product, Order, OrderItem, Wishlist, WishlistItem, ProductReview
 from .embeddings import model as embedding_model, get_product_text
 from .vector_search import load_faiss_index_and_embeddings
 from .serializers import (
     CategorySerializer, ProductSerializer, RegisterSerializer, 
-    UserSerializer, OrderSerializer, CreateOrderRequestSerializer
+    UserSerializer, OrderSerializer, CreateOrderRequestSerializer,
+    WishlistSerializer, WishlistItemSerializer, AddToWishlistSerializer,
+    ProductReviewSerializer, CreateReviewSerializer, ProductReviewStatsSerializer
 )
 from . import services
 from .services import OrderCreationError
@@ -315,6 +317,266 @@ class ChatbotView(APIView):
                 {"error": "Sorry, I'm having trouble connecting right now. Please try again later."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
+
+
+# --- Wishlist Views ---
+
+class WishlistView(APIView):
+    """
+    API view to handle wishlist operations.
+    GET: Retrieve the user's wishlist with all items
+    POST: Add a product to the wishlist
+    DELETE: Remove a product from the wishlist
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        """Get or create user's wishlist and return all items"""
+        wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+        serializer = WishlistSerializer(wishlist, context={'request': request})
+        return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        """Add a product to the wishlist"""
+        serializer = AddToWishlistSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        product_id = serializer.validated_data['product_id']
+        
+        # Get or create wishlist
+        wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+        
+        # Check if product is already in wishlist
+        if WishlistItem.objects.filter(wishlist=wishlist, product_id=product_id).exists():
+            return Response(
+                {'detail': 'Product is already in your wishlist.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Add product to wishlist
+        try:
+            product = Product.objects.get(id=product_id, available=True)
+            wishlist_item = WishlistItem.objects.create(
+                wishlist=wishlist,
+                product=product
+            )
+            item_serializer = WishlistItemSerializer(wishlist_item, context={'request': request})
+            return Response(item_serializer.data, status=status.HTTP_201_CREATED)
+        except Product.DoesNotExist:
+            return Response(
+                {'detail': 'Product not found or not available.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    def delete(self, request, *args, **kwargs):
+        """Remove a product from the wishlist"""
+        product_id = request.data.get('product_id')
+        
+        if not product_id:
+            return Response(
+                {'detail': 'product_id is required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            wishlist = Wishlist.objects.get(user=request.user)
+            wishlist_item = WishlistItem.objects.get(
+                wishlist=wishlist,
+                product_id=product_id
+            )
+            wishlist_item.delete()
+            return Response(
+                {'detail': 'Product removed from wishlist.'},
+                status=status.HTTP_200_OK
+            )
+        except Wishlist.DoesNotExist:
+            return Response(
+                {'detail': 'Wishlist not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except WishlistItem.DoesNotExist:
+            return Response(
+                {'detail': 'Product not in wishlist.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class WishlistSyncView(APIView):
+    """
+    API view to sync guest wishlist with authenticated user's wishlist.
+    POST: Merge guest wishlist items (from localStorage) with user's wishlist
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        """Sync guest wishlist items with user's wishlist"""
+        guest_product_ids = request.data.get('product_ids', [])
+        
+        if not isinstance(guest_product_ids, list):
+            return Response(
+                {'detail': 'product_ids must be an array.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get or create user's wishlist
+        wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+        
+        # Get existing product IDs in user's wishlist
+        existing_product_ids = set(
+            wishlist.items.values_list('product_id', flat=True)
+        )
+        
+        # Add new products that aren't already in the wishlist
+        added_count = 0
+        for product_id in guest_product_ids:
+            if product_id not in existing_product_ids:
+                try:
+                    product = Product.objects.get(id=product_id, available=True)
+                    WishlistItem.objects.create(wishlist=wishlist, product=product)
+                    added_count += 1
+                except Product.DoesNotExist:
+                    # Skip products that don't exist
+                    continue
+        
+        # Return updated wishlist
+        serializer = WishlistSerializer(wishlist, context={'request': request})
+        return Response({
+            'detail': f'{added_count} items synced to your wishlist.',
+            'wishlist': serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+# --- Product Review Views ---
+
+class ProductReviewListCreateView(APIView):
+    """
+    API view to list reviews for a product and create new reviews.
+    GET: List all approved reviews for a product
+    POST: Create a new review (requires authentication)
+    """
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get(self, request, product_id, *args, **kwargs):
+        """Get all approved reviews for a product"""
+        try:
+            product = Product.objects.get(id=product_id, available=True)
+        except Product.DoesNotExist:
+            return Response(
+                {'detail': 'Product not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Get query parameters for sorting
+        sort_by = request.query_params.get('sort', 'recent')  # recent, highest, verified
+        
+        reviews = ProductReview.objects.filter(
+            product=product,
+            is_approved=True
+        ).select_related('user')
+        
+        # Apply sorting
+        if sort_by == 'highest':
+            reviews = reviews.order_by('-rating', '-created_at')
+        elif sort_by == 'verified':
+            reviews = reviews.filter(is_verified_purchase=True).order_by('-created_at')
+        else:  # recent (default)
+            reviews = reviews.order_by('-created_at')
+        
+        serializer = ProductReviewSerializer(reviews, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    def post(self, request, product_id, *args, **kwargs):
+        """Create a new review for a product"""
+        # Add product_id to request data
+        data = request.data.copy()
+        data['product'] = product_id
+        
+        serializer = CreateReviewSerializer(data=data, context={'request': request})
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Save review with current user
+        try:
+            review = serializer.save(user=request.user)
+            response_serializer = ProductReviewSerializer(review, context={'request': request})
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response(
+                {'detail': f'Failed to create review: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class ProductReviewStatsView(APIView):
+    """
+    API view to get review statistics for a product.
+    GET: Get average rating, count, and rating distribution
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, product_id, *args, **kwargs):
+        """Get review statistics for a product"""
+        try:
+            product = Product.objects.get(id=product_id, available=True)
+        except Product.DoesNotExist:
+            return Response(
+                {'detail': 'Product not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        reviews = ProductReview.objects.filter(product=product, is_approved=True)
+        
+        # Calculate statistics
+        average_rating = product.get_average_rating()
+        review_count = reviews.count()
+        
+        # Calculate rating distribution
+        rating_distribution = {
+            '5': reviews.filter(rating=5).count(),
+            '4': reviews.filter(rating=4).count(),
+            '3': reviews.filter(rating=3).count(),
+            '2': reviews.filter(rating=2).count(),
+            '1': reviews.filter(rating=1).count(),
+        }
+        
+        stats = {
+            'average_rating': average_rating or 0,
+            'review_count': review_count,
+            'rating_distribution': rating_distribution
+        }
+        
+        serializer = ProductReviewStatsSerializer(stats)
+        return Response(serializer.data)
+
+
+class RelatedProductsView(APIView):
+    """
+    API view to get related products for a product.
+    GET: Get products related by category and price range
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, product_id, *args, **kwargs):
+        """Get related products"""
+        try:
+            product = Product.objects.get(id=product_id, available=True)
+        except Product.DoesNotExist:
+            return Response(
+                {'detail': 'Product not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Get limit from query params (default 6, max 12)
+        limit = min(int(request.query_params.get('limit', 6)), 12)
+        
+        # Get related products
+        related_products = product.get_related_products(limit=limit)
+        
+        serializer = ProductSerializer(related_products, many=True, context={'request': request})
+        return Response(serializer.data)
 
 
 # Custom 404 handler function
