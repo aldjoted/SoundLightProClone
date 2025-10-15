@@ -166,6 +166,45 @@ Ce document présente les mises à jour prioritaires, les fonctionnalités manqu
 
 ---
 
+### 11. Section Partenariats de Marques sur la Page d'Accueil - 🌟 TRÈS PERTINENT
+**Pourquoi c'est important :**
+- Renforce la crédibilité en présentant les collaborations avec des marques reconnues.
+- Navigation intuitive : les clients recherchent souvent par marque (Yamaha, Shure, etc.).
+- Améliore la découverte de produits avec un chemin de navigation alternatif.
+- Standard de l'industrie pour l'équipement professionnel B2B.
+- Avantages SEO avec des pages dédiées aux marques.
+- Valorise les partenariats professionnels.
+
+**Fonctionnalités :**
+- Galerie de logos de marques cliquables sur la page d'accueil.
+- Clic sur un logo → page dédiée avec tous les produits de la marque.
+- Produits organisés par catégories pour une navigation facile.
+- Affichage de la description de la marque et de son histoire.
+- Design responsive avec grille de logos optimisée.
+- Intégration avec le système de filtrage existant.
+
+**État Actuel :**
+- ✅ Le modèle `Brand` existe avec support d'image/logo (`models.py`).
+- ✅ Les produits sont déjà liés aux marques (clé étrangère).
+- ✅ Le backend peut fournir la liste des marques via l'API.
+- ✅ La structure i18n supporte les descriptions multilingues.
+- ⏳ Pas de section dédiée aux marques sur la page d'accueil.
+- ⏳ Pas de page de produits filtrés par marque.
+
+**Implémentation Suggérée :**
+1. **Backend** : Créer un endpoint `/api/brands/` avec les produits par marque.
+2. **Frontend** : Ajouter une section "Nos Partenaires" sur `index.html`.
+3. **JavaScript** : Charger et afficher dynamiquement les logos des marques.
+4. **Page Marque** : Créer `brand.html` ou utiliser `search-results.html` avec filtre marque.
+5. **UI/UX** : Grille responsive avec effet hover sur les logos.
+6. **SEO** : Balises méta et données structurées pour chaque page de marque.
+
+**Complexité :** Faible-Moyenne (3-5 jours)
+
+**ROI :** Élevé (améliore la confiance, la découverte et l'image professionnelle)
+
+---
+
 ## 🚨 Fonctionnalités Manquantes Critiques que j'ai Remarquées
 
 ### D'après l'Analyse de la Documentation :
@@ -208,15 +247,16 @@ Ce document présente les mises à jour prioritaires, les fonctionnalités manqu
 2. ✅ Produits Connexes (ventes)
 3. ✅ Vue Rapide du Produit (UX)
 4. ✅ Zoom sur l'Image (confiance)
+5. ⏳ Section Partenariats de Marques (crédibilité & découverte)
 
 ### Court Terme (Essentiels E-commerce) :
-5. ✅ Liste de Souhaits (rétention)
-6. ✅ Comparaison de Produits (produits techniques)
-7. ✅ Notifications de Disponibilité (capter la demande)
-8. ✅ Filtrage Avancé (découverte)
+6. ✅ Liste de Souhaits (rétention)
+7. ✅ Comparaison de Produits (produits techniques)
+8. ✅ Notifications de Disponibilité (capter la demande)
+9. ✅ Filtrage Avancé (découverte)
 
 ### Moyen Terme (Plateforme Professionnelle) :
-9. ✅ Tableau de Bord Client (libre-service)
-10. ✅ Récupération de Panier Abandonné (conversion)
-11. ⏳ Chat en Direct (support)
-12. ⏳ Gestion des Commandes (critique manquant !)
+10. ✅ Tableau de Bord Client (libre-service)
+11. ✅ Récupération de Panier Abandonné (conversion)
+12. ⏳ Chat en Direct (support)
+13. ⏳ Gestion des Commandes (critique manquant !)
