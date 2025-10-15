@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Debug tooling for SoundLightPro API connectivity.">
-    <title>Debug API - SoundLightPro</title>
+    <title data-i18n="debug_title">Debug API - SoundLightPro</title>
     
     <!-- Security Headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -112,10 +112,10 @@
 
     <main id="main-content" class="container">
         <div class="page-header">
-            <h1>Debug API Test</h1>
+            <h1 data-i18n="debug_title">Debug API Test</h1>
         </div>
         <section class="card-base" style="padding: var(--spacing-lg);">
-            <p>This utility page helps verify connectivity with the SoundLightPro API.</p>
+            <p data-i18n="debug_description">This utility page helps verify connectivity with the SoundLightPro API.</p>
             <div id="results" class="text-content"></div>
         </section>
     </main>
@@ -141,7 +141,9 @@
 
     <div id="toast-container" class="toast-container" aria-live="assertive" aria-atomic="true"></div>
 
-    <script>
+    <script type="module">
+        import { i18n } from './js/i18n.js';
+        
         async function testAPI() {
             const resultsDiv = document.getElementById('results');
 
@@ -166,9 +168,9 @@
 
                 resultsDiv.innerHTML = `
                     <div class="success-message">
-                        <h2>✅ API Test Successful</h2>
-                        <p><strong>Status:</strong> ${response.status}</p>
-                        <p><strong>Products found:</strong> ${data.count ?? data.length ?? 0}</p>
+                        <h2>✅ <span data-i18n="debug_success">${i18n.t('debug_success')}</span></h2>
+                        <p><strong data-i18n="debug_status">${i18n.t('debug_status')}</strong> ${response.status}</p>
+                        <p><strong data-i18n="debug_products_found">${i18n.t('debug_products_found')}</strong> ${data.count ?? data.length ?? 0}</p>
                         <details>
                             <summary>Response headers</summary>
                             <ul>${headerList}</ul>
@@ -183,15 +185,18 @@
             } catch (error) {
                 resultsDiv.innerHTML = `
                     <div class="error-message">
-                        <h2>❌ API Test Failed</h2>
-                        <p><strong>Error:</strong> ${error.message}</p>
+                        <h2>❌ <span data-i18n="debug_failed">${i18n.t('debug_failed')}</span></h2>
+                        <p><strong data-i18n="debug_error">${i18n.t('debug_error')}</strong> ${error.message}</p>
                         ${error.stack ? `<details open><summary>Stack trace</summary><pre>${error.stack}</pre></details>` : ''}
                     </div>
                 `;
             }
         }
 
-        document.addEventListener('DOMContentLoaded', testAPI);
+        document.addEventListener('DOMContentLoaded', () => {
+            i18n.translate();
+            testAPI();
+        });
     </script>
     <script src="js/apiService.js" type="module"></script>
     <script src="js/cart.js" type="module"></script>

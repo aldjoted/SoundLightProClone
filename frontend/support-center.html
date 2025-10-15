@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="SoundLightPro Support Center - Get help with your orders, products, and technical questions.">
-    <title>Support Center - SoundLightPro</title>
+    <title data-i18n="support_title">Support Center - SoundLightPro</title>
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -93,9 +93,9 @@
                 </button>
                 <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
-                        <li><a href="index.html" class="nav-link">Home</a></li>
+                        <li><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
                         <li class="nav-item mega-menu-container">
-                            <a href="index.html#products" class="nav-link dropdown-toggle">Products</a>
+                            <a href="index.html#products" class="nav-link dropdown-toggle" data-i18n="nav_products">Products</a>
                             <div class="mega-menu" id="products-mega-menu">
                                 <!-- Content is loaded by ui.js -->
                             </div>
@@ -116,7 +116,7 @@
                 <div class="header-search-row">
                     <div class="search-container">
                         <form id="search-form" role="search">
-                            <input type="search" id="search-input" placeholder="Search products..." aria-label="Search products" autocomplete="off">
+                            <input type="search" id="search-input" data-i18n="search_placeholder" placeholder="Search products..." aria-label="Search products" autocomplete="off">
                             <button type="submit" class="search-btn" aria-label="Submit search"><i class="fas fa-search"></i></button>
                         </form>
                         <div id="search-suggestions" class="hidden" aria-label="Search suggestions"></div>
@@ -125,8 +125,8 @@
                 <div class="header-actions">
                     <div class="user-actions">
                         <div id="auth-links" class="auth-links">
-                            <a href="login.html" class="btn btn--secondary"><i class="fas fa-sign-in-alt"></i><span>Login</span></a>
-                            <a href="register.html" class="btn btn--primary"><i class="fas fa-user-plus"></i><span>Register</span></a>
+                            <a href="login.html" class="btn btn--secondary"><i class="fas fa-sign-in-alt"></i><span data-i18n="nav_login">Login</span></a>
+                            <a href="register.html" class="btn btn--primary"><i class="fas fa-user-plus"></i><span data-i18n="nav_register">Register</span></a>
                         </div>
                         <div id="user-info" class="user-info hidden">
                             <div class="user-menu">
@@ -134,7 +134,7 @@
                                     <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
                                 </button>
                                 <div id="user-dropdown-menu" class="user-dropdown">
-                                    <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></button>
+                                    <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
                                 </div>
                             </div>
                         </div>
@@ -146,8 +146,8 @@
 
     <main id="main-content" class="container">
         <div class="page-header">
-            <h1>Support Center</h1>
-            <p>We're here to help! Find answers to common questions or get in touch with our support team.</p>
+            <h1 data-i18n="support_title">Support Center</h1>
+            <p data-i18n="support_subtitle">We're here to help! Find answers to common questions or get in touch with our support team.</p>
         </div>
 
         <!-- Quick Help Section -->
@@ -155,40 +155,40 @@
             <div class="support-grid">
                 <div class="support-card">
                     <i class="fas fa-phone support-icon"></i>
-                    <h3>Phone Support</h3>
-                    <p>Call us for immediate assistance</p>
+                    <h3 data-i18n="support_phone">Phone Support</h3>
+                    <p data-i18n="support_phone_desc">Call us for immediate assistance</p>
                     <a href="tel:+237680494949" class="btn btn-primary">+237 6 80 49 49 49</a>
                 </div>
                 <div class="support-card">
                     <i class="fas fa-envelope support-icon"></i>
-                    <h3>Email Support</h3>
-                    <p>Send us a detailed message</p>
+                    <h3 data-i18n="support_email">Email Support</h3>
+                    <p data-i18n="support_email_desc">Send us a detailed message</p>
                     <a href="mailto:info@soundlightpro.com" class="btn btn-primary">info@soundlightpro.com</a>
                 </div>
                 <div class="support-card">
                     <i class="fas fa-comment-dots support-icon"></i>
-                    <h3>Live Chat</h3>
-                    <p>Chat with our support team</p>
-                    <button class="btn btn-primary" onclick="document.querySelector('.chatbot-toggler').click()" aria-label="Start live chat with support">Start Chat</button>
+                    <h3 data-i18n="support_chat">Live Chat</h3>
+                    <p data-i18n="support_chat_desc">Chat with our support team</p>
+                    <button class="btn btn-primary" onclick="document.querySelector('.chatbot-toggler').click()" aria-label="Start live chat with support" data-i18n="support_start_chat">Start Chat</button>
                 </div>
                 <div class="support-card">
                     <i class="fas fa-map-marker-alt support-icon"></i>
-                    <h3>Visit Us</h3>
-                    <p>Come to our showroom</p>
-                    <a href="contact.html" class="btn btn-primary">Get Directions</a>
+                    <h3 data-i18n="support_visit">Visit Us</h3>
+                    <p data-i18n="support_visit_desc">Come to our showroom</p>
+                    <a href="contact.html" class="btn btn-primary" data-i18n="support_get_directions">Get Directions</a>
                 </div>
             </div>
         </section>
 
         <!-- FAQ Section -->
         <section class="faq-section">
-            <h2 class="section-title">Frequently Asked Questions</h2>
+            <h2 class="section-title" data-i18n="support_faq_title">Frequently Asked Questions</h2>
             
             <div class="faq-category">
-                <h3>Orders & Payment</h3>
+                <h3 data-i18n="support_orders">Orders & Payment</h3>
                 <div class="faq-item">
                     <div class="faq-question">
-                        <h4>How do I place an order?</h4>
+                        <h4 data-i18n="support_how_order">How do I place an order?</h4>
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
@@ -197,7 +197,7 @@
                 </div>
                 <div class="faq-item">
                     <div class="faq-question">
-                        <h4>What payment methods do you accept?</h4>
+                        <h4 data-i18n="support_payment_methods">What payment methods do you accept?</h4>
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
@@ -206,7 +206,7 @@
                 </div>
                 <div class="faq-item">
                     <div class="faq-question">
-                        <h4>Can I modify or cancel my order?</h4>
+                        <h4 data-i18n="support_modify_order">Can I modify or cancel my order?</h4>
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">

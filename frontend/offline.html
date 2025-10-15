@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#6366f1">
-    <title>Offline - SoundLightPro</title>
+    <title data-i18n="offline_title">Offline - SoundLightPro</title>
     
     <style>
         /* Inline styles for offline page to avoid external CSS dependencies */
@@ -256,44 +256,51 @@
             </svg>
         </div>
         
-        <h1>You're Offline</h1>
+        <h1 data-i18n="offline_title">You're Offline</h1>
         
-        <p class="offline-message">
+        <p class="offline-message" data-i18n="offline_message">
             It looks like you've lost your internet connection. Don't worry - some features are still available!
         </p>
         
         <div class="offline-features">
-            <h2>What You Can Do Offline:</h2>
+            <h2 data-i18n="offline_what_can_do">What You Can Do Offline:</h2>
             <ul>
-                <li>Browse cached products and pages you've visited</li>
-                <li>Add items to your cart (will sync when online)</li>
-                <li>View your existing cart contents</li>
-                <li>Access previously loaded content</li>
+                <li data-i18n="offline_browse_cached">Browse cached products and pages you've visited</li>
+                <li data-i18n="offline_add_cart">Add items to your cart (will sync when online)</li>
+                <li data-i18n="offline_view_cart">View your existing cart contents</li>
+                <li data-i18n="offline_access_content">Access previously loaded content</li>
             </ul>
         </div>
         
-        <button class="retry-button" onclick="location.reload()">
+        <button class="retry-button" onclick="location.reload()" data-i18n="offline_try_again">
             Try Again
         </button>
         
         <div class="cached-pages">
-            <h3>Available Cached Pages:</h3>
+            <h3 data-i18n="offline_available_pages">Available Cached Pages:</h3>
             <div class="page-links">
-                <a href="/" class="page-link">Home</a>
-                <a href="/cart.html" class="page-link">Shopping Cart</a>
-                <a href="/about.html" class="page-link">About Us</a>
-                <a href="/services.html" class="page-link">Services</a>
-                <a href="/contact.html" class="page-link">Contact</a>
+                <a href="/" class="page-link" data-i18n="offline_home">Home</a>
+                <a href="/cart.html" class="page-link" data-i18n="offline_shopping_cart">Shopping Cart</a>
+                <a href="/about.html" class="page-link" data-i18n="offline_about">About Us</a>
+                <a href="/services.html" class="page-link" data-i18n="offline_services">Services</a>
+                <a href="/contact.html" class="page-link" data-i18n="offline_contact">Contact</a>
             </div>
         </div>
         
         <div class="connection-status" id="connection-status">
             <span class="connection-status-icon"></span>
-            <span id="connection-text">Checking connection...</span>
+            <span id="connection-text" data-i18n="offline_checking_connection">Checking connection...</span>
         </div>
     </div>
     
-    <script>
+    <script type="module">
+        import { i18n } from './js/i18n.js';
+        
+        // Initialize translations
+        document.addEventListener('DOMContentLoaded', () => {
+            i18n.translate();
+        });
+        
         // Monitor connection status
         function updateConnectionStatus() {
             const statusEl = document.getElementById('connection-status');
@@ -301,7 +308,8 @@
             
             if (navigator.onLine) {
                 statusEl.classList.add('online');
-                textEl.textContent = 'Connection restored! The page will reload automatically.';
+                textEl.setAttribute('data-i18n', 'offline_connection_restored');
+                textEl.textContent = i18n.t('offline_connection_restored');
                 
                 // Auto-reload after 2 seconds
                 setTimeout(() => {
@@ -309,7 +317,8 @@
                 }, 2000);
             } else {
                 statusEl.classList.remove('online');
-                textEl.textContent = 'Still offline. Will retry automatically when connection is restored.';
+                textEl.setAttribute('data-i18n', 'offline_still_offline');
+                textEl.textContent = i18n.t('offline_still_offline');
             }
         }
         

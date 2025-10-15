@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Login to your SoundLightPro account.">
-    <title>Login - SoundLightPro</title>
+    <title data-i18n="login_title">Login - SoundLightPro</title>
     
     <!-- Security Headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -56,7 +56,7 @@
     </script>
     
     <!-- Skip to main content for accessibility -->
-    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <a href="#main-content" class="skip-link" data-i18n="skip_to_main_content">Skip to main content</a>
 
     <!-- Header -->
     <header class="main-header" role="banner">
@@ -74,20 +74,20 @@
                 </button>
                 <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
-                        <li><a href="index.html" class="nav-link">Home</a></li>
+                        <li><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
                         <li class="nav-item mega-menu-container">
-                            <a href="index.html#products" class="nav-link dropdown-toggle">Products</a>
+                            <a href="index.html#products" class="nav-link dropdown-toggle" data-i18n="nav_products">Products</a>
                             <div class="mega-menu" id="products-mega-menu">
                                 <!-- Content is loaded by ui.js -->
                             </div>
                         </li>
-                        <li><a href="about.html" class="nav-link">About Us</a></li>
-                        <li><a href="services.html" class="nav-link">Services</a></li>
-                        <li><a href="contact.html" class="nav-link">Contact</a></li>
+                        <li><a href="about.html" class="nav-link" data-i18n="nav_about">About Us</a></li>
+                        <li><a href="services.html" class="nav-link" data-i18n="nav_services">Services</a></li>
+                        <li><a href="contact.html" class="nav-link" data-i18n="nav_contact">Contact</a></li>
                         <li>
                             <a href="cart.html" class="nav-link cart-link">
                                 <i class="fas fa-shopping-cart" aria-hidden="true"></i>
-                                <span class="cart-label">Cart</span>
+                                <span class="cart-label" data-i18n="nav_cart">Cart</span>
                                 <span class="cart-badge" id="cart-item-count" aria-live="polite">0</span>
                             </a>
                         </li>
@@ -107,8 +107,8 @@
                 <div class="header-actions">
                     <div class="user-actions">
                         <div id="auth-links" class="auth-links">
-                            <a href="login.html" class="btn btn-secondary"><i class="fas fa-sign-in-alt"></i><span>Login</span></a>
-                            <a href="register.html" class="btn btn-primary"><i class="fas fa-user-plus"></i><span>Register</span></a>
+                            <a href="login.html" class="btn btn-secondary"><i class="fas fa-sign-in-alt"></i><span data-i18n="nav_login">Login</span></a>
+                            <a href="register.html" class="btn btn-primary"><i class="fas fa-user-plus"></i><span data-i18n="nav_register">Register</span></a>
                         </div>
                         <div id="user-info" class="user-info hidden">
                             <div class="user-menu">
@@ -116,7 +116,7 @@
                                     <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
                                 </button>
                                 <div id="user-dropdown-menu" class="user-dropdown">
-                                    <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                                    <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
                                 </div>
                             </div>
                         </div>
@@ -128,21 +128,21 @@
 
     <main id="main-content" class="form-page-wrapper">
         <div class="form-container">
-            <h2>Login to Your Account</h2>
+            <h2 data-i18n="login_page_title">Login to Your Account</h2>
             <form id="login-form" class="auth-form">
                 <div id="form-message" class="hidden"></div>
                 <div>
-                    <label for="username">Username</label>
+                    <label for="username" data-i18n="login_username">Username</label>
                     <input type="text" id="username" name="username" required autocomplete="username">
                 </div>
                 <div>
-                    <label for="password">Password</label>
+                    <label for="password" data-i18n="login_password">Password</label>
                     <input type="password" id="password" name="password" required autocomplete="current-password">
                 </div>
-                <button type="submit" class="btn btn-primary" aria-label="Login to account">Login</button>
+                <button type="submit" class="btn btn-primary" aria-label="Login to account" data-i18n="login_button">Login</button>
             </form>
             <p style="text-align: center; margin-top: 1.5rem;">
-                Don't have an account? <a href="register.html">Register here</a>.
+                <span data-i18n="login_no_account">Don't have an account?</span> <a href="register.html" data-i18n="login_register_here">Register here</a>.
             </p>
         </div>
     </main>

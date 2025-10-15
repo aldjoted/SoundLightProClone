@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Create a new account at SoundLightPro.">
-    <title>Register - SoundLightPro</title>
+    <title data-i18n="register_title">Register - SoundLightPro</title>
     
     <!-- Security Headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -56,7 +56,7 @@
     </script>
     
     <!-- Skip to main content for accessibility -->
-    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <a href="#main-content" class="skip-link" data-i18n="skip_to_main_content">Skip to main content</a>
 
     <!-- Header -->
     <header class="main-header" role="banner">
@@ -74,20 +74,20 @@
                 </button>
                 <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
-                        <li><a href="index.html" class="nav-link">Home</a></li>
+                        <li><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
                         <li class="nav-item mega-menu-container">
-                            <a href="index.html#products" class="nav-link dropdown-toggle">Products</a>
+                            <a href="index.html#products" class="nav-link dropdown-toggle" data-i18n="nav_products">Products</a>
                             <div class="mega-menu" id="products-mega-menu">
                                 <!-- Content is loaded by ui.js -->
                             </div>
                         </li>
-                        <li><a href="about.html" class="nav-link">About Us</a></li>
-                        <li><a href="services.html" class="nav-link">Services</a></li>
-                        <li><a href="contact.html" class="nav-link">Contact</a></li>
+                        <li><a href="about.html" class="nav-link" data-i18n="nav_about">About Us</a></li>
+                        <li><a href="services.html" class="nav-link" data-i18n="nav_services">Services</a></li>
+                        <li><a href="contact.html" class="nav-link" data-i18n="nav_contact">Contact</a></li>
                         <li>
                             <a href="cart.html" class="nav-link cart-link">
                                 <i class="fas fa-shopping-cart" aria-hidden="true"></i>
-                                <span class="cart-label">Cart</span>
+                                <span class="cart-label" data-i18n="nav_cart">Cart</span>
                                 <span class="cart-badge" id="cart-item-count" aria-live="polite">0</span>
                             </a>
                         </li>
@@ -97,7 +97,7 @@
                 <div class="header-search-row">
                     <div class="search-container">
                         <form id="search-form" role="search">
-                            <input type="search" id="search-input" placeholder="Search products..." aria-label="Search products" autocomplete="off">
+                            <input type="search" id="search-input" data-i18n="search_placeholder" placeholder="Search products..." aria-label="Search products" autocomplete="off">
                             <button type="submit" class="search-btn" aria-label="Submit search"><i class="fas fa-search"></i></button>
                         </form>
                         <div id="search-suggestions" class="hidden" aria-label="Search suggestions"></div>
@@ -106,8 +106,8 @@
                 <div class="header-actions">
                     <div class="user-actions">
                         <div id="auth-links" class="auth-links">
-                            <a href="login.html" class="btn btn--secondary"><i class="fas fa-sign-in-alt"></i><span>Login</span></a>
-                            <a href="register.html" class="btn btn--primary"><i class="fas fa-user-plus"></i><span>Register</span></a>
+                            <a href="login.html" class="btn btn--secondary"><i class="fas fa-sign-in-alt"></i><span data-i18n="nav_login">Login</span></a>
+                            <a href="register.html" class="btn btn--primary"><i class="fas fa-user-plus"></i><span data-i18n="nav_register">Register</span></a>
                         </div>
                         <div id="user-info" class="user-info hidden">
                             <div class="user-menu">
@@ -115,7 +115,7 @@
                                     <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
                                 </button>
                                 <div id="user-dropdown-menu" class="user-dropdown">
-                                    <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></button>
+                                    <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
                                 </div>
                             </div>
                         </div>
@@ -127,32 +127,32 @@
 
     <main id="main-content" class="form-page-wrapper">
         <div class="form-container">
-            <h2>Create a New Account</h2>
+            <h2 data-i18n="register_page_title">Create a New Account</h2>
             <form id="register-form" class="auth-form">
                 <div id="form-message" class="hidden"></div>
                 
                 <div>
-                    <label for="username">Username</label>
+                    <label for="username" data-i18n="register_username">Username</label>
                     <input type="text" id="username" name="username" required autocomplete="username">
                 </div>
                 
                 <div>
-                    <label for="email">Email</label>
+                    <label for="email" data-i18n="register_email">Email</label>
                     <input type="email" id="email" name="email" required autocomplete="email">
                 </div>
                 
                 <div>
-                    <label for="first_name">First Name</label>
+                    <label for="first_name" data-i18n="register_first_name">First Name</label>
                     <input type="text" id="first_name" name="first_name" required autocomplete="given-name">
                 </div>
                 
                 <div>
-                    <label for="last_name">Last Name</label>
+                    <label for="last_name" data-i18n="register_last_name">Last Name</label>
                     <input type="text" id="last_name" name="last_name" required autocomplete="family-name">
                 </div>
 
                 <div>
-                    <label for="password">Password</label>
+                    <label for="password" data-i18n="register_password">Password</label>
                     <input type="password" id="password" name="password" required autocomplete="new-password" aria-describedby="password-strength">
                     <div id="password-strength" class="password-strength-meter">
                         <div class="strength-bar"></div>
@@ -161,15 +161,15 @@
                 </div>
                 
                 <div>
-                    <label for="password2">Confirm Password</label>
+                    <label for="password2" data-i18n="register_confirm_password">Confirm Password</label>
                     <input type="password" id="password2" name="password2" required autocomplete="new-password" aria-describedby="password-match-help">
                     <small id="password-match-help" class="form-text"></small>
                 </div>
                 
-                <button type="submit" class="btn btn-primary" aria-label="Register new account">Register</button>
+                <button type="submit" class="btn btn-primary" aria-label="Register new account" data-i18n="register_button">Register</button>
             </form>
              <p style="text-align: center; margin-top: 1.5rem;">
-                Already have an account? <a href="login.html">Login here</a>.
+                <span data-i18n="register_have_account">Already have an account?</span> <a href="login.html" data-i18n="register_login_here">Login here</a>.
             </p>
         </div>
     </main>

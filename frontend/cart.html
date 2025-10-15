@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Your shopping cart at SoundLightPro.">
-    <title>Your Shopping Cart - SoundLightPro</title>
+    <title data-i18n="cart_title">Your Shopping Cart - SoundLightPro</title>
     
     <!-- PWA Configuration -->
     <meta name="theme-color" content="#6366f1">
@@ -73,7 +73,7 @@
     </script>
     
     <!-- Skip to main content for accessibility -->
-    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <a href="#main-content" class="skip-link" data-i18n="skip_to_main_content">Skip to main content</a>
 
     <!-- Header -->
     <header class="main-header" role="banner">
@@ -100,7 +100,7 @@
                         </li>
                         <li><a href="about.html" class="nav-link" data-i18n="nav_about">About Us</a></li>
                         <li><a href="services.html" class="nav-link" data-i18n="nav_services">Services</a></li>
-                        <li><a href="contact.html" class="nav-link">Contact</a></li>
+                        <li><a href="contact.html" class="nav-link" data-i18n="nav_contact">Contact</a></li>
                         <li>
                             <a href="cart.html" class="nav-link cart-link">
                                 <i class="fas fa-shopping-cart" aria-hidden="true"></i>
@@ -144,50 +144,50 @@
 
     <main id="main-content" class="container">
         <div class="page-header">
-            <h1 data-i18n="nav_cart">Your Shopping Cart</h1>
+            <h1 data-i18n="cart_page_title">Your Shopping Cart</h1>
         </div>
         <div id="cart-container">
-            <div class="loading-spinner"><div class="spinner"></div><p data-i18n="msg_loading">Loading cart...</p></div>
+            <div class="loading-spinner"><div class="spinner"></div><p data-i18n="loading_cart">Loading cart...</p></div>
         </div>
 
         <!-- Checkout Form - Initially hidden -->
         <div id="checkout-section" class="hidden">
             <div class="cart-summary">
-                <h2>Checkout</h2>
+                <h2 data-i18n="checkout_title">Checkout</h2>
                 <div id="checkout-message" class="hidden"></div>
                 
                 <form id="checkout-form" class="checkout-form">
                     <fieldset>
-                        <legend>Shipping Information</legend>
+                        <legend data-i18n="shipping_information">Shipping Information</legend>
                         <div>
-                            <label for="first_name">First Name</label>
+                            <label for="first_name" data-i18n="first_name_label">First Name</label>
                             <input type="text" id="first_name" name="first_name" required autocomplete="given-name">
                         </div>
                         <div>
-                            <label for="last_name">Last Name</label>
+                            <label for="last_name" data-i18n="last_name_label">Last Name</label>
                             <input type="text" id="last_name" name="last_name" required autocomplete="family-name">
                         </div>
                         <div>
-                            <label for="email">Email Address</label>
+                            <label for="email" data-i18n="email_label">Email Address</label>
                             <input type="email" id="email" name="email" required autocomplete="email">
                         </div>
                         <div>
-                            <label for="address">Address</label>
+                            <label for="address" data-i18n="address_label">Address</label>
                             <input type="text" id="address" name="address" required autocomplete="street-address">
                         </div>
                         <div>
-                            <label for="postal_code">Postal Code</label>
+                            <label for="postal_code" data-i18n="postal_code_label">Postal Code</label>
                             <input type="text" id="postal_code" name="postal_code" required autocomplete="postal-code">
                         </div>
                         <div>
-                            <label for="city">City</label>
+                            <label for="city" data-i18n="city_label">City</label>
                             <input type="text" id="city" name="city" required autocomplete="address-level2">
                         </div>
                     </fieldset>
 
                     <fieldset>
-                        <legend>Payment Details</legend>
-                        <label for="card-element">Credit or debit card</label>
+                        <legend data-i18n="payment_details">Payment Details</legend>
+                        <label for="card-element" data-i18n="credit_debit_card">Credit or debit card</label>
                         <div id="card-element">
                           <!-- A Stripe Element will be inserted here. -->
                         </div>
@@ -196,7 +196,7 @@
                         <div id="card-errors" role="alert"></div>
                     </fieldset>
 
-                    <button type="submit" id="submit-payment-btn" class="btn btn-primary checkout-btn" aria-label="Complete payment">Pay Now</button>
+                    <button type="submit" id="submit-payment-btn" class="btn btn-primary checkout-btn" aria-label="Complete payment" data-i18n="pay_now">Pay Now</button>
                 </form>
             </div>
         </div>
@@ -210,7 +210,7 @@
     <!-- Chatbot Interface -->
     <dialog class="chatbot" id="chatbot-panel" aria-label="Assistant">
         <header class="chatbot-header">
-            <h2>SoundLightPro Assistant</h2>
+            <h2 data-i18n="chatbot_title">SoundLightPro Assistant</h2>
             <button class="close-btn" aria-label="Close assistant">
                 <i class="fas fa-times"></i>
             </button>
@@ -218,11 +218,11 @@
         <ul class="chatbox">
             <li class="chat incoming">
                 <span class="chat-icon"><i class="fas fa-robot"></i></span>
-                <p>Hi there! 👋<br>How can I help you today?</p>
+                <p data-i18n="chatbot_greeting_message">Hi there! 👋<br>How can I help you today?</p>
             </li>
         </ul>
         <div class="chat-input">
-            <textarea placeholder="Ask a question..." required></textarea>
+            <textarea data-i18n="chatbot_placeholder" placeholder="Ask a question..." required></textarea>
             <button id="send-btn" aria-label="Send message">
                 <i class="fas fa-paper-plane"></i>
             </button>
@@ -234,32 +234,32 @@
             <div class="footer-grid">
                 <div class="footer-column">
                     <h3 class="footer-title">SoundLightPro</h3>
-                    <p class="footer-text">Professional audio and lighting solutions for events, concerts, and venues worldwide.</p>
+                    <p class="footer-text" data-i18n="footer_description">Professional audio and lighting solutions for events, concerts, and venues worldwide.</p>
                     <div class="social-icons">
                         <a href="https://www.facebook.com/beglec.cm/" aria-label="Facebook" target="_blank" rel="noopener" class="social-link"><i class="fab fa-facebook-f"></i></a>
                         <a href="https://www.youtube.com/@soundlightpro3226/featured" aria-label="YouTube" target="_blank" rel="noopener" class="social-link"><i class="fab fa-youtube"></i></a>
                     </div>
                 </div>
                 <div class="footer-column">
-                    <h4 class="footer-subtitle">Quick Links</h4>
+                    <h4 class="footer-subtitle" data-i18n="footer_quick_links">Quick Links</h4>
                     <ul class="footer-links">
-                        <li><a href="about.html">About Us</a></li>
-                        <li><a href="index.html#products">Products</a></li>
-                        <li><a href="services.html">Services</a></li>
-                        <li><a href="contact.html">Contact</a></li>
+                        <li><a href="about.html" data-i18n="nav_about">About Us</a></li>
+                        <li><a href="index.html#products" data-i18n="nav_products">Products</a></li>
+                        <li><a href="services.html" data-i18n="nav_services">Services</a></li>
+                        <li><a href="contact.html" data-i18n="nav_contact">Contact</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
-                    <h4 class="footer-subtitle">Customer Service</h4>
+                    <h4 class="footer-subtitle" data-i18n="footer_customer_service">Customer Service</h4>
                     <ul class="footer-links">
-                        <li><a href="support-center.html">Support Center</a></li>
-                        <li><a href="shipping-info.html">Shipping Info</a></li>
-                        <li><a href="returns.html">Returns</a></li>
-                        <li><a href="warranty.html">Warranty</a></li>
+                        <li><a href="support-center.html" data-i18n="footer_support_center">Support Center</a></li>
+                        <li><a href="shipping-info.html" data-i18n="footer_shipping_info">Shipping Info</a></li>
+                        <li><a href="returns.html" data-i18n="footer_returns">Returns</a></li>
+                        <li><a href="warranty.html" data-i18n="footer_warranty">Warranty</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
-                    <h4 class="footer-subtitle">Contact Info</h4>
+                    <h4 class="footer-subtitle" data-i18n="footer_contact_info">Contact Info</h4>
                     <address class="footer-contact">
                         <i class="fas fa-map-marker-alt"></i> 1451, 63 Bd de la République<br>Douala, Cameroon<br><br>
                         <i class="fas fa-phone"></i> <a href="tel:+237680494949">+237 6 80 49 49 49</a><br><br>
@@ -268,11 +268,11 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2025 SoundLightPro. All rights reserved.</p>
+                <p data-i18n="footer_copyright">&copy; 2025 SoundLightPro. All rights reserved.</p>
                 <div class="footer-bottom-links">
-                    <a href="privacy-policy.html">Privacy Policy</a>
-                    <a href="terms-of-service.html">Terms of Service</a>
-                    <a href="cookie-policy.html">Cookie Policy</a>
+                    <a href="privacy-policy.html" data-i18n="footer_privacy_policy">Privacy Policy</a>
+                    <a href="terms-of-service.html" data-i18n="footer_terms_of_service">Terms of Service</a>
+                    <a href="cookie-policy.html" data-i18n="footer_cookie_policy">Cookie Policy</a>
                 </div>
             </div>
         </div>
