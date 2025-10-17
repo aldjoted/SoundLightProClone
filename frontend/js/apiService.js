@@ -392,9 +392,10 @@ export const getCategories = async (options = {}, useRetry = true) => {
  * Logs in a user and stores authentication tokens.
  * @param {string} username - The user's username.
  * @param {string} password - The user's password.
+ * @param {boolean} [useCookie=true] - Whether to use httpOnly cookies for refresh token.
  * @returns {Promise<Object>} A promise that resolves to the token object.
  */
-export const loginUser = async (username, password) => {
+export const loginUser = async (username, password, useCookie = true) => {
     if (!username || !password) {
         throw new APIError('Username and password are required', 400, 'MISSING_CREDENTIALS');
     }
@@ -402,25 +403,31 @@ export const loginUser = async (username, password) => {
     try {
         const response = await apiFetch('/token/', {
             method: 'POST',
-            body: JSON.stringify({ username, password }),
+            body: JSON.stringify({ username, password, use_cookie: useCookie }),
         });
         
-        if (!response.access || !response.refresh) {
+        if (!response.access) {
             throw new APIError('Invalid response format from login', 500, 'INVALID_LOGIN_RESPONSE');
         }
         
         tokenManager.setAccessToken(response.access);
-        tokenManager.setRefreshToken(response.refresh);
+        
+        // If not using cookies, store refresh token from response
+        if (!useCookie && response.refresh) {
+            tokenManager.setRefreshToken(response.refresh);
+        }
+        
         return response;
     } catch (error) {
         console.error('Login failed:', error);
         if (error instanceof APIError) {
-            throw new APIError(
-                error.status === 401 ? 'Invalid username or password' : error.getUserMessage(),
-                error.status,
-                error.code,
-                error.response
-            );
+            let message = error.getUserMessage();
+            if (error.status === 401) {
+                message = 'Invalid username or password';
+            } else if (error.status === 429) {
+                message = 'Too many login attempts. Please try again in a few minutes.';
+            }
+            throw new APIError(message, error.status, error.code, error.response);
         }
         throw error;
     }
@@ -444,12 +451,11 @@ export const registerUser = async (userData) => {
     } catch (error) {
         console.error('Registration failed:', error);
         if (error instanceof APIError) {
-            throw new APIError(
-                `Registration failed: ${error.getUserMessage()}`,
-                error.status,
-                error.code,
-                error.response
-            );
+            let message = error.getUserMessage();
+            if (error.status === 429) {
+                message = 'Too many registration attempts. Please try again later.';
+            }
+            throw new APIError(message, error.status, error.code, error.response);
         }
         throw error;
     }
@@ -482,15 +488,17 @@ export const getUserProfile = async (useRetry = true) => {
 };
 
 /**
- * Logs out the user by clearing stored tokens.
+ * Logs out the user by clearing stored tokens and notifying the backend.
  */
-export const logoutUser = () => {
+export const logoutUser = async () => {
     try {
-        tokenManager.clearTokens();
+        // Notify backend to invalidate refresh token cookie
+        await apiFetch('/logout/', { method: 'POST' });
     } catch (error) {
-        console.error('Error during logout:', error);
-        // Force clear even if there's an error
-        localStorage.removeItem('refreshToken');
+        console.error('Backend logout failed, proceeding with client-side cleanup:', error);
+    } finally {
+        // Always clear client-side tokens
+        tokenManager.clearTokens();
     }
 };
 

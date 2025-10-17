@@ -45,12 +45,12 @@ export const API_BASE_URL = (() => {
   try {
     const h = typeof window !== 'undefined' ? window.location.hostname : '';
     if (h && isLanHost(h)) {
-      return `http://${h}:8000/api/v1`;
+      return `http://${h}:8000/api`;
     }
   } catch {}
   let api = runtime.API_BASE_URL;
   if (!api) api = import.meta?.env?.VITE_API_BASE_URL;
-  if (!api) api = 'http://127.0.0.1:8000/api/v1';
+  if (!api) api = 'http://127.0.0.1:8000/api';
   return api;
 })();
 

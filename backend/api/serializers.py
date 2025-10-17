@@ -155,6 +155,48 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name')
     
+    def validate_username(self, value):
+        """
+        Validate username format and availability.
+        - Must be at least 3 characters
+        - Can only contain letters, numbers, underscores, and hyphens
+        - Cannot be all numbers
+        """
+        if len(value) < 3:
+            raise serializers.ValidationError("Username must be at least 3 characters long.")
+        
+        if not value.replace('_', '').replace('-', '').isalnum():
+            raise serializers.ValidationError(
+                "Username can only contain letters, numbers, underscores (_), and hyphens (-)."
+            )
+        
+        if value.isdigit():
+            raise serializers.ValidationError("Username cannot be all numbers.")
+        
+        # Check for reserved usernames
+        reserved_usernames = ['admin', 'root', 'user', 'api', 'www', 'help', 'support']
+        if value.lower() in reserved_usernames:
+            raise serializers.ValidationError("This username is reserved and cannot be used.")
+        
+        return value
+    
+    def validate_email(self, value):
+        """
+        Validate email uniqueness.
+        """
+        if not value:
+            raise serializers.ValidationError("Email is required.")
+        
+        # Normalize email to lowercase
+        value = value.lower()
+        
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError(
+                "A user with this email address already exists. Please use a different email or try logging in."
+            )
+        
+        return value
+    
     def validate(self, attrs):
         # Check that the two password fields match
         if attrs['password'] != attrs['password2']:
@@ -163,9 +205,10 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # Create a new user with a hashed password
+        # Normalize email before saving
         user = User.objects.create(
             username=validated_data['username'],
-            email=validated_data['email'],
+            email=validated_data['email'].lower(),
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name']
         )

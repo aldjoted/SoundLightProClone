@@ -1,19 +1,16 @@
 from django.urls import path
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
 from . import views
+from .jwt_views import RateLimitedTokenObtainPairView, RateLimitedTokenRefreshView
 
 # This file defines the URL endpoints for the 'api' app.
 
 urlpatterns = [
     # --- Authentication Endpoints ---
-    # For user login, returns access and refresh tokens
-    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    # To get a new access token using a refresh token
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    # For new user registration
+    # For user login, returns access and refresh tokens (Rate Limited: 5/minute)
+    path('token/', RateLimitedTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # To get a new access token using a refresh token (Rate Limited: 10/minute)
+    path('token/refresh/', RateLimitedTokenRefreshView.as_view(), name='token_refresh'),
+    # For new user registration (Rate Limited: 3/hour)
     path('register/', views.RegisterView.as_view(), name='register'),
     # To get details of the current logged-in user
     path('user/', views.UserDetailView.as_view(), name='user_detail'),

@@ -911,16 +911,45 @@ function initLoginPage() {
     const form = document.getElementById('login-form');
     if (!form) return;
 
+    const formMessage = document.getElementById('form-message');
     const pageListenerManager = new ListenerManager();
 
     pageListenerManager.add(form, 'submit', async (e) => {
         e.preventDefault();
+        
+        // Get submit button and store original text
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        // Clear any previous error messages
+        if (formMessage) {
+            formMessage.className = 'hidden';
+            formMessage.textContent = '';
+        }
+        
+        // Set loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span data-i18n="loading">Loading...</span>';
+        
         try {
-            await apiService.loginUser(form.username.value.trim(), form.password.value);
+            await apiService.loginUser(form.username.value.trim(), form.password.value, true);
             ui.showToast('Login successful!', 'success');
+            // Keep button disabled during redirect
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> <span data-i18n="login_success">Success! Redirecting...</span>';
             window.location.href = 'index.html';
         } catch (err) {
+            // Display error in form
+            if (formMessage) {
+                formMessage.textContent = err.message || 'Login failed. Please check your credentials.';
+                formMessage.className = 'alert alert-error';
+            }
             ui.showToast('Login failed. Please check your credentials.', 'error');
+        } finally {
+            // Restore button state if still on page
+            if (!window.location.href.includes('index.html')) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
         }
     });
 
@@ -938,26 +967,88 @@ function initRegisterPage() {
     const form = document.getElementById('register-form');
     if (!form) return;
 
+    const formMessage = document.getElementById('form-message');
     const pageListenerManager = new ListenerManager();
 
     pageListenerManager.add(form, 'submit', async (e) => {
         e.preventDefault();
+        
+        // Get submit button and store original text
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        // Clear any previous error messages
+        if (formMessage) {
+            formMessage.className = 'hidden';
+            formMessage.textContent = '';
+        }
+        
         const data = {
-            username: form.username.value.trim(), email: form.email.value.trim(),
-            first_name: form.first_name.value.trim(), last_name: form.last_name.value.trim(),
-            password: form.password.value, password2: form.password2.value
+            username: form.username.value.trim(), 
+            email: form.email.value.trim(),
+            first_name: form.first_name.value.trim(), 
+            last_name: form.last_name.value.trim(),
+            password: form.password.value, 
+            password2: form.password2.value
         };
 
+        // Client-side validation
         if (data.password !== data.password2) {
+            if (formMessage) {
+                formMessage.textContent = 'Passwords do not match.';
+                formMessage.className = 'alert alert-error';
+            }
             ui.showToast('Passwords do not match.', 'error');
             return;
         }
 
+        // Set loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span data-i18n="creating_account">Creating account...</span>';
+
         try {
             await apiService.registerUser(data);
+            // Show success state
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> <span data-i18n="registration_success">Success! Redirecting...</span>';
+            if (formMessage) {
+                formMessage.textContent = 'Account created successfully! Redirecting to login...';
+                formMessage.className = 'alert alert-success';
+            }
+            ui.showToast('Registration successful!', 'success');
             window.location.href = 'login.html?registered=true';
         } catch (err) {
-            ui.showToast(`Registration failed: ${err.message}`, 'error');
+            // Parse and display detailed error messages
+            let errorMessage = 'Registration failed. Please check your information.';
+            
+            if (err.response && typeof err.response === 'object') {
+                // Handle field-specific errors from Django
+                const errors = [];
+                for (const [field, messages] of Object.entries(err.response)) {
+                    if (Array.isArray(messages)) {
+                        errors.push(`${field}: ${messages.join(', ')}`);
+                    } else {
+                        errors.push(`${field}: ${messages}`);
+                    }
+                }
+                if (errors.length > 0) {
+                    errorMessage = errors.join('; ');
+                }
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+            
+            // Display error in form
+            if (formMessage) {
+                formMessage.textContent = errorMessage;
+                formMessage.className = 'alert alert-error';
+            }
+            ui.showToast(`Registration failed: ${errorMessage}`, 'error');
+        } finally {
+            // Restore button state if still on page
+            if (!window.location.href.includes('login.html')) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
         }
     });
 

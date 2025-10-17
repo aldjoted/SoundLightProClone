@@ -9,6 +9,8 @@ from django.db.models.query import QuerySet
 from django.contrib.auth.models import User
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
+from django_ratelimit.decorators import ratelimit
+from django_ratelimit.exceptions import Ratelimited
 from rest_framework import generics, permissions, status, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -33,16 +35,41 @@ load_dotenv()
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 
+# --- Rate Limiting Error Handler ---
+
+def ratelimit_error(request, exception):
+    """
+    Custom error handler for rate limit exceeded.
+    Returns a JSON response with 429 status code.
+    """
+    return Response(
+        {
+            'error': 'Too many requests',
+            'detail': 'You have exceeded the rate limit. Please try again later.',
+            'retry_after': '60'  # seconds
+        },
+        status=status.HTTP_429_TOO_MANY_REQUESTS
+    )
+
+
 # --- Authentication Views ---
 
+@method_decorator(ratelimit(key='ip', rate='3/h', method='POST', block=True), name='dispatch')
 class RegisterView(generics.CreateAPIView):
     """
     API view for user registration.
     Allows any user (authentication not required) to create a new account.
+    Rate limited to 3 registrations per hour per IP address.
     """
     queryset = User.objects.all()
     permission_classes = (permissions.AllowAny,)
     serializer_class = RegisterSerializer
+    
+    def create(self, request, *args, **kwargs):
+        try:
+            return super().create(request, *args, **kwargs)
+        except Ratelimited:
+            return ratelimit_error(request, None)
 
 class UserDetailView(APIView):
     """

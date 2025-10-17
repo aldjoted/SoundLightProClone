@@ -27,8 +27,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # Include the URLs from our 'api' app
-    # We are namespacing them under 'api/v1/' which is a good practice for versioning
-    path('api/v1/', include('api.urls')),
+    # All API endpoints are available at /api/
+    path('api/', include('api.urls')),
 ]
 
 # This is a standard pattern for serving media files (like product images)
