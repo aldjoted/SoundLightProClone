@@ -192,42 +192,29 @@ function router() {
  */
 async function initApp() {
     try {
-        // Initialize security measures first
+        // Initialize i18n first (synchronous)
+        setupI18n();
+
+        // Initialize security and performance optimizations
         initSecurity();
-        
-        // Initialize performance optimizations
         initPerformanceOptimizations();
+        
+        // Attempt to authenticate the user and load profile
+        const user = await auth.authenticateUser();
+        ui.updateUserAuthUI(user);
+
+        // Initialize PWA features (now that user state is known)
+        initPWAFeatures();
         
         // Initialize analytics and monitoring
         initAnalytics();
         
-        // Initialize PWA features
-        initPWAFeatures();
-        
-        // Initialize internationalization
-        setupI18n();
-        
         if (window.AOS) AOS.init({ duration: 800, once: true });
 
+        // Update UI elements that depend on user state
         ui.updateCartCount(cart.getCartItemCount());
         globalListenerManager.add(document, 'cartUpdated', () => ui.updateCartCount(cart.getCartItemCount()));
         
-        try {
-            // Try to get user profile only if we might have a refresh token
-            // This reduces unnecessary 401 calls for anonymous users
-            const refreshToken = localStorage.getItem('refreshToken');
-            if (refreshToken) {
-                const user = await apiService.getUserProfile();
-                ui.updateUserAuthUI(user);
-            } else {
-                // No refresh token, user is not logged in
-                ui.updateUserAuthUI(null);
-            }
-        } catch (error) {
-            // If getUserProfile fails, user is not authenticated or token expired
-            ui.updateUserAuthUI(null);
-        }
-
         // Load categories for mega menu on all pages
         try {
             const categories = await getCached('categories', () => apiService.getCategories(), 'categories');
@@ -235,11 +222,9 @@ async function initApp() {
             ui.renderMegaMenu(categories);
         } catch (error) {
             console.error('Failed to load mega menu categories:', error);
-            // Don't throw - mega menu failure shouldn't break the entire page
         }
 
         // --- Orchestration ---
-        // Instantiate the imported modules to activate them.
         new AdvancedSearch();
         new MobileNavigation();
 
@@ -247,7 +232,17 @@ async function initApp() {
         
     } catch (error) {
         console.error('Error in initApp:', error);
-        throw error;
+        // If auth fails, proceed gracefully
+        ui.updateUserAuthUI(null);
+        
+        // Still initialize PWA features and event listeners for logged-out users
+        try {
+            initPWAFeatures();
+        } catch (pwaError) {
+            console.error('Failed to initialize PWA features:', pwaError);
+        }
+        
+        setupGlobalEventListeners();
     }
 }
 
@@ -908,13 +903,17 @@ function initCartPage() {
  * Initializes the Login Page.
  */
 function initLoginPage() {
-    const form = document.getElementById('login-form');
-    if (!form) return;
+    const form = document.querySelector('#login-form');
+    if (!form) {
+        console.error('Login form not found');
+        return;
+    }
 
     const formMessage = document.getElementById('form-message');
     const pageListenerManager = new ListenerManager();
 
-    pageListenerManager.add(form, 'submit', async (e) => {
+    // Add form submission handler
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         // Get submit button and store original text

@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from .models import (
     Category, Brand, Product, ProductImage, Order, OrderItem,
-    Wishlist, WishlistItem, ProductReview
+    Wishlist, WishlistItem, ProductReview, UserProfile, ShippingAddress, PaymentMethod
 )
 
 # --- Product Catalog Serializers ---
@@ -411,3 +411,243 @@ class ProductReviewStatsSerializer(serializers.Serializer):
     average_rating = serializers.FloatField()
     review_count = serializers.IntegerField()
     rating_distribution = serializers.DictField(child=serializers.IntegerField())
+
+
+# --- Dashboard User Profile Serializers ---
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer for UserProfile model.
+    """
+    username = serializers.CharField(source='user.username', read_only=True)
+    email = serializers.EmailField(source='user.email', read_only=True)
+    first_name = serializers.CharField(source='user.first_name')
+    last_name = serializers.CharField(source='user.last_name')
+    avatar = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            'username', 'email', 'first_name', 'last_name', 'phone',
+            'date_of_birth', 'bio', 'avatar', 'preferred_language',
+            'email_notifications', 'newsletter_subscription',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['username', 'email', 'created_at', 'updated_at']
+
+    def get_avatar(self, obj):
+        """Return absolute URL for avatar image if available"""
+        try:
+            url = obj.avatar.url if obj.avatar else ''
+        except Exception:
+            url = ''
+        request = self.context.get('request')
+        if request and url:
+            return request.build_absolute_uri(url)
+        return url
+
+    def update(self, instance, validated_data):
+        """Update both UserProfile and related User fields"""
+        user_data = validated_data.pop('user', {})
+        
+        # Update User model fields
+        if user_data:
+            user = instance.user
+            user.first_name = user_data.get('first_name', user.first_name)
+            user.last_name = user_data.get('last_name', user.last_name)
+            user.save()
+        
+        # Update UserProfile fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        return instance
+
+
+class UpdatePasswordSerializer(serializers.Serializer):
+    """
+    Serializer for updating user password.
+    """
+    old_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(required=True, write_only=True, validators=[validate_password])
+    confirm_password = serializers.CharField(required=True, write_only=True)
+
+    def validate_old_password(self, value):
+        """Verify that the old password is correct"""
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Old password is incorrect.")
+        return value
+
+    def validate(self, attrs):
+        """Verify that new passwords match"""
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError({"confirm_password": "New passwords do not match."})
+        return attrs
+
+    def save(self):
+        """Update the user's password"""
+        user = self.context['request'].user
+        user.set_password(self.validated_data['new_password'])
+        user.save()
+        return user
+
+
+# --- Shipping Address Serializers ---
+
+class ShippingAddressSerializer(serializers.ModelSerializer):
+    """
+    Serializer for ShippingAddress model.
+    """
+    class Meta:
+        model = ShippingAddress
+        fields = [
+            'id', 'label', 'first_name', 'last_name', 'company',
+            'address_line1', 'address_line2', 'city', 'state',
+            'postal_code', 'country', 'phone', 'is_default',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+
+    def validate(self, data):
+        """Ensure user always has at least one address, and validate phone"""
+        user = self.context['request'].user
+        
+        # If this is the first address, it must be default
+        if not self.instance:  # Creating new address
+            existing_count = ShippingAddress.objects.filter(user=user).count()
+            if existing_count == 0:
+                data['is_default'] = True
+        
+        return data
+
+    def create(self, validated_data):
+        """Create shipping address for current user"""
+        user = self.context['request'].user
+        return ShippingAddress.objects.create(user=user, **validated_data)
+
+
+# --- Payment Method Serializers ---
+
+class PaymentMethodSerializer(serializers.ModelSerializer):
+    """
+    Serializer for PaymentMethod model (read-only display).
+    Does not expose sensitive Stripe payment method ID to clients.
+    """
+    is_expired = serializers.BooleanField(read_only=True)
+    display_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PaymentMethod
+        fields = [
+            'id', 'payment_type', 'card_brand', 'card_last4',
+            'card_exp_month', 'card_exp_year', 'bank_name',
+            'account_last4', 'is_default', 'is_expired',
+            'display_name', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'is_expired']
+
+    def get_display_name(self, obj):
+        """Get user-friendly display name for payment method"""
+        return str(obj)
+
+
+class CreatePaymentMethodSerializer(serializers.Serializer):
+    """
+    Serializer for creating a new payment method.
+    Accepts Stripe payment method ID and optionally sets as default.
+    """
+    stripe_payment_method_id = serializers.CharField(required=True)
+    is_default = serializers.BooleanField(default=False)
+
+    def validate_stripe_payment_method_id(self, value):
+        """Validate Stripe payment method ID format"""
+        if not value.startswith('pm_'):
+            raise serializers.ValidationError("Invalid Stripe payment method ID format.")
+        return value
+
+
+class UpdatePaymentMethodSerializer(serializers.ModelSerializer):
+    """
+    Serializer for updating payment method (mainly for setting default).
+    """
+    class Meta:
+        model = PaymentMethod
+        fields = ['is_default']
+
+
+# --- Enhanced Order Serializers ---
+
+class DashboardOrderItemSerializer(serializers.ModelSerializer):
+    """
+    Serializer for OrderItem in dashboard context.
+    """
+    product_id = serializers.IntegerField(source='product.id', read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    product_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrderItem
+        fields = ['product_id', 'product_name', 'product_image', 'price', 'quantity']
+
+    def get_product_image(self, obj):
+        """Get first product image URL"""
+        if obj.product and obj.product.images.exists():
+            image = obj.product.images.first()
+            try:
+                url = image.image.url if image else ''
+            except Exception:
+                url = ''
+            request = self.context.get('request')
+            if request and url:
+                return request.build_absolute_uri(url)
+            return url
+        return ''
+
+
+class DashboardOrderSerializer(serializers.ModelSerializer):
+    """
+    Enhanced serializer for Order model in dashboard context.
+    Includes status, tracking, and order items.
+    """
+    items = DashboardOrderItemSerializer(many=True, read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    status_class = serializers.CharField(source='get_status_display_class', read_only=True)
+    item_count = serializers.SerializerMethodField()
+    can_cancel = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Order
+        fields = [
+            'id', 'first_name', 'last_name', 'email', 'address',
+            'postal_code', 'city', 'status', 'status_display', 'status_class',
+            'paid', 'total_paid', 'tracking_number', 'shipping_method',
+            'estimated_delivery', 'notes', 'created_at', 'updated_at',
+            'items', 'item_count', 'can_cancel'
+        ]
+        read_only_fields = [
+            'paid', 'total_paid', 'created_at', 'updated_at', 'stripe_id'
+        ]
+
+    def get_item_count(self, obj):
+        """Get total number of items in order"""
+        return sum(item.quantity for item in obj.items.all())
+
+    def get_can_cancel(self, obj):
+        """Check if order can be cancelled"""
+        return obj.status in ['pending', 'processing']
+
+
+class OrderFilterSerializer(serializers.Serializer):
+    """
+    Serializer for order filtering parameters.
+    """
+    status = serializers.ChoiceField(
+        choices=['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'],
+        default='all',
+        required=False
+    )
+    date_from = serializers.DateField(required=False)
+    date_to = serializers.DateField(required=False)
+    search = serializers.CharField(required=False, allow_blank=True)

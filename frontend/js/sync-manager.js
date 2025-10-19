@@ -72,7 +72,7 @@ class SyncManager {
      */
     openDB() {
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open('soundlightpro-sw', 1);
+            const request = indexedDB.open('soundlightpro-sw', 2);
             
             request.onerror = () => reject(request.error);
             request.onsuccess = () => resolve(request.result);
@@ -98,6 +98,25 @@ class SyncManager {
                     wishlistStore.createIndex('timestamp', 'timestamp', { unique: false });
                     wishlistStore.createIndex('status', 'status', { unique: false });
                     wishlistStore.createIndex('operation', 'operation', { unique: false });
+                }
+                
+                if (!db.objectStoreNames.contains('forms')) {
+                    const formsStore = db.createObjectStore('forms', { 
+                        keyPath: 'id', 
+                        autoIncrement: true 
+                    });
+                    formsStore.createIndex('timestamp', 'timestamp', { unique: false });
+                    formsStore.createIndex('status', 'status', { unique: false });
+                }
+                
+                if (!db.objectStoreNames.contains('api')) {
+                    const apiStore = db.createObjectStore('api', { 
+                        keyPath: 'id', 
+                        autoIncrement: true 
+                    });
+                    apiStore.createIndex('timestamp', 'timestamp', { unique: false });
+                    apiStore.createIndex('status', 'status', { unique: false });
+                    apiStore.createIndex('endpoint', 'endpoint', { unique: false });
                 }
                 
                 if (!db.objectStoreNames.contains('forms')) {
@@ -318,6 +337,13 @@ class SyncManager {
                 return;
             }
             
+            // Check if the object store exists
+            if (!this.db.objectStoreNames.contains(storeName)) {
+                console.warn(`[SyncManager] Object store "${storeName}" does not exist`);
+                resolve([]); // Return empty array instead of rejecting
+                return;
+            }
+            
             try {
                 const transaction = this.db.transaction([storeName], 'readonly');
                 const store = transaction.objectStore(storeName);
@@ -326,6 +352,7 @@ class SyncManager {
                 request.onsuccess = () => resolve(request.result);
                 request.onerror = () => reject(request.error);
             } catch (error) {
+                console.error(`[SyncManager] Error accessing store "${storeName}":`, error);
                 reject(error);
             }
         });

@@ -18,14 +18,20 @@ from stripe.error import StripeError # type: ignore
 import google.generativeai as genai # type: ignore
 # from google import genai    # type: ignore
 
-from .models import Category, Product, Order, OrderItem, Wishlist, WishlistItem, ProductReview
+from .models import (
+    Category, Product, Order, OrderItem, Wishlist, WishlistItem, ProductReview,
+    UserProfile, ShippingAddress, PaymentMethod
+)
 from .embeddings import model as embedding_model, get_product_text
 from .vector_search import load_faiss_index_and_embeddings
 from .serializers import (
     CategorySerializer, ProductSerializer, RegisterSerializer, 
     UserSerializer, OrderSerializer, CreateOrderRequestSerializer,
     WishlistSerializer, WishlistItemSerializer, AddToWishlistSerializer,
-    ProductReviewSerializer, CreateReviewSerializer, ProductReviewStatsSerializer
+    ProductReviewSerializer, CreateReviewSerializer, ProductReviewStatsSerializer,
+    UserProfileSerializer, UpdatePasswordSerializer, ShippingAddressSerializer,
+    PaymentMethodSerializer, CreatePaymentMethodSerializer, UpdatePaymentMethodSerializer,
+    DashboardOrderSerializer, DashboardOrderItemSerializer, OrderFilterSerializer
 )
 from . import services
 from .services import OrderCreationError
@@ -81,6 +87,19 @@ class UserDetailView(APIView):
         # Return serialized data for the current authenticated user
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
+
+class LogoutView(APIView):
+    """
+    API view to handle user logout.
+    Clears any server-side session data if needed.
+    """
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        # With JWT, logout is primarily handled client-side by removing tokens
+        # This endpoint exists for consistency and future enhancements (e.g., token blacklisting)
+        return Response({'detail': 'Successfully logged out.'}, status=status.HTTP_200_OK)
 
 
 # --- Product Catalog Views ---
@@ -604,6 +623,463 @@ class RelatedProductsView(APIView):
         
         serializer = ProductSerializer(related_products, many=True, context={'request': request})
         return Response(serializer.data)
+
+
+# --- Dashboard Views ---
+
+class UserProfileView(APIView):
+    """
+    API view for user profile management.
+    GET: Retrieve user profile
+    PUT/PATCH: Update user profile
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        """Get user profile"""
+        profile, created = UserProfile.objects.get_or_create(user=request.user)
+        serializer = UserProfileSerializer(profile, context={'request': request})
+        return Response(serializer.data)
+
+    def put(self, request, *args, **kwargs):
+        """Update user profile (full update)"""
+        profile, created = UserProfile.objects.get_or_create(user=request.user)
+        serializer = UserProfileSerializer(profile, data=request.data, context={'request': request}, partial=False)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, *args, **kwargs):
+        """Update user profile (partial update)"""
+        profile, created = UserProfile.objects.get_or_create(user=request.user)
+        serializer = UserProfileSerializer(profile, data=request.data, context={'request': request}, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdatePasswordView(APIView):
+    """
+    API view for updating user password.
+    POST: Update password with old password verification
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        """Update user password"""
+        serializer = UpdatePasswordSerializer(data=request.data, context={'request': request})
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'detail': 'Password updated successfully.'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ShippingAddressListCreateView(APIView):
+    """
+    API view for shipping address management.
+    GET: List all shipping addresses for user
+    POST: Create new shipping address
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        """List all shipping addresses"""
+        addresses = ShippingAddress.objects.filter(user=request.user)
+        serializer = ShippingAddressSerializer(addresses, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        """Create new shipping address"""
+        serializer = ShippingAddressSerializer(data=request.data, context={'request': request})
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ShippingAddressDetailView(APIView):
+    """
+    API view for single shipping address operations.
+    GET: Retrieve shipping address
+    PUT/PATCH: Update shipping address
+    DELETE: Delete shipping address
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self, address_id, user):
+        """Helper method to get address object"""
+        try:
+            return ShippingAddress.objects.get(id=address_id, user=user)
+        except ShippingAddress.DoesNotExist:
+            return None
+
+    def get(self, request, address_id, *args, **kwargs):
+        """Get shipping address details"""
+        address = self.get_object(address_id, request.user)
+        if not address:
+            return Response({'detail': 'Address not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = ShippingAddressSerializer(address, context={'request': request})
+        return Response(serializer.data)
+
+    def put(self, request, address_id, *args, **kwargs):
+        """Update shipping address (full update)"""
+        address = self.get_object(address_id, request.user)
+        if not address:
+            return Response({'detail': 'Address not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = ShippingAddressSerializer(address, data=request.data, context={'request': request}, partial=False)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, address_id, *args, **kwargs):
+        """Update shipping address (partial update)"""
+        address = self.get_object(address_id, request.user)
+        if not address:
+            return Response({'detail': 'Address not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = ShippingAddressSerializer(address, data=request.data, context={'request': request}, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, address_id, *args, **kwargs):
+        """Delete shipping address"""
+        address = self.get_object(address_id, request.user)
+        if not address:
+            return Response({'detail': 'Address not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Prevent deleting the only address
+        if ShippingAddress.objects.filter(user=request.user).count() == 1:
+            return Response(
+                {'detail': 'Cannot delete your only shipping address.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # If deleting default address, make another one default
+        if address.is_default:
+            next_address = ShippingAddress.objects.filter(user=request.user).exclude(id=address_id).first()
+            if next_address:
+                next_address.is_default = True
+                next_address.save()
+        
+        address.delete()
+        return Response({'detail': 'Address deleted successfully.'}, status=status.HTTP_200_OK)
+
+
+class PaymentMethodListCreateView(APIView):
+    """
+    API view for payment method management.
+    GET: List all payment methods for user
+    POST: Create new payment method (via Stripe)
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        """List all payment methods"""
+        payment_methods = PaymentMethod.objects.filter(user=request.user)
+        serializer = PaymentMethodSerializer(payment_methods, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        """Create new payment method"""
+        serializer = CreatePaymentMethodSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        stripe_pm_id = serializer.validated_data['stripe_payment_method_id']
+        is_default = serializer.validated_data.get('is_default', False)
+        
+        try:
+            # Retrieve payment method details from Stripe
+            import stripe
+            stripe_pm = stripe.PaymentMethod.retrieve(stripe_pm_id)
+            
+            # Create PaymentMethod instance
+            payment_method = PaymentMethod.objects.create(
+                user=request.user,
+                stripe_payment_method_id=stripe_pm_id,
+                payment_type=stripe_pm.type,
+                is_default=is_default
+            )
+            
+            # Set card details if it's a card
+            if stripe_pm.type == 'card':
+                payment_method.card_brand = stripe_pm.card.brand
+                payment_method.card_last4 = stripe_pm.card.last4
+                payment_method.card_exp_month = stripe_pm.card.exp_month
+                payment_method.card_exp_year = stripe_pm.card.exp_year
+                payment_method.save()
+            
+            response_serializer = PaymentMethodSerializer(payment_method, context={'request': request})
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            
+        except stripe.error.StripeError as e:
+            return Response(
+                {'detail': f'Stripe error: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {'detail': f'Error creating payment method: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class PaymentMethodDetailView(APIView):
+    """
+    API view for single payment method operations.
+    GET: Retrieve payment method
+    PATCH: Update payment method (set as default)
+    DELETE: Delete payment method
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self, pm_id, user):
+        """Helper method to get payment method object"""
+        try:
+            return PaymentMethod.objects.get(id=pm_id, user=user)
+        except PaymentMethod.DoesNotExist:
+            return None
+
+    def get(self, request, pm_id, *args, **kwargs):
+        """Get payment method details"""
+        payment_method = self.get_object(pm_id, request.user)
+        if not payment_method:
+            return Response({'detail': 'Payment method not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = PaymentMethodSerializer(payment_method, context={'request': request})
+        return Response(serializer.data)
+
+    def patch(self, request, pm_id, *args, **kwargs):
+        """Update payment method (mainly for setting default)"""
+        payment_method = self.get_object(pm_id, request.user)
+        if not payment_method:
+            return Response({'detail': 'Payment method not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = UpdatePaymentMethodSerializer(payment_method, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            response_serializer = PaymentMethodSerializer(payment_method, context={'request': request})
+            return Response(response_serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pm_id, *args, **kwargs):
+        """Delete payment method"""
+        payment_method = self.get_object(pm_id, request.user)
+        if not payment_method:
+            return Response({'detail': 'Payment method not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # If deleting default payment method, make another one default
+        if payment_method.is_default:
+            next_pm = PaymentMethod.objects.filter(user=request.user).exclude(id=pm_id).first()
+            if next_pm:
+                next_pm.is_default = True
+                next_pm.save()
+        
+        # Also detach from Stripe
+        try:
+            import stripe
+            stripe.PaymentMethod.detach(payment_method.stripe_payment_method_id)
+        except stripe.error.StripeError as e:
+            # Log error but continue with deletion
+            print(f"Error detaching payment method from Stripe: {e}")
+        
+        payment_method.delete()
+        return Response({'detail': 'Payment method deleted successfully.'}, status=status.HTTP_200_OK)
+
+
+class DashboardOrderListView(APIView):
+    """
+    API view for user order history in dashboard.
+    GET: List all orders for user with filtering and search
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        """List orders with filtering"""
+        # Get filter parameters
+        status_filter = request.query_params.get('status', 'all')
+        date_from = request.query_params.get('date_from')
+        date_to = request.query_params.get('date_to')
+        search = request.query_params.get('search', '').strip()
+        
+        # Base queryset
+        queryset = Order.objects.filter(user=request.user).prefetch_related('items__product__images')
+        
+        # Apply status filter
+        if status_filter and status_filter != 'all':
+            queryset = queryset.filter(status=status_filter)
+        
+        # Apply date filters
+        if date_from:
+            from datetime import datetime
+            try:
+                date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+                queryset = queryset.filter(created_at__date__gte=date_from_obj)
+            except ValueError:
+                pass
+        
+        if date_to:
+            from datetime import datetime
+            try:
+                date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+                queryset = queryset.filter(created_at__date__lte=date_to_obj)
+            except ValueError:
+                pass
+        
+        # Apply search filter (search in order ID, tracking number, product names)
+        if search:
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(id__icontains=search) |
+                Q(tracking_number__icontains=search) |
+                Q(items__product__name__icontains=search)
+            ).distinct()
+        
+        # Order by creation date (newest first)
+        queryset = queryset.order_by('-created_at')
+        
+        serializer = DashboardOrderSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
+
+
+class DashboardOrderDetailView(APIView):
+    """
+    API view for single order details in dashboard.
+    GET: Retrieve order details
+    PATCH: Update order (cancel order)
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self, order_id, user):
+        """Helper method to get order object"""
+        try:
+            return Order.objects.prefetch_related('items__product__images').get(id=order_id, user=user)
+        except Order.DoesNotExist:
+            return None
+
+    def get(self, request, order_id, *args, **kwargs):
+        """Get order details"""
+        order = self.get_object(order_id, request.user)
+        if not order:
+            return Response({'detail': 'Order not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = DashboardOrderSerializer(order, context={'request': request})
+        return Response(serializer.data)
+
+    def patch(self, request, order_id, *args, **kwargs):
+        """Update order (mainly for cancellation)"""
+        order = self.get_object(order_id, request.user)
+        if not order:
+            return Response({'detail': 'Order not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Only allow cancellation if order is pending or processing
+        action = request.data.get('action')
+        if action == 'cancel':
+            if order.status in ['pending', 'processing']:
+                order.status = 'cancelled'
+                order.save()
+                serializer = DashboardOrderSerializer(order, context={'request': request})
+                return Response(serializer.data)
+            else:
+                return Response(
+                    {'detail': 'Order cannot be cancelled at this stage.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        return Response({'detail': 'Invalid action.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DashboardReviewListView(APIView):
+    """
+    API view for user's product reviews in dashboard.
+    GET: List all reviews written by user
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        """List all reviews by user"""
+        reviews = ProductReview.objects.filter(user=request.user).select_related('product').order_by('-created_at')
+        serializer = ProductReviewSerializer(reviews, many=True, context={'request': request})
+        return Response(serializer.data)
+
+
+class DashboardReviewDetailView(APIView):
+    """
+    API view for user's single review operations.
+    GET: Retrieve review
+    PUT/PATCH: Update review
+    DELETE: Delete review
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self, review_id, user):
+        """Helper method to get review object"""
+        try:
+            return ProductReview.objects.select_related('product').get(id=review_id, user=user)
+        except ProductReview.DoesNotExist:
+            return None
+
+    def get(self, request, review_id, *args, **kwargs):
+        """Get review details"""
+        review = self.get_object(review_id, request.user)
+        if not review:
+            return Response({'detail': 'Review not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = ProductReviewSerializer(review, context={'request': request})
+        return Response(serializer.data)
+
+    def put(self, request, review_id, *args, **kwargs):
+        """Update review (full update)"""
+        review = self.get_object(review_id, request.user)
+        if not review:
+            return Response({'detail': 'Review not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Only allow updating rating, title, and comment
+        allowed_fields = {'rating', 'title', 'comment'}
+        update_data = {k: v for k, v in request.data.items() if k in allowed_fields}
+        
+        serializer = ProductReviewSerializer(review, data=update_data, context={'request': request}, partial=False)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, review_id, *args, **kwargs):
+        """Update review (partial update)"""
+        review = self.get_object(review_id, request.user)
+        if not review:
+            return Response({'detail': 'Review not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Only allow updating rating, title, and comment
+        allowed_fields = {'rating', 'title', 'comment'}
+        update_data = {k: v for k, v in request.data.items() if k in allowed_fields}
+        
+        serializer = ProductReviewSerializer(review, data=update_data, context={'request': request}, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, review_id, *args, **kwargs):
+        """Delete review"""
+        review = self.get_object(review_id, request.user)
+        if not review:
+            return Response({'detail': 'Review not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        review.delete()
+        return Response({'detail': 'Review deleted successfully.'}, status=status.HTTP_200_OK)
 
 
 # Custom 404 handler function

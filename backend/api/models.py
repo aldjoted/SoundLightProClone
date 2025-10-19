@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from decimal import Decimal
 from mptt.models import MPTTModel, TreeForeignKey
 from django.utils.translation import gettext_lazy as _
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 # Create your models here.
 
@@ -157,10 +159,168 @@ class ProductImage(models.Model):
         return f"Image for {self.product.name}"
 
 
+class UserProfile(models.Model):
+    """
+    Extended user profile model for additional user information.
+    Automatically created for each user via signals.
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    phone = models.CharField(max_length=20, blank=True, verbose_name=_("Phone Number"))
+    date_of_birth = models.DateField(null=True, blank=True, verbose_name=_("Date of Birth"))
+    bio = models.TextField(blank=True, max_length=500, verbose_name=_("Biography"))
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True, verbose_name=_("Avatar"))
+    
+    # Preferences
+    preferred_language = models.CharField(
+        max_length=5,
+        choices=[('en', 'English'), ('fr', 'French')],
+        default='en',
+        verbose_name=_("Preferred Language")
+    )
+    email_notifications = models.BooleanField(default=True, verbose_name=_("Email Notifications"))
+    newsletter_subscription = models.BooleanField(default=False, verbose_name=_("Newsletter Subscription"))
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("User Profile")
+        verbose_name_plural = _("User Profiles")
+
+    def __str__(self):
+        return f"Profile for {self.user.username}"
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Signal to automatically create a UserProfile when a User is created"""
+    if created:
+        UserProfile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """Signal to save UserProfile when User is saved"""
+    if hasattr(instance, 'profile'):
+        instance.profile.save()
+
+
+class ShippingAddress(models.Model):
+    """
+    Model for storing multiple shipping addresses for users.
+    Users can save multiple addresses and set one as default.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shipping_addresses')
+    label = models.CharField(max_length=50, verbose_name=_("Address Label"), help_text="e.g., Home, Office, Warehouse")
+    first_name = models.CharField(max_length=50, verbose_name=_("First Name"))
+    last_name = models.CharField(max_length=50, verbose_name=_("Last Name"))
+    company = models.CharField(max_length=100, blank=True, verbose_name=_("Company Name"))
+    address_line1 = models.CharField(max_length=250, verbose_name=_("Address Line 1"))
+    address_line2 = models.CharField(max_length=250, blank=True, verbose_name=_("Address Line 2"))
+    city = models.CharField(max_length=100, verbose_name=_("City"))
+    state = models.CharField(max_length=100, blank=True, verbose_name=_("State/Province"))
+    postal_code = models.CharField(max_length=20, verbose_name=_("Postal Code"))
+    country = models.CharField(max_length=100, default='Cameroon', verbose_name=_("Country"))
+    phone = models.CharField(max_length=20, verbose_name=_("Phone Number"))
+    is_default = models.BooleanField(default=False, verbose_name=_("Default Address"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('-is_default', '-created_at')
+        verbose_name = _("Shipping Address")
+        verbose_name_plural = _("Shipping Addresses")
+        indexes = [
+            models.Index(fields=['user', '-is_default']),
+        ]
+
+    def __str__(self):
+        return f"{self.label} - {self.address_line1}, {self.city}"
+
+    def save(self, *args, **kwargs):
+        """Ensure only one default address per user"""
+        if self.is_default:
+            # Set all other addresses for this user to non-default
+            ShippingAddress.objects.filter(user=self.user, is_default=True).update(is_default=False)
+        super().save(*args, **kwargs)
+
+
+class PaymentMethod(models.Model):
+    """
+    Model for storing saved payment methods (Stripe payment methods).
+    Stores minimal, non-sensitive payment information.
+    """
+    PAYMENT_TYPE_CHOICES = [
+        ('card', 'Credit/Debit Card'),
+        ('bank_account', 'Bank Account'),
+        ('mobile_money', 'Mobile Money'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payment_methods')
+    stripe_payment_method_id = models.CharField(max_length=255, unique=True, verbose_name=_("Stripe Payment Method ID"))
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICES, default='card', verbose_name=_("Payment Type"))
+    
+    # Card-specific fields (for display only, not for processing)
+    card_brand = models.CharField(max_length=20, blank=True, verbose_name=_("Card Brand"))  # Visa, Mastercard, etc.
+    card_last4 = models.CharField(max_length=4, blank=True, verbose_name=_("Last 4 Digits"))
+    card_exp_month = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=_("Expiry Month"))
+    card_exp_year = models.PositiveIntegerField(null=True, blank=True, verbose_name=_("Expiry Year"))
+    
+    # Bank account fields (minimal info)
+    bank_name = models.CharField(max_length=100, blank=True, verbose_name=_("Bank Name"))
+    account_last4 = models.CharField(max_length=4, blank=True, verbose_name=_("Account Last 4 Digits"))
+    
+    is_default = models.BooleanField(default=False, verbose_name=_("Default Payment Method"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('-is_default', '-created_at')
+        verbose_name = _("Payment Method")
+        verbose_name_plural = _("Payment Methods")
+        indexes = [
+            models.Index(fields=['user', '-is_default']),
+        ]
+
+    def __str__(self):
+        if self.payment_type == 'card' and self.card_brand and self.card_last4:
+            return f"{self.card_brand} ending in {self.card_last4}"
+        elif self.payment_type == 'bank_account' and self.bank_name:
+            return f"{self.bank_name} ending in {self.account_last4}"
+        return f"{self.get_payment_type_display()}"
+
+    def save(self, *args, **kwargs):
+        """Ensure only one default payment method per user"""
+        if self.is_default:
+            # Set all other payment methods for this user to non-default
+            PaymentMethod.objects.filter(user=self.user, is_default=True).update(is_default=False)
+        super().save(*args, **kwargs)
+
+    @property
+    def is_expired(self):
+        """Check if card is expired (only for cards)"""
+        if self.payment_type == 'card' and self.card_exp_month and self.card_exp_year:
+            from datetime import date
+            today = date.today()
+            return (self.card_exp_year < today.year) or \
+                   (self.card_exp_year == today.year and self.card_exp_month < today.month)
+        return False
+
+
 class Order(models.Model):
     """
     Model representing a customer's order.
+    Enhanced with status tracking and shipping information.
     """
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('shipped', 'Shipped'),
+        ('delivered', 'Delivered'),
+        ('cancelled', 'Cancelled'),
+        ('refunded', 'Refunded'),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
@@ -173,12 +333,42 @@ class Order(models.Model):
     paid = models.BooleanField(default=False)
     stripe_id = models.CharField(max_length=250, blank=True)
     total_paid = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    
+    # Enhanced order tracking fields
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+        verbose_name=_("Order Status")
+    )
+    tracking_number = models.CharField(max_length=100, blank=True, verbose_name=_("Tracking Number"))
+    notes = models.TextField(blank=True, verbose_name=_("Order Notes"))
+    
+    # Shipping information
+    shipping_method = models.CharField(max_length=50, blank=True, verbose_name=_("Shipping Method"))
+    estimated_delivery = models.DateField(null=True, blank=True, verbose_name=_("Estimated Delivery Date"))
 
     class Meta:
         ordering = ('-created_at',)
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['status', '-created_at']),
+        ]
 
     def __str__(self):
-        return f'Order {self.pk}'
+        return f'Order #{self.pk}'
+    
+    def get_status_display_class(self):
+        """Return CSS class for status display"""
+        status_classes = {
+            'pending': 'status-pending',
+            'processing': 'status-processing',
+            'shipped': 'status-shipped',
+            'delivered': 'status-delivered',
+            'cancelled': 'status-cancelled',
+            'refunded': 'status-refunded',
+        }
+        return status_classes.get(self.status, 'status-default')
 
 
 class OrderItem(models.Model):

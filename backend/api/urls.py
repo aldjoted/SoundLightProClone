@@ -10,6 +10,8 @@ urlpatterns = [
     path('token/', RateLimitedTokenObtainPairView.as_view(), name='token_obtain_pair'),
     # To get a new access token using a refresh token (Rate Limited: 10/minute)
     path('token/refresh/', RateLimitedTokenRefreshView.as_view(), name='token_refresh'),
+    # For user logout
+    path('logout/', views.LogoutView.as_view(), name='logout'),
     # For new user registration (Rate Limited: 3/hour)
     path('register/', views.RegisterView.as_view(), name='register'),
     # To get details of the current logged-in user
@@ -45,4 +47,25 @@ urlpatterns = [
 
     # --- Chatbot Endpoint ---
     path('chatbot/', views.ChatbotView.as_view(), name='chatbot'),
+
+    # --- Dashboard Endpoints ---
+    # User Profile
+    path('dashboard/profile/', views.UserProfileView.as_view(), name='dashboard_profile'),
+    path('dashboard/profile/password/', views.UpdatePasswordView.as_view(), name='dashboard_update_password'),
+    
+    # Shipping Addresses
+    path('dashboard/addresses/', views.ShippingAddressListCreateView.as_view(), name='dashboard_addresses'),
+    path('dashboard/addresses/<int:address_id>/', views.ShippingAddressDetailView.as_view(), name='dashboard_address_detail'),
+    
+    # Payment Methods
+    path('dashboard/payment-methods/', views.PaymentMethodListCreateView.as_view(), name='dashboard_payment_methods'),
+    path('dashboard/payment-methods/<int:pm_id>/', views.PaymentMethodDetailView.as_view(), name='dashboard_payment_method_detail'),
+    
+    # Orders (Dashboard view with enhanced details)
+    path('dashboard/orders/', views.DashboardOrderListView.as_view(), name='dashboard_orders'),
+    path('dashboard/orders/<int:order_id>/', views.DashboardOrderDetailView.as_view(), name='dashboard_order_detail'),
+    
+    # Reviews (Dashboard view)
+    path('dashboard/reviews/', views.DashboardReviewListView.as_view(), name='dashboard_reviews'),
+    path('dashboard/reviews/<int:review_id>/', views.DashboardReviewDetailView.as_view(), name='dashboard_review_detail'),
 ]

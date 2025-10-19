@@ -435,7 +435,7 @@ class OfflineIndicator {
      */
     openDB() {
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open('soundlightpro-sw', 1);
+            const request = indexedDB.open('soundlightpro-sw', 2);
             
             request.onerror = () => reject(request.error);
             request.onsuccess = () => resolve(request.result);
@@ -443,11 +443,26 @@ class OfflineIndicator {
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
                 
+                // Create all required object stores
                 if (!db.objectStoreNames.contains('cart')) {
-                    db.createObjectStore('cart', { keyPath: 'id', autoIncrement: true });
+                    const cartStore = db.createObjectStore('cart', { keyPath: 'id', autoIncrement: true });
+                    cartStore.createIndex('timestamp', 'timestamp', { unique: false });
+                    cartStore.createIndex('status', 'status', { unique: false });
+                }
+                if (!db.objectStoreNames.contains('wishlist')) {
+                    const wishlistStore = db.createObjectStore('wishlist', { keyPath: 'id', autoIncrement: true });
+                    wishlistStore.createIndex('timestamp', 'timestamp', { unique: false });
+                    wishlistStore.createIndex('status', 'status', { unique: false });
                 }
                 if (!db.objectStoreNames.contains('forms')) {
-                    db.createObjectStore('forms', { keyPath: 'id', autoIncrement: true });
+                    const formsStore = db.createObjectStore('forms', { keyPath: 'id', autoIncrement: true });
+                    formsStore.createIndex('timestamp', 'timestamp', { unique: false });
+                    formsStore.createIndex('status', 'status', { unique: false });
+                }
+                if (!db.objectStoreNames.contains('api')) {
+                    const apiStore = db.createObjectStore('api', { keyPath: 'id', autoIncrement: true });
+                    apiStore.createIndex('timestamp', 'timestamp', { unique: false });
+                    apiStore.createIndex('status', 'status', { unique: false });
                 }
             };
         });
