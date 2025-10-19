@@ -200,10 +200,22 @@ const translations = {
         footer_returns: "Returns",
         footer_warranty: "Warranty",
         footer_contact_info: "Contact Info",
-        footer_copyright: "© 2025 SoundLightPro. All rights reserved.",
+        footer_copyright: "All rights reserved.",
         footer_privacy_policy: "Privacy Policy",
         footer_terms_of_service: "Terms of Service",
         footer_cookie_policy: "Cookie Policy",
+        footer_company: "Company",
+        footer_support: "Support",
+        footer_legal: "Legal",
+        footer_connect: "Connect With Us",
+        footer_about: "About Us",
+        footer_contact: "Contact",
+        footer_services: "Services",
+        footer_helpcenter: "Help Center",
+        footer_shipping: "Shipping Info",
+        footer_terms: "Terms of Service",
+        footer_privacy: "Privacy Policy",
+        footer_cookies: "Cookie Policy",
         chatbot_greeting_message: "Hi there! 👋<br>How can I help you today?",
 
         // 404 Page
@@ -491,10 +503,17 @@ const translations = {
         dashboard_nav_addresses: "Addresses",
         dashboard_nav_payment: "Payment Methods",
         dashboard_nav_security: "Security",
+        dashboard_nav_logout: "Logout",
         
         // Overview Section
         dashboard_overview_title: "Account Overview",
         dashboard_overview_subtitle: "Your account summary and quick stats",
+        dashboard_overview_totalorders: "Total Orders",
+        dashboard_overview_reviews: "Reviews",
+        dashboard_overview_wishlist: "Wishlist Items",
+        dashboard_overview_addresses: "Addresses",
+        dashboard_overview_recentorders: "Recent Orders",
+        dashboard_overview_viewall: "View All Orders",
         dashboard_stats_orders: "Total Orders",
         dashboard_stats_pending: "Pending Orders",
         dashboard_stats_reviews: "Reviews Written",
@@ -834,10 +853,22 @@ const translations = {
         footer_returns: "Retours",
         footer_warranty: "Garantie",
         footer_contact_info: "Infos Contact",
-        footer_copyright: "© 2025 SoundLightPro. Tous droits réservés.",
+        footer_copyright: "Tous droits réservés.",
         footer_privacy_policy: "Politique de Confidentialité",
         footer_terms_of_service: "Conditions d'Utilisation",
         footer_cookie_policy: "Politique de Cookies",
+        footer_company: "Entreprise",
+        footer_support: "Support",
+        footer_legal: "Légal",
+        footer_connect: "Connectez-vous",
+        footer_about: "À Propos",
+        footer_contact: "Contact",
+        footer_services: "Services",
+        footer_helpcenter: "Centre d'Aide",
+        footer_shipping: "Infos Livraison",
+        footer_terms: "Conditions d'Utilisation",
+        footer_privacy: "Confidentialité",
+        footer_cookies: "Cookies",
         chatbot_greeting_message: "Salut ! 👋<br>Comment puis-je vous aider aujourd'hui ?",
 
         // 404 Page
@@ -1125,10 +1156,17 @@ const translations = {
         dashboard_nav_addresses: "Adresses",
         dashboard_nav_payment: "Modes de Paiement",
         dashboard_nav_security: "Sécurité",
+        dashboard_nav_logout: "Déconnexion",
         
         // Overview Section
         dashboard_overview_title: "Aperçu du Compte",
         dashboard_overview_subtitle: "Résumé de votre compte et statistiques rapides",
+        dashboard_overview_totalorders: "Commandes Totales",
+        dashboard_overview_reviews: "Avis",
+        dashboard_overview_wishlist: "Articles en Liste",
+        dashboard_overview_addresses: "Adresses",
+        dashboard_overview_recentorders: "Commandes Récentes",
+        dashboard_overview_viewall: "Voir Toutes les Commandes",
         dashboard_stats_orders: "Commandes Totales",
         dashboard_stats_pending: "Commandes en Attente",
         dashboard_stats_reviews: "Avis Rédigés",
@@ -1321,10 +1359,20 @@ class I18n {
      * Get translated text for a key
      */
     t(key, params = {}) {
-        let translation = translations[this.currentLanguage]?.[key] || translations.en[key];
+        // Normalize key: convert dot notation to underscore and lowercase
+        // e.g., "Nav.Home" -> "nav_home", "Dashboard.Title" -> "dashboard_title"
+        const normalizedKey = key
+            .replace(/\./g, '_')
+            .toLowerCase();
+        
+        let translation = translations[this.currentLanguage]?.[normalizedKey] || translations.en[normalizedKey];
         if (!translation) {
-            // Humanize the key: replace underscores with spaces and capitalize first letter
-            const humanized = key.replace(/_/g, ' ').replace(/\b\w/g, (m, idx) => m.toUpperCase());
+            // Try original key as fallback
+            translation = translations[this.currentLanguage]?.[key] || translations.en[key];
+        }
+        if (!translation) {
+            // Humanize the key: replace underscores/dots with spaces and capitalize
+            const humanized = key.replace(/[_.]/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
             translation = humanized;
         }
         // Simple parameter replacement
