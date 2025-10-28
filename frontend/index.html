@@ -89,34 +89,54 @@
         <div class="container">
             <!-- Le conteneur .header-wrapper est utilisé par main.js pour injecter le bouton du menu mobile -->
             <div class="header-wrapper">
-                <!-- Row 1: Logo + Language Switcher, Auth Links, Cart -->
+                <!-- Row 1: Logo + Navigation + Actions -->
                 <a href="index.html" class="logo" aria-label="SoundLightPro Home">
                     <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
                 </a>
                 
+                <!-- Main Navigation -->
+                <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
+                    <ul>
+                        <li><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
+                        <li class="nav-item mega-menu-container">
+                            <a href="index.html#products" class="nav-link dropdown-toggle" data-i18n="nav_products">Products</a>
+                            <div class="mega-menu" id="products-mega-menu">
+                                <!-- Content is loaded by ui.js -->
+                            </div>
+                        </li>
+                        <li><a href="services.html" class="nav-link" data-i18n="nav_services">Services</a></li>
+                        <li><a href="about.html" class="nav-link" data-i18n="nav_about">About Us</a></li>
+                        <li><a href="contact.html" class="nav-link">Contact</a></li>
+                    </ul>
+                </nav>
+                
                 <div class="header-actions">
-                    <!-- Language Switcher will be injected here by language-switcher.js -->
-                    
-                    <div class="user-actions">
-                        <div id="auth-links" class="auth-links">
-                            <a href="login.html" class="btn btn--secondary"><i class="fas fa-sign-in-alt"></i><span data-i18n="nav_login">Login</span></a>
-                            <a href="register.html" class="btn btn--primary"><i class="fas fa-user-plus"></i><span data-i18n="nav_register">Register</span></a>
+                    <!-- User Menu Button -->
+                    <div id="auth-menu-container" class="auth-menu-container">
+                        <button class="user-icon-btn" aria-label="User menu" aria-expanded="false" id="user-icon-toggle">
+                            <i class="fas fa-user"></i>
+                        </button>
+                        <div class="user-auth-dropdown" id="user-auth-dropdown">
+                            <a href="login.html" class="auth-dropdown-link"><i class="fas fa-sign-in-alt"></i><span data-i18n="nav_login">Login</span></a>
+                            <a href="register.html" class="auth-dropdown-link"><i class="fas fa-user-plus"></i><span data-i18n="nav_register">Register</span></a>
                         </div>
-                        <div id="user-info" class="user-info hidden">
-                            <div class="user-menu">
-                                <button class="user-menu-toggle" aria-expanded="false" aria-controls="user-dropdown-menu" aria-label="User menu">
-                                    <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
-                                </button>
-                                <div id="user-dropdown-menu" class="user-dropdown">
-                                    <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
-                                </div>
+                    </div>
+                    
+                    <!-- User Info (shown when logged in) -->
+                    <div id="user-info" class="user-info hidden">
+                        <div class="user-menu">
+                            <button class="user-icon-btn" id="user-info-toggle" aria-expanded="false" aria-controls="user-dropdown-menu" aria-label="User menu">
+                                <i class="fas fa-user-circle"></i>
+                            </button>
+                            <div id="user-dropdown-menu" class="user-dropdown">
+                                <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
                             </div>
                         </div>
                     </div>
                     
-                    <a href="cart.html" class="header-cart-link">
+                    <!-- Cart Icon Only -->
+                    <a href="cart.html" class="header-cart-icon" aria-label="Shopping cart">
                         <i class="fas fa-shopping-cart" aria-hidden="true"></i>
-                        <span class="cart-label" data-i18n="nav_cart">Cart</span>
                         <span class="cart-badge" id="cart-item-count" aria-live="polite">0</span>
                     </a>
                 </div>
@@ -141,22 +161,6 @@
                         <div id="search-suggestions" class="hidden" aria-label="Search suggestions"></div>
                     </div>
                 </div>
-                
-                <!-- Row 3: Main Navigation -->
-                <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
-                    <ul>
-                        <li><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
-                        <li class="nav-item mega-menu-container">
-                            <a href="index.html#products" class="nav-link dropdown-toggle" data-i18n="nav_products">Products</a>
-                            <div class="mega-menu" id="products-mega-menu">
-                                <!-- Content is loaded by ui.js -->
-                            </div>
-                        </li>
-                        <li><a href="services.html" class="nav-link" data-i18n="nav_services">Services</a></li>
-                        <li><a href="about.html" class="nav-link" data-i18n="nav_about">About Us</a></li>
-                        <li><a href="contact.html" class="nav-link">Contact</a></li>
-                    </ul>
-                </nav>
             </div>
         </div>
     </header>
@@ -214,24 +218,6 @@
             </div>
         </section>
 
-        <section class="video-promo container" aria-labelledby="video-title" data-aos="fade-up">
-             <div class="section-header">
-                <h2 id="video-title" class="section-title">See Our Equipment in Action</h2>
-                <p class="section-subtitle">Professional setups for world-class events</p>
-            </div>
-            <div class="video-wrapper">
-                <div class="responsive-video">
-                    <iframe 
-                        src="https://www.youtube.com/embed/OEZhDF4HItI" 
-                        title="SoundLightPro Equipment Showcase Video" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen 
-                        loading="lazy">
-                    </iframe>
-                </div>
-            </div>
-        </section>
-
         <section class="training-cta container" data-aos="fade-up" aria-labelledby="training-cta-title">
             <div class="cta-content">
                 <h2 id="training-cta-title">Pro Training for DJs & Sound Techs</h2>
@@ -250,24 +236,206 @@
                 </div>
             </div>
         </section>
+
+        <!-- Testimonials Section -->
+        <section class="testimonials-section container" data-aos="fade-up">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <span class="title-accent">Client Success Stories</span>
+                    <span class="title-main">What Our Customers Say</span>
+                </h2>
+                <p class="section-subtitle">Trusted by professionals worldwide for quality and reliability</p>
+            </div>
+            
+            <div class="testimonials-grid">
+                <!-- Testimonial 1 -->
+                <div class="testimonial-card">
+                    <div class="testimonial-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text">"Exceptional quality and professional service. The lighting equipment we purchased exceeded all expectations. Our events have never looked better!"</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="author-info">
+                            <h4>Jean-Pierre Dubois</h4>
+                            <p>Event Manager, Douala Events</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 2 -->
+                <div class="testimonial-card">
+                    <div class="testimonial-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text">"Outstanding customer support and top-tier products. Their technical team helped us set up our entire sound system flawlessly. Highly recommended!"</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="author-info">
+                            <h4>Amina Nkosi</h4>
+                            <p>Sound Engineer, Studio Pro Yaoundé</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 3 -->
+                <div class="testimonial-card">
+                    <div class="testimonial-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text">"Been working with SoundLightPro for 3 years now. Their equipment is reliable, durable, and always delivers crystal-clear sound quality. True professionals!"</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="author-info">
+                            <h4>David Moukoko</h4>
+                            <p>DJ & Music Producer</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 4 -->
+                <div class="testimonial-card">
+                    <div class="testimonial-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text">"Perfect partner for our venue. Fast delivery, competitive prices, and excellent after-sales service. They truly understand the needs of event professionals."</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="author-info">
+                            <h4>Marie Kamga</h4>
+                            <p>Venue Owner, Le Grand Palais</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 5 -->
+                <div class="testimonial-card">
+                    <div class="testimonial-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text">"The best investment we've made for our church. The sound system is powerful, clear, and easy to use. The team's expertise made installation seamless."</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="author-info">
+                            <h4>Pastor Emmanuel Talla</h4>
+                            <p>Technical Director, Grace Church</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 6 -->
+                <div class="testimonial-card">
+                    <div class="testimonial-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text">"Incredible range of products and unbeatable prices. Their lighting solutions transformed our nightclub. Professional equipment that really makes a difference!"</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="author-info">
+                            <h4>Carlos Mendez</h4>
+                            <p>Club Owner, Tropicana Nights</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <footer class="main-footer" role="contentinfo">
         <div class="container">
             <div class="footer-grid">
-                <div class="footer-column"><h3 class="footer-title">SoundLightPro</h3><p class="footer-text">Professional audio and lighting solutions for events, concerts, and venues worldwide.</p><div class="social-icons"><a href="https://www.facebook.com/beglec.cm/" aria-label="Facebook" target="_blank" rel="noopener noreferrer" class="social-link"><i class="fab fa-facebook-f"></i></a><a href="https://www.youtube.com/@soundlightpro3226/featured" aria-label="YouTube" target="_blank" rel="noopener noreferrer" class="social-link"><i class="fab fa-youtube"></i></a></div></div>
-                <div class="footer-column"><h4 class="footer-subtitle">Quick Links</h4><ul class="footer-links"><li><a href="about.html">About Us</a></li><li><a href="index.html#products">Products</a></li><li><a href="services.html">Services</a></li><li><a href="contact.html">Contact</a></li></ul></div>
-                <div class="footer-column"><h4 class="footer-subtitle">Customer Service</h4><ul class="footer-links"><li><a href="support-center.html">Support Center</a></li><li><a href="shipping-info.html">Shipping Info</a></li><li><a href="returns.html">Returns</a></li><li><a href="warranty.html">Warranty</a></li></ul></div>
+                <div class="footer-column footer-brand">
+                    <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="footer-logo">
+                    <p class="footer-text">Professional audio and lighting solutions for events, concerts, and venues worldwide.</p>
+                    <div class="social-icons">
+                        <a href="https://www.facebook.com/beglec.cm/" aria-label="Facebook" target="_blank" rel="noopener noreferrer" class="social-link">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="https://www.youtube.com/@soundlightpro3226/featured" aria-label="YouTube" target="_blank" rel="noopener noreferrer" class="social-link">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h4 class="footer-subtitle">Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="index.html#products">Products</a></li>
+                        <li><a href="services.html">Services</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4 class="footer-subtitle">Customer Service</h4>
+                    <ul class="footer-links">
+                        <li><a href="support-center.html">Support Center</a></li>
+                        <li><a href="shipping-info.html">Shipping Info</a></li>
+                        <li><a href="returns.html">Returns</a></li>
+                        <li><a href="warranty.html">Warranty</a></li>
+                    </ul>
+                </div>
                 <div class="footer-column">
                     <h4 class="footer-subtitle">Contact Info</h4>
                     <address class="footer-contact">
-                        <i class="fas fa-map-marker-alt"></i> 1451, 63 Bd de la République<br>Douala, Cameroon<br><br>
-                        <i class="fas fa-phone"></i> <a href="tel:+237680494949">+237 6 80 49 49 49</a><br><br>
-                        <i class="fas fa-envelope"></i> <a href="mailto:info@soundlightpro.com">info@soundlightpro.com</a>
+                        <p class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>1451, 63 Bd de la République<br>Douala, Cameroon</span>
+                        </p>
+                        <p class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <a href="tel:+237680494949">+237 6 80 49 49 49</a>
+                        </p>
+                        <p class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <a href="mailto:info@soundlightpro.com">info@soundlightpro.com</a>
+                        </p>
                     </address>
                 </div>
             </div>
-            <div class="footer-bottom"><p>&copy; 2025 SoundLightPro. All rights reserved.</p><div class="footer-bottom-links"><a href="privacy-policy.html">Privacy Policy</a><a href="terms-of-service.html">Terms of Service</a><a href="cookie-policy.html">Cookie Policy</a></div></div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 SoundLightPro. All rights reserved.</p>
+                <div class="footer-bottom-links">
+                    <a href="privacy-policy.html">Privacy Policy</a>
+                    <a href="terms-of-service.html">Terms of Service</a>
+                    <a href="cookie-policy.html">Cookie Policy</a>
+                </div>
+            </div>
         </div>
     </footer>
 

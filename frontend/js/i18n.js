@@ -15,6 +15,7 @@ const translations = {
         nav_products: "Products",
         nav_about: "About Us",
         nav_services: "Services",
+        nav_contact: "Contact",
         nav_login: "Login",
         nav_register: "Register",
         nav_logout: "Logout",
@@ -32,20 +33,21 @@ const translations = {
         btn_buy_now: "Buy Now",
         btn_remove: "Remove",
         btn_update: "Update",
+        btn_send: "Send",
         
-    // Cart
+        // Cart
         cart_empty: "Your cart is empty.",
         cart_total: "Total",
         cart_subtotal: "Subtotal",
         cart_item_added: "added to cart!",
         cart_item_removed: "removed from cart",
         cart_updated: "Cart updated",
-    cart_summary: "Order summary",
-    cart_taxes_note: "Taxes and shipping calculated at checkout.",
-    cart_checkout: "Proceed to checkout",
-    cart_empty_title: "Your cart is empty",
-    cart_empty_sub: "Looks like you haven't added anything yet.",
-    cart_continue_shopping: "Continue shopping",
+        cart_summary: "Order summary",
+        cart_taxes_note: "Taxes and shipping calculated at checkout.",
+        cart_checkout: "Proceed to checkout",
+        cart_empty_title: "Your cart is empty",
+        cart_empty_sub: "Looks like you haven't added anything yet.",
+        cart_continue_shopping: "Continue shopping",
         
         // Product details
         product_category: "Category",
@@ -56,6 +58,58 @@ const translations = {
         product_quantity: "Quantity",
         product_description: "Description",
         product_no_description: "No description available.",
+        
+        // Home page sections
+        home_hero_title: "A New Perspective",
+        home_hero_subtitle: "in Sound & Light",
+        home_hero_description: "Discover our cutting-edge professional equipment",
+        home_products_title: "Our Products",
+        home_video_title: "See Our Equipment in Action",
+        home_video_subtitle: "Professional setups for world-class events",
+        home_training_title: "Pro Training for DJs & Sound Techs",
+        home_training_description: "Hands-on workshops to master pro audio and lighting. Limited seats monthly.",
+        home_training_btn: "View Training & Enroll",
+        home_newsletter_title: "Stay Updated",
+        home_newsletter_subtitle: "Get the latest news about new products and exclusive offers",
+        home_newsletter_placeholder: "Enter your email",
+        home_newsletter_btn: "Subscribe",
+        
+        // Features
+        feature_shipping: "Fast Shipping",
+        feature_shipping_desc: "Free delivery on orders over $500",
+        feature_warranty: "Warranty Protection",
+        feature_warranty_desc: "2-year warranty on all products",
+        feature_support: "Expert Support",
+        feature_support_desc: "24/7 technical assistance",
+        feature_returns: "Easy Returns",
+        feature_returns_desc: "30-day return policy",
+        
+        // Footer
+        footer_company_desc: "Professional audio and lighting solutions for events, concerts, and venues worldwide.",
+        footer_quick_links: "Quick Links",
+        footer_customer_service: "Customer Service",
+        footer_contact_info: "Contact Info",
+        footer_support_center: "Support Center",
+        footer_shipping_info: "Shipping Info",
+        footer_returns: "Returns",
+        footer_warranty: "Warranty",
+        footer_all_rights: "All rights reserved.",
+        footer_privacy_policy: "Privacy Policy",
+        footer_terms_of_service: "Terms of Service",
+        footer_cookie_policy: "Cookie Policy",
+        
+        // Contact page
+        contact_title: "Contact Us",
+        contact_address: "Address",
+        contact_mobile: "Phone",
+        contact_email: "Email",
+        contact_social: "Social",
+        contact_drop_line: "Drop Us a Line",
+        contact_name: "Your Name",
+        contact_email_field: "Your Email",
+        contact_subject: "Subject",
+        contact_message: "Your Message",
+        contact_send: "Send",
         
         // Forms
         form_email: "Email",
@@ -76,6 +130,7 @@ const translations = {
         msg_register_failed: "Registration failed",
         msg_password_mismatch: "Passwords do not match.",
         msg_loading: "Loading...",
+        msg_loading_products: "Loading products...",
         msg_error: "An error occurred",
         
         // General
@@ -103,10 +158,10 @@ const translations = {
         time_days_ago: "days ago",
         
         // Chatbot
-        chatbot_title: "Customer Support",
-        chatbot_placeholder: "Type your message...",
+        chatbot_title: "Chat Support",
+        chatbot_placeholder: "Type your message here...",
         chatbot_send: "Send",
-        chatbot_greeting: "Hello! How can I help you today?",
+        chatbot_greeting: "Hi there! 👋<br>How can I help you today?",
         
         // Language switcher
         language_english: "English",
@@ -120,6 +175,7 @@ const translations = {
         nav_products: "Produits",
         nav_about: "À Propos",
         nav_services: "Services",
+        nav_contact: "Contact",
         nav_login: "Connexion",
         nav_register: "S'inscrire",
         nav_logout: "Déconnexion",
@@ -137,20 +193,21 @@ const translations = {
         btn_buy_now: "Acheter Maintenant",
         btn_remove: "Supprimer",
         btn_update: "Mettre à Jour",
+        btn_send: "Envoyer",
         
-    // Cart
+        // Cart
         cart_empty: "Votre panier est vide.",
         cart_total: "Total",
         cart_subtotal: "Sous-total",
         cart_item_added: "ajouté au panier !",
         cart_item_removed: "retiré du panier",
         cart_updated: "Panier mis à jour",
-    cart_summary: "Récapitulatif de commande",
-    cart_taxes_note: "Taxes et frais de livraison calculés lors du paiement.",
-    cart_checkout: "Passer au paiement",
-    cart_empty_title: "Votre panier est vide",
-    cart_empty_sub: "On dirait que vous n'avez encore rien ajouté.",
-    cart_continue_shopping: "Continuer vos achats",
+        cart_summary: "Récapitulatif de commande",
+        cart_taxes_note: "Taxes et frais de livraison calculés lors du paiement.",
+        cart_checkout: "Passer au paiement",
+        cart_empty_title: "Votre panier est vide",
+        cart_empty_sub: "On dirait que vous n'avez encore rien ajouté.",
+        cart_continue_shopping: "Continuer vos achats",
         
         // Product details
         product_category: "Catégorie",
@@ -161,6 +218,58 @@ const translations = {
         product_quantity: "Quantité",
         product_description: "Description",
         product_no_description: "Aucune description disponible.",
+        
+        // Home page sections
+        home_hero_title: "Une Nouvelle Perspective",
+        home_hero_subtitle: "en Son & Lumière",
+        home_hero_description: "Découvrez notre équipement professionnel de pointe",
+        home_products_title: "Nos Produits",
+        home_video_title: "Voir Notre Équipement en Action",
+        home_video_subtitle: "Installations professionnelles pour des événements de classe mondiale",
+        home_training_title: "Formation Pro pour DJs & Techniciens Son",
+        home_training_description: "Ateliers pratiques pour maîtriser l'audio et l'éclairage pro. Places limitées chaque mois.",
+        home_training_btn: "Voir les Formations & S'inscrire",
+        home_newsletter_title: "Restez Informé",
+        home_newsletter_subtitle: "Recevez les dernières nouvelles sur les nouveaux produits et offres exclusives",
+        home_newsletter_placeholder: "Entrez votre e-mail",
+        home_newsletter_btn: "S'abonner",
+        
+        // Features
+        feature_shipping: "Livraison Rapide",
+        feature_shipping_desc: "Livraison gratuite pour les commandes de plus de 500$",
+        feature_warranty: "Protection Garantie",
+        feature_warranty_desc: "Garantie de 2 ans sur tous les produits",
+        feature_support: "Support Expert",
+        feature_support_desc: "Assistance technique 24/7",
+        feature_returns: "Retours Faciles",
+        feature_returns_desc: "Politique de retour de 30 jours",
+        
+        // Footer
+        footer_company_desc: "Solutions audio et éclairage professionnelles pour événements, concerts et lieux dans le monde entier.",
+        footer_quick_links: "Liens Rapides",
+        footer_customer_service: "Service Client",
+        footer_contact_info: "Informations de Contact",
+        footer_support_center: "Centre de Support",
+        footer_shipping_info: "Infos Livraison",
+        footer_returns: "Retours",
+        footer_warranty: "Garantie",
+        footer_all_rights: "Tous droits réservés.",
+        footer_privacy_policy: "Politique de Confidentialité",
+        footer_terms_of_service: "Conditions d'Utilisation",
+        footer_cookie_policy: "Politique des Cookies",
+        
+        // Contact page
+        contact_title: "Contactez-Nous",
+        contact_address: "Adresse",
+        contact_mobile: "Téléphone",
+        contact_email: "E-mail",
+        contact_social: "Réseaux Sociaux",
+        contact_drop_line: "Laissez-Nous un Message",
+        contact_name: "Votre Nom",
+        contact_email_field: "Votre E-mail",
+        contact_subject: "Sujet",
+        contact_message: "Votre Message",
+        contact_send: "Envoyer",
         
         // Forms
         form_email: "E-mail",
@@ -181,6 +290,7 @@ const translations = {
         msg_register_failed: "Inscription échouée",
         msg_password_mismatch: "Les mots de passe ne correspondent pas.",
         msg_loading: "Chargement...",
+        msg_loading_products: "Chargement des produits...",
         msg_error: "Une erreur s'est produite",
         
         // General
@@ -209,9 +319,9 @@ const translations = {
         
         // Chatbot
         chatbot_title: "Support Client",
-        chatbot_placeholder: "Tapez votre message...",
+        chatbot_placeholder: "Tapez votre message ici...",
         chatbot_send: "Envoyer",
-        chatbot_greeting: "Bonjour ! Comment puis-je vous aider aujourd'hui ?",
+        chatbot_greeting: "Bonjour ! 👋<br>Comment puis-je vous aider aujourd'hui ?",
         
         // Language switcher
         language_english: "English",

@@ -69,17 +69,14 @@
     <!-- Header -->
     <header class="main-header" role="banner">
         <div class="container">
+            <!-- Le conteneur .header-wrapper est utilisé par main.js pour injecter le bouton du menu mobile -->
             <div class="header-wrapper">
+                <!-- Row 1: Logo + Navigation + Actions -->
                 <a href="index.html" class="logo" aria-label="SoundLightPro Home">
                     <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
                 </a>
-                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-nav-panel">
-                    <span class="hamburger-icon">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </span>
-                </button>
+                
+                <!-- Main Navigation -->
                 <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
                         <li><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
@@ -89,44 +86,61 @@
                                 <!-- Content is loaded by ui.js -->
                             </div>
                         </li>
-                        <li><a href="about.html" class="nav-link" data-i18n="nav_about">About Us</a></li>
                         <li><a href="services.html" class="nav-link" data-i18n="nav_services">Services</a></li>
+                        <li><a href="about.html" class="nav-link" data-i18n="nav_about">About Us</a></li>
                         <li><a href="contact.html" class="nav-link">Contact</a></li>
-                        <li>
-                            <a href="cart.html" class="nav-link cart-link">
-                                <i class="fas fa-shopping-cart" aria-hidden="true"></i>
-                                <span class="cart-label" data-i18n="nav_cart">Cart</span>
-                                <span class="cart-badge" id="cart-item-count" aria-live="polite">0</span>
-                            </a>
-                        </li>
                     </ul>
                 </nav>
-                <!-- Search bar on its own row under the navigation -->
+                
+                <div class="header-actions">
+                    <!-- User Menu Button -->
+                    <div id="auth-menu-container" class="auth-menu-container">
+                        <button class="user-icon-btn" aria-label="User menu" aria-expanded="false" id="user-icon-toggle">
+                            <i class="fas fa-user"></i>
+                        </button>
+                        <div class="user-auth-dropdown" id="user-auth-dropdown">
+                            <a href="login.html" class="auth-dropdown-link"><i class="fas fa-sign-in-alt"></i><span data-i18n="nav_login">Login</span></a>
+                            <a href="register.html" class="auth-dropdown-link"><i class="fas fa-user-plus"></i><span data-i18n="nav_register">Register</span></a>
+                        </div>
+                    </div>
+                    
+                    <!-- User Info (shown when logged in) -->
+                    <div id="user-info" class="user-info hidden">
+                        <div class="user-menu">
+                            <button class="user-icon-btn" id="user-info-toggle" aria-expanded="false" aria-controls="user-dropdown-menu" aria-label="User menu">
+                                <i class="fas fa-user-circle"></i>
+                            </button>
+                            <div id="user-dropdown-menu" class="user-dropdown">
+                                <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cart Icon Only -->
+                    <a href="cart.html" class="header-cart-icon" aria-label="Shopping cart">
+                        <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+                        <span class="cart-badge" id="cart-item-count" aria-live="polite">0</span>
+                    </a>
+                </div>
+                
+                <!-- Mobile Menu Toggle -->
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-nav-panel">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
+                
+                <!-- Row 2: Search Bar -->
                 <div class="header-search-row">
                     <div class="search-container">
                         <form id="search-form" role="search">
                             <input type="search" id="search-input" data-i18n="search_placeholder" placeholder="Search products..." aria-label="Search products" autocomplete="off">
                             <button type="submit" class="search-btn" aria-label="Submit search"><i class="fas fa-search"></i></button>
                         </form>
+                        <!-- Search suggestions dropdown -->
                         <div id="search-suggestions" class="hidden" aria-label="Search suggestions"></div>
-                    </div>
-                </div>
-                <div class="header-actions">
-                    <div class="user-actions">
-                        <div id="auth-links" class="auth-links">
-                            <a href="login.html" class="btn btn--secondary"><i class="fas fa-sign-in-alt"></i><span data-i18n="nav_login">Login</span></a>
-                            <a href="register.html" class="btn btn--primary"><i class="fas fa-user-plus"></i><span data-i18n="nav_register">Register</span></a>
-                        </div>
-                        <div id="user-info" class="user-info hidden">
-                            <div class="user-menu">
-                                <button class="user-menu-toggle" aria-expanded="false" aria-controls="user-dropdown-menu" aria-label="User menu">
-                                    <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
-                                </button>
-                                <div id="user-dropdown-menu" class="user-dropdown">
-                                    <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -201,8 +215,8 @@
     <!-- Chatbot Interface -->
     <dialog class="chatbot" id="chatbot-panel" aria-label="Assistant">
         <header class="chatbot-header">
-            <h2>SoundLightPro Assistant</h2>
-            <button class="close-btn" aria-label="Close assistant">
+            <h2 data-i18n="chatbot_title">Chat Support</h2>
+            <button class="close-btn" aria-label="Close chatbot">
                 <i class="fas fa-times"></i>
             </button>
         </header>
@@ -223,12 +237,16 @@
     <footer class="main-footer" role="contentinfo">
         <div class="container">
             <div class="footer-grid">
-                <div class="footer-column">
-                    <h3 class="footer-title">SoundLightPro</h3>
+                <div class="footer-column footer-brand">
+                    <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="footer-logo">
                     <p class="footer-text">Professional audio and lighting solutions for events, concerts, and venues worldwide.</p>
                     <div class="social-icons">
-                        <a href="https://www.facebook.com/beglec.cm/" aria-label="Facebook" target="_blank" rel="noopener" class="social-link"><i class="fab fa-facebook-f"></i></a>
-                        <a href="https://www.youtube.com/@soundlightpro3226/featured" aria-label="YouTube" target="_blank" rel="noopener" class="social-link"><i class="fab fa-youtube"></i></a>
+                        <a href="https://www.facebook.com/beglec.cm/" aria-label="Facebook" target="_blank" rel="noopener noreferrer" class="social-link">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="https://www.youtube.com/@soundlightpro3226/featured" aria-label="YouTube" target="_blank" rel="noopener noreferrer" class="social-link">
+                            <i class="fab fa-youtube"></i>
+                        </a>
                     </div>
                 </div>
                 <div class="footer-column">
@@ -252,9 +270,18 @@
                 <div class="footer-column">
                     <h4 class="footer-subtitle">Contact Info</h4>
                     <address class="footer-contact">
-                        <i class="fas fa-map-marker-alt"></i> 1451, 63 Bd de la République<br>Douala, Cameroon<br><br>
-                        <i class="fas fa-phone"></i> <a href="tel:+237680494949">+237 6 80 49 49 49</a><br><br>
-                        <i class="fas fa-envelope"></i> <a href="mailto:info@soundlightpro.com">info@soundlightpro.com</a>
+                        <p class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>1451, 63 Bd de la République<br>Douala, Cameroon</span>
+                        </p>
+                        <p class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <a href="tel:+237680494949">+237 6 80 49 49 49</a>
+                        </p>
+                        <p class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <a href="mailto:info@soundlightpro.com">info@soundlightpro.com</a>
+                        </p>
                     </address>
                 </div>
             </div>

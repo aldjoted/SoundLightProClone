@@ -9,10 +9,18 @@
     width: 100%;
     max-width: 450px;
 }
+
+/* Wider container for registration forms */
+.form-page-wrapper .form-container {
+    max-width: 680px;
+}
+
 .form-container h2 {
     text-align: center;
     font-size: 1.75rem;
     margin-bottom: var(--spacing-xl);
+    color: var(--text-primary);
+    font-weight: 700;
 }
 
 /* Search Form */
@@ -341,6 +349,141 @@
     outline-offset: 2px; 
 }
 
+/* Account Type Tabs */
+.account-type-tabs {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-2xl);
+    background: var(--bg-secondary);
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-xl);
+    border: 2px solid var(--border-color);
+}
+
+.tab-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.tab-btn i {
+    font-size: 1.25rem;
+    transition: transform 0.3s ease;
+}
+
+.tab-btn:hover {
+    color: var(--primary-color);
+    background: rgba(99, 102, 241, 0.05);
+}
+
+.tab-btn:hover i {
+    transform: scale(1.1);
+}
+
+.tab-btn.active {
+    background: white;
+    color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.tab-btn.active::before {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40%;
+    height: 3px;
+    background: var(--primary-color);
+    border-radius: var(--radius-full);
+}
+
+/* Tab Content */
+.tab-content {
+    display: none !important;
+    animation: fadeIn 0.4s ease;
+}
+
+.tab-content.active {
+    display: flex !important;
+    flex-direction: column;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Form Row (for side-by-side fields) */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+/* Form Section Title */
+.form-section-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: var(--spacing-xl);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.form-section-title i {
+    font-size: 1.1rem;
+}
+
+/* Checkbox Group */
+.checkbox-group {
+    margin: var(--spacing-md) 0;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.checkbox-label span {
+    user-select: none;
+}
+
 /* Auth & Contact Forms */
 .auth-form,
 .contact-form {
@@ -348,37 +491,60 @@
     flex-direction: column;
     gap: var(--spacing-lg);
 }
+
 .contact-form {
-    margin-top: var(--spacing-lg);
+    margin-top: var(--spacing-md);
 }
+
 .auth-form label,
 .contact-form label {
-    font-weight: 500;
-    font-size: 0.875rem;
+    font-weight: 600;
+    font-size: 0.9rem;
     display: block;
     margin-bottom: var(--spacing-xs);
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    font-size: 0.8rem;
 }
+
 .auth-form input,
 .contact-form input,
 .contact-form textarea {
     width: 100%;
-    padding: 0.75rem 1rem;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-color);
-    background: var(--bg-secondary);
-    /* PERFORMANCE: Transition specific properties */
-    transition: border-color var(--transition-base), box-shadow var(--transition-base);
+    padding: 0.875rem 1.125rem;
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--border-color);
+    background: white;
+    font-size: 1rem;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
 }
+
 .auth-form input:focus,
 .contact-form input:focus,
 .contact-form textarea:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    transform: translateY(-1px);
 }
+
+.contact-form textarea {
+    resize: vertical;
+    min-height: 150px;
+    font-family: inherit;
+}
+
 .contact-form button {
     align-self: flex-start;
+    padding: 0.875rem 2.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
+
 .contact-form-container h3 {
     font-size: 1.75rem;
 }
@@ -390,115 +556,326 @@
     margin: var(--spacing-lg) auto 0;
     gap: var(--spacing-sm);
 }
+
 .newsletter-form input {
-    flex-grow: 1;
+    flex: 1;
     padding: 0.75rem 1rem;
     border-radius: var(--radius-full);
-    border: 1px solid var(--gray-600);
-    background: var(--gray-800);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
     color: white;
 }
-.add-to-cart-form {
-    display: flex;
-    gap: var(--spacing-md);
-    align-items: center;
-}
-.add-to-cart-form input[type="number"] {
-    width: 80px;
-    padding: 0.75rem;
-    text-align: center;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-color);
-}
-.add-to-cart-form .btn-primary {
-    flex-grow: 1;
-}
-.checkout-form {
-    margin-top: var(--spacing-xl);
-}
-.checkout-form h3 {
-    font-size: 1.25rem;
-    margin-bottom: var(--spacing-lg);
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: var(--spacing-sm);
-}
-.checkout-form input {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    margin-bottom: var(--spacing-md);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-color);
-}
-#card-element {
-    padding: 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    margin-bottom: var(--spacing-md);
-}
-#card-errors {
-    color: var(--danger-color);
-    margin-top: var(--spacing-sm);
+
+.newsletter-form input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
 }
 
-/* Form Validation & Helpers */
-#form-message {
+.newsletter-form button {
+    padding: 0.75rem 2rem;
+    border-radius: var(--radius-full);
+    background: white;
+    color: var(--primary-color);
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.newsletter-form button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Form Messages */
+.form-message {
     padding: var(--spacing-md);
     border-radius: var(--radius-md);
     margin-bottom: var(--spacing-lg);
-    text-align: center;
+    font-size: 0.95rem;
 }
-#form-message.error {
-    background: #f8d7da;
-    color: #721c24;
+
+.form-message.success {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success-color);
+    border: 1px solid var(--success-color);
 }
-#form-message.success {
-    background: #d4edda;
-    color: #155724;
+
+.form-message.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
 }
+
+/* Password Strength Meter */
+.password-strength-meter {
+    margin-top: var(--spacing-xs);
+    height: 4px;
+    background: var(--gray-200);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.password-strength-meter .strength-bar {
+    height: 100%;
+    width: 0;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.password-strength-meter .strength-bar.weak {
+    width: 33%;
+    background: var(--danger-color);
+}
+
+.password-strength-meter .strength-bar.medium {
+    width: 66%;
+    background: var(--warning-color);
+}
+
+.password-strength-meter .strength-bar.strong {
+    width: 100%;
+    background: var(--success-color);
+}
+
 .form-text {
     display: block;
     margin-top: var(--spacing-xs);
     font-size: 0.875rem;
-    min-height: 1.2em;
-}
-.form-text.error { color: var(--danger-color); }
-.form-text.success { color: var(--success-color); }
-.form-text.warning { color: var(--warning-color); }
-
-.password-strength-meter {
-    height: 5px;
-    background-color: var(--gray-200);
-    border-radius: var(--radius-full);
-    margin-top: var(--spacing-sm);
-    overflow: hidden;
-}
-.strength-bar {
-    height: 100%;
-    width: 0;
+    color: var(--text-secondary);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .strength-bar {
-        transition: width 0.3s ease, background-color 0.3s ease;
+/* ============================================================ */
+/* RESPONSIVE FORMS                                             */
+/* ============================================================ */
+
+/* MOBILE DEVICES (max-width: 767px) */
+@media (max-width: 767px) {
+    /* Form page wrapper */
+    .form-page-wrapper {
+        padding: var(--spacing-md) 0 !important;
+        align-items: center !important;
+        min-height: auto !important;
+    }
+
+    /* Form container - Adapt padding and width */
+    .form-container {
+        padding: var(--spacing-lg);
+        max-width: 100%;
+        margin: var(--spacing-md);
+        border-radius: var(--radius-lg);
+    }
+
+    .form-page-wrapper .form-container {
+        max-width: 100%;
+        padding: var(--spacing-lg) var(--spacing-md);
+    }
+
+    .form-container h2 {
+        font-size: 1.5rem;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    /* Account Type Tabs - Stack on small mobile */
+    .account-type-tabs {
+        gap: var(--spacing-sm);
+    }
+
+    .tab-btn {
+        padding: var(--spacing-md) var(--spacing-sm);
+        font-size: 0.9rem;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tab-btn i {
+        font-size: 1.1rem;
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .tab-btn span {
+        font-size: 0.85rem;
+    }
+
+    /* Form rows - Stack on mobile */
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .form-row > div {
+        width: 100%;
+    }
+
+    /* Form section titles */
+    .form-section-title {
+        font-size: 1rem;
+        padding: var(--spacing-sm) 0;
+        margin-top: var(--spacing-lg);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .form-section-title i {
+        font-size: 1rem;
+    }
+
+    /* Form inputs and labels */
+    .auth-form label {
+        font-size: 0.9rem;
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .auth-form input {
+        padding: 0.875rem;
+        font-size: 1rem; /* Prevent zoom on iOS */
+    }
+
+    /* Buttons */
+    .auth-form .btn {
+        padding: var(--spacing-md);
+        font-size: 1rem;
+        width: 100%;
+    }
+
+    /* Checkbox group */
+    .checkbox-group {
+        padding: var(--spacing-md) 0;
+    }
+
+    .checkbox-label {
+        font-size: 0.9rem;
+    }
+
+    /* Contact form responsive */
+    .contact-form {
+        padding: var(--spacing-lg);
+    }
+
+    .contact-form input,
+    .contact-form textarea {
+        font-size: 1rem; /* Prevent zoom on iOS */
+        padding: 0.875rem;
+    }
+
+    .contact-form .btn {
+        width: 100%;
+        padding: var(--spacing-md);
     }
 }
 
+/* EXTRA SMALL MOBILE (max-width: 374px) */
+@media (max-width: 374px) {
+    .form-container {
+        padding: var(--spacing-md);
+        margin: var(--spacing-sm);
+    }
 
-/* Responsive Search Form */
-/* Note: Search input widths now use clamp() for fluid responsiveness */
-/* Individual breakpoints below handle layout changes only */
+    .form-page-wrapper .form-container {
+        padding: var(--spacing-md);
+    }
 
-@media (max-width: 768px) {
-    .search-container {
-        width: 100%;
+    .form-container h2 {
+        font-size: 1.35rem;
     }
-    #search-form {
-        width: 100%;
+
+    /* Tabs - Further reduce on very small screens */
+    .tab-btn {
+        padding: var(--spacing-sm);
+        font-size: 0.85rem;
+        flex-direction: column;
     }
-    #search-input {
-        width: 100%;
+
+    .tab-btn i {
+        font-size: 1rem;
+        margin-right: 0;
+        margin-bottom: 0.25rem;
     }
-    #search-input:focus {
-        width: 100%;
+
+    .tab-btn span {
+        font-size: 0.8rem;
+    }
+
+    .form-section-title {
+        font-size: 0.95rem;
+    }
+}
+
+/* SMALL MOBILE (375px - 479px) */
+@media (min-width: 375px) and (max-width: 479px) {
+    .form-container {
+        padding: var(--spacing-lg);
+        margin: var(--spacing-md);
+    }
+
+    .form-page-wrapper .form-container {
+        padding: var(--spacing-lg);
+    }
+}
+
+/* MEDIUM & LARGE MOBILE (480px - 767px) */
+@media (min-width: 480px) and (max-width: 767px) {
+    .form-container {
+        padding: var(--spacing-xl);
+        margin: var(--spacing-lg);
+    }
+
+    .form-page-wrapper .form-container {
+        padding: var(--spacing-xl);
+    }
+
+    .form-container h2 {
+        font-size: 1.65rem;
+    }
+
+    .tab-btn {
+        padding: var(--spacing-md);
+        font-size: 1rem;
+    }
+
+    .tab-btn span {
+        font-size: 0.9rem;
+    }
+}
+
+/* TABLET PORTRAIT (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .form-container {
+        padding: var(--spacing-2xl);
+        max-width: 600px;
+        margin: var(--spacing-xl) auto;
+    }
+
+    .form-page-wrapper .form-container {
+        max-width: 650px;
+        padding: var(--spacing-2xl);
+    }
+
+    .form-container h2 {
+        font-size: 1.75rem;
+    }
+
+    /* Tabs - Keep side by side on tablet */
+    .tab-btn {
+        padding: var(--spacing-md) var(--spacing-lg);
+        font-size: 1rem;
+    }
+
+    /* Form rows - Keep side by side on tablet */
+    .form-row {
+        flex-direction: row;
+        gap: var(--spacing-md);
+    }
+
+    .form-row > div {
+        flex: 1;
+    }
+}
+
+/* DESKTOP (min-width: 1024px) */
+@media (min-width: 1024px) {
+    .form-container {
+        margin: var(--spacing-2xl) auto;
+    }
+
+    .form-page-wrapper .form-container {
+        max-width: 680px;
     }
 }

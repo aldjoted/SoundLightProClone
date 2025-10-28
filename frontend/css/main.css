@@ -12,6 +12,7 @@
 @import url('components/cards.css');
 @import url('components/forms.css');
 @import url('components/navigation.css');
+@import url('components/testimonials.css');
 
 /* 4. Pages Layer: Page-specific styles */
 @import url('pages/404.css');
@@ -19,6 +20,7 @@
 @import url('pages/product-detail.css');
 @import url('pages/cart.css');
 @import url('pages/contact.css');
+@import url('pages/home-responsive.css');
 
 /* 5. Utilities Layer: Helper classes, states, and widgets */
 @import url('utilities/utilities.css');
