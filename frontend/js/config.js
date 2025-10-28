@@ -13,8 +13,17 @@ function parseBool(val, fallback) {
   return Boolean(val);
 }
 
+// Helper: safe access to import.meta.env
+function getEnv(name) {
+  try {
+    return (import.meta && import.meta.env && import.meta.env[name]) || undefined;
+  } catch (e) {
+    return undefined;
+  }
+}
+
 // Environment detection
-const MODE = String((import.meta && import.meta.env && import.meta.env.MODE) || '');
+const MODE = String(getEnv('MODE') || '');
 export const IS_PRODUCTION = MODE.startsWith('prod');
 export const IS_DEVELOPMENT = MODE.startsWith('dev');
 
@@ -45,46 +54,46 @@ export const API_BASE_URL = (() => {
   try {
     const h = typeof window !== 'undefined' ? window.location.hostname : '';
     if (h && isLanHost(h)) {
-      return `http://${h}:8000/api`;
+      return `http://${h}:8000/api/v1`;
     }
   } catch {}
   let api = runtime.API_BASE_URL;
-  if (!api) api = import.meta?.env?.VITE_API_BASE_URL;
-  if (!api) api = 'http://127.0.0.1:8000/api';
+  if (!api) api = getEnv('VITE_API_BASE_URL');
+  if (!api) api = 'http://127.0.0.1:8000/api/v1';
   return api;
 })();
 
 // Site origin
 export const SITE_URL = (() => {
   let url = runtime.SITE_URL;
-  if (!url) url = import.meta?.env?.VITE_SITE_URL;
+  if (!url) url = getEnv('VITE_SITE_URL');
   if (!url) url = (typeof window !== 'undefined' && window.location) ? window.location.origin : 'http://localhost:3000';
   return url;
 })();
 
 // Feature flags
 export const FEATURES = {
-  enableVoiceSearch: parseBool(runtime.enableVoiceSearch, parseBool(import.meta?.env?.VITE_ENABLE_VOICE_SEARCH, true)),
-  enableAnalytics: parseBool(runtime.enableAnalytics, parseBool(import.meta?.env?.VITE_ENABLE_ANALYTICS, false)),
-  enableErrorTracking: parseBool(runtime.enableErrorTracking, parseBool(import.meta?.env?.VITE_ENABLE_ERROR_TRACKING, false)),
+  enableVoiceSearch: parseBool(runtime.enableVoiceSearch, parseBool(getEnv('VITE_ENABLE_VOICE_SEARCH'), true)),
+  enableAnalytics: parseBool(runtime.enableAnalytics, parseBool(getEnv('VITE_ENABLE_ANALYTICS'), false)),
+  enableErrorTracking: parseBool(runtime.enableErrorTracking, parseBool(getEnv('VITE_ENABLE_ERROR_TRACKING'), false)),
 };
 
 // Third-party service configuration
 export const SERVICES = {
-  googleAnalyticsId: runtime.googleAnalyticsId || import.meta?.env?.VITE_GOOGLE_ANALYTICS_ID,
-  sentryDsn: runtime.sentryDsn || import.meta?.env?.VITE_SENTRY_DSN,
-  cspReportUri: runtime.cspReportUri || import.meta?.env?.VITE_CSP_REPORT_URI,
+  googleAnalyticsId: runtime.googleAnalyticsId || getEnv('VITE_GOOGLE_ANALYTICS_ID'),
+  sentryDsn: runtime.sentryDsn || getEnv('VITE_SENTRY_DSN'),
+  cspReportUri: runtime.cspReportUri || getEnv('VITE_CSP_REPORT_URI'),
 };
 
 // CDN config
 export const CDN = {
-  baseUrl: runtime.cdnUrl || import.meta?.env?.VITE_CDN_URL,
-  imagesUrl: runtime.imagesUrl || import.meta?.env?.VITE_IMAGES_CDN,
+  baseUrl: runtime.cdnUrl || getEnv('VITE_CDN_URL'),
+  imagesUrl: runtime.imagesUrl || getEnv('VITE_IMAGES_CDN'),
 };
 
 // Disable Service Worker on local preview by default to avoid stale caches
 export const DISABLE_SW = (() => {
-  const envVal = import.meta?.env?.VITE_DISABLE_SW;
+  const envVal = getEnv('VITE_DISABLE_SW');
   if (typeof runtime.disableSW === 'boolean') return runtime.disableSW;
   if (envVal !== undefined) return String(envVal).toLowerCase() === 'true';
   return IS_LOCAL_HOST;
@@ -93,7 +102,7 @@ export const DISABLE_SW = (() => {
 // Stripe key
 export const STRIPE_PUBLISHABLE_KEY =
   runtime.STRIPE_PUBLISHABLE_KEY ||
-  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
+  getEnv('VITE_STRIPE_PUBLISHABLE_KEY') ||
   'pk_test_51SGlxnL3Yer4f974pQeRKB0AmIroFjZ4UPnvxGsHtm3bV5A6FOwP7Xbc6ZI8BiQO6FLW8cjNA9df3uHP5jrj19mC00XKUkds1P';
 
 export default {

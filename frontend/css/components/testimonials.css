@@ -1,0 +1,192 @@
+/* --- Component: Testimonials --- */
+
+/* Testimonials Section */
+.testimonials-section {
+    padding: var(--spacing-3xl) 0;
+    background: var(--bg-secondary);
+    margin-top: var(--spacing-2xl);
+}
+
+/* Testimonials Grid */
+.testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-xl);
+    margin-top: var(--spacing-2xl);
+}
+
+/* Individual Testimonial Card */
+.testimonial-card {
+    background: white;
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-xl);
+    border: 2px solid var(--border-color);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+/* Blue top line decoration */
+.testimonial-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary-color);
+}
+
+/* Hover Effect */
+.testimonial-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 32px rgba(99, 102, 241, 0.2);
+    border-color: var(--primary-color);
+}
+
+/* Quote Icon (decorative) */
+.testimonial-card::after {
+    content: '\f10e';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    font-size: 3rem;
+    color: var(--primary-color);
+    opacity: 0.05;
+    z-index: 0;
+}
+
+/* Rating Stars */
+.testimonial-rating {
+    display: flex;
+    gap: var(--spacing-xs);
+    color: var(--accent-color);
+    font-size: 1.1rem;
+    z-index: 1;
+}
+
+.testimonial-rating i {
+    transition: transform 0.2s ease;
+}
+
+.testimonial-card:hover .testimonial-rating i {
+    transform: scale(1.1);
+}
+
+/* Testimonial Text */
+.testimonial-text {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--text-primary);
+    font-style: italic;
+    position: relative;
+    z-index: 1;
+    margin: 0;
+}
+
+/* Author Section */
+.testimonial-author {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-top: auto;
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+    z-index: 1;
+}
+
+/* Author Avatar */
+.author-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    border: 3px solid white;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+/* Author Info */
+.author-info {
+    flex: 1;
+}
+
+.author-info h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 var(--spacing-xs) 0;
+}
+
+.author-info p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1024px) {
+    .testimonials-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: var(--spacing-lg);
+    }
+}
+
+@media (max-width: 768px) {
+    .testimonials-section {
+        padding: var(--spacing-2xl) 0;
+    }
+    
+    .testimonials-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-lg);
+    }
+    
+    .testimonial-card {
+        padding: var(--spacing-lg);
+    }
+    
+    .testimonial-text {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .testimonials-section {
+        padding: var(--spacing-xl) 0;
+    }
+    
+    .testimonial-card {
+        padding: var(--spacing-md);
+    }
+    
+    .testimonial-rating {
+        font-size: 1rem;
+    }
+    
+    .author-avatar {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+    }
+    
+    .author-info h4 {
+        font-size: 0.95rem;
+    }
+    
+    .author-info p {
+        font-size: 0.8rem;
+    }
+}
+

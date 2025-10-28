@@ -230,6 +230,9 @@ async function initApp() {
 
         setupGlobalEventListeners();
         
+        // Highlight the active page in navigation
+        highlightActivePage();
+        
     } catch (error) {
         console.error('Error in initApp:', error);
         // If auth fails, proceed gracefully
@@ -279,14 +282,36 @@ function setupGlobalEventListeners() {
     globalListenerManager.add(document.body, 'click', (e) => {
         const target = e.target;
         
-        // User menu toggle
+        // User icon toggle (for auth dropdown)
+        const userIconBtn = target.closest('#user-icon-toggle');
+        if (userIconBtn) {
+            e.stopPropagation();
+            const authMenuContainer = document.getElementById('auth-menu-container');
+            const isExpanded = userIconBtn.getAttribute('aria-expanded') === 'true';
+            userIconBtn.setAttribute('aria-expanded', !isExpanded);
+            if (authMenuContainer) {
+                authMenuContainer.classList.toggle('active');
+            }
+            return;
+        }
+
+        // User info toggle (for logged in users)
+        const userInfoBtn = target.closest('#user-info-toggle');
+        if (userInfoBtn) {
+            e.stopPropagation();
+            const isExpanded = userInfoBtn.getAttribute('aria-expanded') === 'true';
+            userInfoBtn.setAttribute('aria-expanded', !isExpanded);
+            return;
+        }
+
+        // User menu toggle (legacy)
         const userMenuToggle = target.closest('.user-menu-toggle');
         if (userMenuToggle) {
             e.stopPropagation();
             const isExpanded = userMenuToggle.getAttribute('aria-expanded') === 'true';
-                if (userMenuToggle) {
-                    userMenuToggle.setAttribute('aria-expanded', !isExpanded);
-                }
+            if (userMenuToggle) {
+                userMenuToggle.setAttribute('aria-expanded', !isExpanded);
+            }
             return;
         }
 
@@ -301,10 +326,26 @@ function setupGlobalEventListeners() {
             return;
         }
         
+        // Close auth menu on outside click
+        const openAuthToggle = document.querySelector('#user-icon-toggle[aria-expanded="true"]');
+        if (openAuthToggle && !target.closest('.auth-menu-container')) {
+            openAuthToggle.setAttribute('aria-expanded', 'false');
+            const authMenuContainer = document.getElementById('auth-menu-container');
+            if (authMenuContainer) {
+                authMenuContainer.classList.remove('active');
+            }
+        }
+
         // Close user menu on outside click (guarded)
         const openToggle = document.querySelector('.user-menu-toggle[aria-expanded="true"]');
         if (openToggle && !target.closest('.user-menu')) {
             openToggle.setAttribute('aria-expanded', 'false');
+        }
+
+        // Close user info dropdown on outside click
+        const openUserInfo = document.querySelector('#user-info-toggle[aria-expanded="true"]');
+        if (openUserInfo && !target.closest('#user-info')) {
+            openUserInfo.setAttribute('aria-expanded', 'false');
         }
     });
 
@@ -350,6 +391,50 @@ async function handleProductGridActions(e) {
         } catch (error) {
             console.error("Failed to load product for quick view:", error);
             ui.showToast('Could not load product details.', 'error');
+        }
+    }
+}
+
+/**
+ * Highlight the active page in navigation
+ */
+function highlightActivePage() {
+    // Get current page filename
+    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    
+    // Map of page filenames to their corresponding navigation links
+    const pageMap = {
+        'index.html': 'index.html',
+        '': 'index.html', // Root path
+        'about.html': 'about.html',
+        'services.html': 'services.html',
+        'contact.html': 'contact.html',
+        'product.html': 'index.html#products', // Product page links to products section
+        'search-results.html': 'index.html#products', // Search results links to products
+        'cart.html': 'cart.html',
+    };
+    
+    // Get the link that should be active
+    const targetPage = pageMap[currentPage] || currentPage;
+    
+    // Remove active class from all nav links
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    // Add active class to the current page link
+    document.querySelectorAll('.nav-link').forEach(link => {
+        const href = link.getAttribute('href');
+        if (href === targetPage || href === currentPage) {
+            link.classList.add('active');
+        }
+    });
+    
+    // Special case: if we're on a page with #products in URL, highlight products
+    if (window.location.hash === '#products' || currentPage === 'product.html' || currentPage === 'search-results.html') {
+        const productsLink = document.querySelector('.nav-link[href*="products"]');
+        if (productsLink) {
+            productsLink.classList.add('active');
         }
     }
 }

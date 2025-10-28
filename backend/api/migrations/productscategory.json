@@ -72,7 +72,7 @@
     },
     {
       "id": "effect-machines",
-      "name": "EFFECT MACHINES",
+      "name": "SFX",
       "subcategories": [
         {
           "id": "accessories-liquids",
@@ -176,7 +176,7 @@
     },
     {
       "id": "sound",
-      "name": "SOUND",
+      "name": "EVENTS & SHOW",
       "subcategories": [
         {
           "id": "microphones",

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="SoundLightPro Warranty Information - Comprehensive 2-year warranty coverage for professional audio and lighting equipment.">
-    <title data-i18n="warranty_title">Warranty Information - SoundLightPro</title>
+    <title>Warranty Information - SoundLightPro</title>
     
     <!-- Security Headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -61,19 +61,17 @@
     
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
+    <!-- Header -->
     <header class="main-header" role="banner">
         <div class="container">
+            <!-- Le conteneur .header-wrapper est utilisé par main.js pour injecter le bouton du menu mobile -->
             <div class="header-wrapper">
+                <!-- Row 1: Logo + Navigation + Actions -->
                 <a href="index.html" class="logo" aria-label="SoundLightPro Home">
                     <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
                 </a>
-                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-nav-panel">
-                    <span class="hamburger-icon">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </span>
-                </button>
+                
+                <!-- Main Navigation -->
                 <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
                         <li><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
@@ -83,44 +81,61 @@
                                 <!-- Content is loaded by ui.js -->
                             </div>
                         </li>
-                        <li><a href="about.html" class="nav-link" data-i18n="nav_about">About Us</a></li>
                         <li><a href="services.html" class="nav-link" data-i18n="nav_services">Services</a></li>
+                        <li><a href="about.html" class="nav-link" data-i18n="nav_about">About Us</a></li>
                         <li><a href="contact.html" class="nav-link">Contact</a></li>
-                        <li>
-                            <a href="cart.html" class="nav-link cart-link">
-                                <i class="fas fa-shopping-cart" aria-hidden="true"></i>
-                                <span class="cart-label" data-i18n="nav_cart">Cart</span>
-                                <span class="cart-badge" id="cart-item-count" aria-live="polite">0</span>
-                            </a>
-                        </li>
                     </ul>
                 </nav>
-                <!-- Search bar on its own row under the navigation -->
+                
+                <div class="header-actions">
+                    <!-- User Menu Button -->
+                    <div id="auth-menu-container" class="auth-menu-container">
+                        <button class="user-icon-btn" aria-label="User menu" aria-expanded="false" id="user-icon-toggle">
+                            <i class="fas fa-user"></i>
+                        </button>
+                        <div class="user-auth-dropdown" id="user-auth-dropdown">
+                            <a href="login.html" class="auth-dropdown-link"><i class="fas fa-sign-in-alt"></i><span data-i18n="nav_login">Login</span></a>
+                            <a href="register.html" class="auth-dropdown-link"><i class="fas fa-user-plus"></i><span data-i18n="nav_register">Register</span></a>
+                        </div>
+                    </div>
+                    
+                    <!-- User Info (shown when logged in) -->
+                    <div id="user-info" class="user-info hidden">
+                        <div class="user-menu">
+                            <button class="user-icon-btn" id="user-info-toggle" aria-expanded="false" aria-controls="user-dropdown-menu" aria-label="User menu">
+                                <i class="fas fa-user-circle"></i>
+                            </button>
+                            <div id="user-dropdown-menu" class="user-dropdown">
+                                <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cart Icon Only -->
+                    <a href="cart.html" class="header-cart-icon" aria-label="Shopping cart">
+                        <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+                        <span class="cart-badge" id="cart-item-count" aria-live="polite">0</span>
+                    </a>
+                </div>
+                
+                <!-- Mobile Menu Toggle -->
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-nav-panel">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
+                
+                <!-- Row 2: Search Bar -->
                 <div class="header-search-row">
                     <div class="search-container">
                         <form id="search-form" role="search">
-                            <input type="search" id="search-input" placeholder="Search products..." aria-label="Search products" autocomplete="off">
+                            <input type="search" id="search-input" data-i18n="search_placeholder" placeholder="Search products..." aria-label="Search products" autocomplete="off">
                             <button type="submit" class="search-btn" aria-label="Submit search"><i class="fas fa-search"></i></button>
                         </form>
+                        <!-- Search suggestions dropdown -->
                         <div id="search-suggestions" class="hidden" aria-label="Search suggestions"></div>
-                    </div>
-                </div>
-                <div class="header-actions">
-                    <div class="user-actions">
-                        <div id="auth-links" class="auth-links">
-                            <a href="login.html" class="btn btn--secondary"><i class="fas fa-sign-in-alt"></i><span>Login</span></a>
-                            <a href="register.html" class="btn btn--primary"><i class="fas fa-user-plus"></i><span>Register</span></a>
-                        </div>
-                        <div id="user-info" class="user-info hidden">
-                            <div class="user-menu">
-                                <button class="user-menu-toggle" aria-expanded="false" aria-controls="user-dropdown-menu" aria-label="User menu">
-                                    <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
-                                </button>
-                                <div id="user-dropdown-menu" class="user-dropdown">
-                                    <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -129,53 +144,53 @@
 
     <main id="main-content" class="container">
         <div class="page-header">
-            <h1 data-i18n="warranty_title">Warranty Information</h1>
-            <p data-i18n="warranty_subtitle">We stand behind our products with comprehensive warranty coverage and expert support.</p>
+            <h1>Warranty Information</h1>
+            <p>We stand behind our products with comprehensive warranty coverage and expert support.</p>
         </div>
 
         <!-- Warranty Overview -->
         <section class="warranty-overview">
             <div class="feature-card" style="text-align: center; margin-bottom: 2rem;">
                 <i class="fas fa-shield-alt feature-icon"></i>
-                <h3 data-i18n="warranty_comprehensive">2-Year Comprehensive Warranty</h3>
-                <p data-i18n="warranty_comprehensive_desc">All SoundLightPro products come with a 2-year manufacturer warranty covering parts and labor</p>
+                <h3>2-Year Comprehensive Warranty</h3>
+                <p>All SoundLightPro products come with a 2-year manufacturer warranty covering parts and labor</p>
             </div>
         </section>
 
         <!-- Warranty Coverage -->
         <section class="warranty-coverage">
-            <h2 class="section-title" data-i18n="warranty_coverage_title">What's Covered</h2>
+            <h2 class="section-title">What's Covered</h2>
             
             <div class="coverage-grid">
                 <div class="coverage-item">
                     <div class="coverage-icon">
                         <i class="fas fa-cogs"></i>
                     </div>
-                    <h4 data-i18n="warranty_defects">Manufacturing Defects</h4>
-                    <p data-i18n="warranty_defects_desc">Any defects in materials or workmanship that occur under normal use conditions are fully covered.</p>
+                    <h4>Manufacturing Defects</h4>
+                    <p>Any defects in materials or workmanship that occur under normal use conditions are fully covered.</p>
                 </div>
 
                 <div class="coverage-item">
                     <div class="coverage-icon">
                         <i class="fas fa-tools"></i>
                     </div>
-                    <h4 data-i18n="warranty_parts">Parts & Labor</h4>
-                    <p data-i18n="warranty_parts_desc">Both replacement parts and labor costs are covered for warranty repairs at authorized service centers.</p>
+                    <h4>Parts & Labor</h4>
+                    <p>Both replacement parts and labor costs are covered for warranty repairs at authorized service centers.</p>
                 </div>
 
                 <div class="coverage-item">
                     <div class="coverage-icon">
                         <i class="fas fa-shipping-fast"></i>
                     </div>
-                    <h4 data-i18n="warranty_shipping">Free Shipping</h4>
-                    <p data-i18n="warranty_shipping_desc">We cover shipping costs both ways for warranty repairs within Cameroon during the warranty period.</p>
+                    <h4>Free Shipping</h4>
+                    <p>We cover shipping costs both ways for warranty repairs within Cameroon during the warranty period.</p>
                 </div>
 
                 <div class="coverage-item">
                     <div class="coverage-icon">
                         <i class="fas fa-sync-alt"></i>
                     </div>
-                    <h4 data-i18n="warranty_replacement">Replacement Units</h4>
+                    <h4>Replacement Units</h4>
                     <p>If repair isn't possible, we'll provide a replacement unit of the same or equivalent model.</p>
                 </div>
 
@@ -183,7 +198,7 @@
                     <div class="coverage-icon">
                         <i class="fas fa-headset"></i>
                     </div>
-                    <h4 data-i18n="warranty_support">Technical Support</h4>
+                    <h4>Technical Support</h4>
                     <p>Free technical support and troubleshooting assistance throughout the warranty period.</p>
                 </div>
 
@@ -191,7 +206,7 @@
                     <div class="coverage-icon">
                         <i class="fas fa-clock"></i>
                     </div>
-                    <h4 data-i18n="warranty_turnaround">Quick Turnaround</h4>
+                    <h4>Quick Turnaround</h4>
                     <p>Most warranty repairs are completed within 7-10 business days of receiving your unit.</p>
                 </div>
             </div>
@@ -420,8 +435,10 @@
     <!-- Chatbot Interface -->
     <dialog class="chatbot" id="chatbot-panel" aria-label="Assistant">
         <header class="chatbot-header">
-            <h2>SoundLightPro Assistant</h2>
-            <button class="close-btn fas fa-times" aria-label="Close assistant"></button>
+            <h2 data-i18n="chatbot_title">Chat Support</h2>
+            <button class="close-btn" aria-label="Close chatbot">
+                <i class="fas fa-times"></i>
+            </button>
         </header>
         <ul class="chatbox">
             <li class="chat incoming">
@@ -438,19 +455,62 @@
     <footer class="main-footer" role="contentinfo">
         <div class="container">
             <div class="footer-grid">
-                <div class="footer-column"><h3 class="footer-title">SoundLightPro</h3><p class="footer-text">Professional audio and lighting solutions for events, concerts, and venues worldwide.</p><div class="social-icons"><a href="https://www.facebook.com/beglec.cm/" aria-label="Facebook" target="_blank" rel="noopener noreferrer" class="social-link"><i class="fab fa-facebook-f"></i></a><a href="https://www.youtube.com/@soundlightpro3226/featured" aria-label="YouTube" target="_blank" rel="noopener noreferrer" class="social-link"><i class="fab fa-youtube"></i></a></div></div>
-                <div class="footer-column"><h4 class="footer-subtitle">Quick Links</h4><ul class="footer-links"><li><a href="about.html">About Us</a></li><li><a href="index.html#products">Products</a></li><li><a href="services.html">Services</a></li><li><a href="contact.html">Contact</a></li></ul></div>
-                <div class="footer-column"><h4 class="footer-subtitle">Customer Service</h4><ul class="footer-links"><li><a href="support-center.html">Support Center</a></li><li><a href="shipping-info.html">Shipping Info</a></li><li><a href="returns.html">Returns</a></li><li><a href="warranty.html">Warranty</a></li></ul></div>
+                <div class="footer-column footer-brand">
+                    <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="footer-logo">
+                    <p class="footer-text">Professional audio and lighting solutions for events, concerts, and venues worldwide.</p>
+                    <div class="social-icons">
+                        <a href="https://www.facebook.com/beglec.cm/" aria-label="Facebook" target="_blank" rel="noopener noreferrer" class="social-link">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="https://www.youtube.com/@soundlightpro3226/featured" aria-label="YouTube" target="_blank" rel="noopener noreferrer" class="social-link">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h4 class="footer-subtitle">Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="index.html#products">Products</a></li>
+                        <li><a href="services.html">Services</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4 class="footer-subtitle">Customer Service</h4>
+                    <ul class="footer-links">
+                        <li><a href="support-center.html">Support Center</a></li>
+                        <li><a href="shipping-info.html">Shipping Info</a></li>
+                        <li><a href="returns.html">Returns</a></li>
+                        <li><a href="warranty.html">Warranty</a></li>
+                    </ul>
+                </div>
                 <div class="footer-column">
                     <h4 class="footer-subtitle">Contact Info</h4>
                     <address class="footer-contact">
-                        <i class="fas fa-map-marker-alt"></i> 1451, 63 Bd de la République<br>Douala, Cameroon<br><br>
-                        <i class="fas fa-phone"></i> <a href="tel:+237680494949">+237 6 80 49 49 49</a><br><br>
-                        <i class="fas fa-envelope"></i> <a href="mailto:info@soundlightpro.com">info@soundlightpro.com</a>
+                        <p class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>1451, 63 Bd de la République<br>Douala, Cameroon</span>
+                        </p>
+                        <p class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <a href="tel:+237680494949">+237 6 80 49 49 49</a>
+                        </p>
+                        <p class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <a href="mailto:info@soundlightpro.com">info@soundlightpro.com</a>
+                        </p>
                     </address>
                 </div>
             </div>
-            <div class="footer-bottom"><p>&copy; 2025 SoundLightPro. All rights reserved.</p><div class="footer-bottom-links"><a href="privacy-policy.html">Privacy Policy</a><a href="terms-of-service.html">Terms of Service</a><a href="cookie-policy.html">Cookie Policy</a></div></div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 SoundLightPro. All rights reserved.</p>
+                <div class="footer-bottom-links">
+                    <a href="privacy-policy.html">Privacy Policy</a>
+                    <a href="terms-of-service.html">Terms of Service</a>
+                    <a href="cookie-policy.html">Cookie Policy</a>
+                </div>
+            </div>
         </div>
     </footer>
 

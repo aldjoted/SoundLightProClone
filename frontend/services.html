@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Services offered by SoundLightPro, including consultation and system design.">
-    <title data-i18n="services_title">Services - SoundLightPro</title>
+    <title>Services - SoundLightPro</title>
     
     <!-- Security Headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -94,24 +94,19 @@
     }
     </script>
     
-    <a href="#main-content" class="skip-link" data-i18n="skip_to_main_content">Skip to main content</a>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <!-- Header -->
-    <header class="main-header has-overlay" role="banner">
+    <header class="main-header" role="banner">
         <div class="container">
             <!-- Le conteneur .header-wrapper est utilisé par main.js pour injecter le bouton du menu mobile -->
             <div class="header-wrapper">
+                <!-- Row 1: Logo + Navigation + Actions -->
                 <a href="index.html" class="logo" aria-label="SoundLightPro Home">
                     <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
                 </a>
-                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-nav-panel">
-                    <span class="hamburger-icon">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </span>
-                </button>
-                <!-- Navigation updated for main navigation -->
+                
+                <!-- Main Navigation -->
                 <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
                         <li><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
@@ -121,19 +116,53 @@
                                 <!-- Content is loaded by ui.js -->
                             </div>
                         </li>
-                        <li><a href="about.html" class="nav-link" data-i18n="nav_about">About Us</a></li>
                         <li><a href="services.html" class="nav-link" data-i18n="nav_services">Services</a></li>
-                        <li><a href="contact.html" class="nav-link" data-i18n="nav_contact">Contact</a></li>
-                        <li>
-                            <a href="cart.html" class="nav-link cart-link">
-                                <i class="fas fa-shopping-cart" aria-hidden="true"></i>
-                                <span class="cart-label" data-i18n="nav_cart">Cart</span>
-                                <span class="cart-badge" id="cart-item-count" aria-live="polite">0</span>
-                            </a>
-                        </li>
+                        <li><a href="about.html" class="nav-link" data-i18n="nav_about">About Us</a></li>
+                        <li><a href="contact.html" class="nav-link">Contact</a></li>
                     </ul>
                 </nav>
-                <!-- Search bar on its own row under the navigation -->
+                
+                <div class="header-actions">
+                    <!-- User Menu Button -->
+                    <div id="auth-menu-container" class="auth-menu-container">
+                        <button class="user-icon-btn" aria-label="User menu" aria-expanded="false" id="user-icon-toggle">
+                            <i class="fas fa-user"></i>
+                        </button>
+                        <div class="user-auth-dropdown" id="user-auth-dropdown">
+                            <a href="login.html" class="auth-dropdown-link"><i class="fas fa-sign-in-alt"></i><span data-i18n="nav_login">Login</span></a>
+                            <a href="register.html" class="auth-dropdown-link"><i class="fas fa-user-plus"></i><span data-i18n="nav_register">Register</span></a>
+                        </div>
+                    </div>
+                    
+                    <!-- User Info (shown when logged in) -->
+                    <div id="user-info" class="user-info hidden">
+                        <div class="user-menu">
+                            <button class="user-icon-btn" id="user-info-toggle" aria-expanded="false" aria-controls="user-dropdown-menu" aria-label="User menu">
+                                <i class="fas fa-user-circle"></i>
+                            </button>
+                            <div id="user-dropdown-menu" class="user-dropdown">
+                                <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cart Icon Only -->
+                    <a href="cart.html" class="header-cart-icon" aria-label="Shopping cart">
+                        <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+                        <span class="cart-badge" id="cart-item-count" aria-live="polite">0</span>
+                    </a>
+                </div>
+                
+                <!-- Mobile Menu Toggle -->
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-nav-panel">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
+                
+                <!-- Row 2: Search Bar -->
                 <div class="header-search-row">
                     <div class="search-container">
                         <form id="search-form" role="search">
@@ -144,47 +173,29 @@
                         <div id="search-suggestions" class="hidden" aria-label="Search suggestions"></div>
                     </div>
                 </div>
-                <div class="header-actions">
-                    <div class="user-actions">
-                        <div id="auth-links" class="auth-links">
-                            <a href="login.html" class="btn btn--secondary"><i class="fas fa-sign-in-alt"></i><span data-i18n="nav_login">Login</span></a>
-                            <a href="register.html" class="btn btn--primary"><i class="fas fa-user-plus"></i><span data-i18n="nav_register">Register</span></a>
-                        </div>
-                        <div id="user-info" class="user-info hidden">
-                            <div class="user-menu">
-                                <button class="user-menu-toggle" aria-expanded="false" aria-controls="user-dropdown-menu" aria-label="User menu">
-                                    <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
-                                </button>
-                                <div id="user-dropdown-menu" class="user-dropdown">
-                                    <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </header>
 
     <main id="main-content" class="container">
         <div class="page-header">
-            <h1 data-i18n="services_page_title">Our Services</h1>
+            <h1>Our Services</h1>
         </div>
         <section class="text-content" style="max-width: 800px; margin: 0 auto; padding-bottom: 3rem;">
             <div class="feature-card" style="margin-bottom: 2rem; text-align: left; padding: 2rem;">
                 <i class="fas fa-headset feature-icon"></i>
-                <h3 data-i18n="services_consultation_title">Expert Consultation</h3>
-                <p data-i18n="services_consultation_text">Not sure what you need? Our team of audio and lighting experts is here to help. We provide personalized consultations to help you select the perfect equipment for your specific needs, whether you're outfitting a new venue or upgrading your touring rig.</p>
+                <h3>Expert Consultation</h3>
+                <p style="text-align: justify;">Not sure what you need? Our team of audio and lighting experts is here to help. We provide personalized consultations to help you select the perfect equipment for your specific needs, whether you're outfitting a new venue or upgrading your touring rig.</p>
             </div>
             <div class="feature-card" style="margin-bottom: 2rem; text-align: left; padding: 2rem;">
                 <i class="fas fa-drafting-compass feature-icon"></i>
-                <h3 data-i18n="services_design_title">System Design & Integration</h3>
-                <p data-i18n="services_design_text">We offer comprehensive system design services for permanent installations. From concert halls and theaters to houses of worship and conference centers, we can design a fully integrated audio and lighting system that delivers exceptional performance and reliability.</p>
+                <h3>System Design & Integration</h3>
+                <p style="text-align: justify;">We offer comprehensive system design services for permanent installations. From concert halls and theaters to houses of worship and conference centers, we can design a fully integrated audio and lighting system that delivers exceptional performance and reliability.</p>
             </div>
              <div class="feature-card" style="margin-bottom: 2rem; text-align: left; padding: 2rem;">
                 <i class="fas fa-tools feature-icon"></i>
-                <h3 data-i18n="services_support_title">Technical Support & Repair</h3>
-                <p data-i18n="services_support_text">Our commitment to you doesn't end after the sale. We provide lifetime technical support for all our products. Our certified technicians also offer repair and maintenance services to keep your gear in peak condition for years to come.</p>
+                <h3>Technical Support & Repair</h3>
+                <p style="text-align: justify;">Our commitment to you doesn't end after the sale. We provide lifetime technical support for all our products. Our certified technicians also offer repair and maintenance services to keep your gear in peak condition for years to come.</p>
             </div>
         </section>
     </main>
@@ -196,17 +207,19 @@
     <!-- Chatbot Interface -->
     <dialog class="chatbot" id="chatbot-panel" aria-label="Assistant">
         <header class="chatbot-header">
-            <h2 data-i18n="chatbot_title">SoundLightPro Assistant</h2>
-            <button class="close-btn fas fa-times" aria-label="Close assistant"></button>
+            <h2 data-i18n="chatbot_title">Chat Support</h2>
+            <button class="close-btn" aria-label="Close chatbot">
+                <i class="fas fa-times"></i>
+            </button>
         </header>
         <ul class="chatbox">
             <li class="chat incoming">
                 <span class="chat-icon"><i class="fas fa-robot"></i></span>
-                <p data-i18n="chatbot_greeting_message">Hi there! 👋<br>How can I help you today?</p>
+                <p>Hi there! 👋<br>How can I help you today?</p>
             </li>
         </ul>
         <div class="chat-input">
-            <textarea data-i18n="chatbot_placeholder" placeholder="Ask a question..." required></textarea>
+            <textarea placeholder="Ask a question..." required></textarea>
             <button id="send-btn" class="fas fa-paper-plane" aria-label="Send message"></button>
         </div>
     </dialog>
@@ -214,19 +227,62 @@
     <footer class="main-footer" role="contentinfo">
         <div class="container">
             <div class="footer-grid">
-                <div class="footer-column"><h3 class="footer-title">SoundLightPro</h3><p class="footer-text" data-i18n="footer_description">Professional audio and lighting solutions for events, concerts, and venues worldwide.</p><div class="social-icons"><a href="https://www.facebook.com/beglec.cm/" aria-label="Facebook" target="_blank" rel="noopener" class="social-link"><i class="fab fa-facebook-f"></i></a><a href="https://www.youtube.com/@soundlightpro3226/featured" aria-label="YouTube" target="_blank" rel="noopener" class="social-link"><i class="fab fa-youtube"></i></a></div></div>
-                <div class="footer-column"><h4 class="footer-subtitle" data-i18n="footer_quick_links">Quick Links</h4><ul class="footer-links"><li><a href="about.html" data-i18n="nav_about">About Us</a></li><li><a href="index.html#products" data-i18n="nav_products">Products</a></li><li><a href="services.html" data-i18n="nav_services">Services</a></li><li><a href="contact.html" data-i18n="nav_contact">Contact</a></li></ul></div>
-                <div class="footer-column"><h4 class="footer-subtitle" data-i18n="footer_customer_service">Customer Service</h4><ul class="footer-links"><li><a href="support-center.html" data-i18n="footer_support_center">Support Center</a></li><li><a href="shipping-info.html" data-i18n="footer_shipping_info">Shipping Info</a></li><li><a href="returns.html" data-i18n="footer_returns">Returns</a></li><li><a href="warranty.html" data-i18n="footer_warranty">Warranty</a></li></ul></div>
+                <div class="footer-column footer-brand">
+                    <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="footer-logo">
+                    <p class="footer-text">Professional audio and lighting solutions for events, concerts, and venues worldwide.</p>
+                    <div class="social-icons">
+                        <a href="https://www.facebook.com/beglec.cm/" aria-label="Facebook" target="_blank" rel="noopener noreferrer" class="social-link">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="https://www.youtube.com/@soundlightpro3226/featured" aria-label="YouTube" target="_blank" rel="noopener noreferrer" class="social-link">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                </div>
                 <div class="footer-column">
-                    <h4 class="footer-subtitle" data-i18n="footer_contact_info">Contact Info</h4>
+                    <h4 class="footer-subtitle">Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="index.html#products">Products</a></li>
+                        <li><a href="services.html">Services</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4 class="footer-subtitle">Customer Service</h4>
+                    <ul class="footer-links">
+                        <li><a href="support-center.html">Support Center</a></li>
+                        <li><a href="shipping-info.html">Shipping Info</a></li>
+                        <li><a href="returns.html">Returns</a></li>
+                        <li><a href="warranty.html">Warranty</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4 class="footer-subtitle">Contact Info</h4>
                     <address class="footer-contact">
-                        <i class="fas fa-map-marker-alt"></i> 1451, 63 Bd de la République<br>Douala, Cameroon<br><br>
-                        <i class="fas fa-phone"></i> <a href="tel:+237680494949">+237 6 80 49 49 49</a><br><br>
-                        <i class="fas fa-envelope"></i> <a href="mailto:info@soundlightpro.com">info@soundlightpro.com</a>
+                        <p class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>1451, 63 Bd de la République<br>Douala, Cameroon</span>
+                        </p>
+                        <p class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <a href="tel:+237680494949">+237 6 80 49 49 49</a>
+                        </p>
+                        <p class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <a href="mailto:info@soundlightpro.com">info@soundlightpro.com</a>
+                        </p>
                     </address>
                 </div>
             </div>
-            <div class="footer-bottom"><p data-i18n="footer_copyright">&copy; 2025 SoundLightPro. All rights reserved.</p><div class="footer-bottom-links"><a href="privacy-policy.html" data-i18n="footer_privacy_policy">Privacy Policy</a><a href="terms-of-service.html" data-i18n="footer_terms_of_service">Terms of Service</a><a href="cookie-policy.html" data-i18n="footer_cookie_policy">Cookie Policy</a></div></div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 SoundLightPro. All rights reserved.</p>
+                <div class="footer-bottom-links">
+                    <a href="privacy-policy.html">Privacy Policy</a>
+                    <a href="terms-of-service.html">Terms of Service</a>
+                    <a href="cookie-policy.html">Cookie Policy</a>
+                </div>
+            </div>
         </div>
     </footer>
 

@@ -20,8 +20,16 @@ class LanguageSwitcher {
      * Initialize the language switcher
      */
     init() {
-        this.createSwitcher();
-        this.setupEventListeners();
+        // Wait for DOM to be ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.createSwitcher();
+                this.setupEventListeners();
+            });
+        } else {
+            this.createSwitcher();
+            this.setupEventListeners();
+        }
         
         // Listen for language changes
         i18n.addListener((newLang) => {
@@ -33,27 +41,35 @@ class LanguageSwitcher {
      * Create the language switcher HTML
      */
     createSwitcher() {
+        console.log('🌍 Creating language switcher...');
         const switcher = document.createElement('div');
         switcher.className = 'language-switcher';
         switcher.innerHTML = this.getSwitcherHTML();
         
-        // Insert into header-actions area (before user actions) for better positioning
+        // Insert into header-actions area as the LAST element
         const headerActions = document.querySelector('.header-actions');
+        console.log('📍 Header actions found:', headerActions);
+        
         if (headerActions) {
-            // Insert at the beginning of header-actions for top-right placement
-            headerActions.insertBefore(switcher, headerActions.firstChild);
+            // Insert at the end (after user icon and cart)
+            headerActions.appendChild(switcher);
+            console.log('✅ Language switcher added to header-actions');
         } else {
             // Fallback: try navigation
             const nav = document.querySelector('nav') || document.querySelector('.nav');
+            console.log('📍 Navigation found:', nav);
             if (nav) {
                 nav.appendChild(switcher);
+                console.log('✅ Language switcher added to navigation');
             } else {
                 // Final fallback: insert at top of body
                 document.body.insertBefore(switcher, document.body.firstChild);
+                console.log('✅ Language switcher added to body');
             }
         }
         
         this.element = switcher;
+        console.log('🌍 Language switcher element:', this.element);
     }
     
     /**
@@ -234,12 +250,6 @@ const styles = `
         min-width: 38px; 
         padding: 4px 8px; 
         font-size: 0.75rem;
-    }
-}
-    .lang-pill { 
-        min-width: 38px; 
-        padding: 4px 7px; 
-        font-size: 0.8rem;
     }
 }
 `;

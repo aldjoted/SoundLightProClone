@@ -77,7 +77,11 @@ class MobileNavigation {
                 </div>
                 <div class="mobile-nav-section">
                     <h4>Account</h4>
-                    <a href="cart.html" class="mobile-nav-link"><i class="fas fa-shopping-cart"></i><span>Cart</span><span id="mobile-cart-badge" class="cart-badge">0</span></a>
+                    <a href="cart.html" class="mobile-nav-link mobile-cart-link">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Cart</span>
+                        <span id="mobile-cart-badge" class="mobile-cart-badge">0</span>
+                    </a>
                     <div id="mobile-auth-container"></div>
                 </div>
             </div>
@@ -187,7 +191,8 @@ class MobileNavigation {
         if (badge) {
             const count = cart.getCartItemCount();
             badge.textContent = count;
-            badge.style.display = count > 0 ? 'inline-flex' : 'none';
+            // Always display the badge (like the header cart badge)
+            badge.style.display = 'inline-flex';
         }
     }
 

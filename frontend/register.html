@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Create a new account at SoundLightPro.">
-    <title data-i18n="register_title">Register - SoundLightPro</title>
+    <title>Register - SoundLightPro</title>
     
     <!-- Security Headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -56,22 +56,19 @@
     </script>
     
     <!-- Skip to main content for accessibility -->
-    <a href="#main-content" class="skip-link" data-i18n="skip_to_main_content">Skip to main content</a>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <!-- Header -->
     <header class="main-header" role="banner">
         <div class="container">
+            <!-- Le conteneur .header-wrapper est utilisé par main.js pour injecter le bouton du menu mobile -->
             <div class="header-wrapper">
+                <!-- Row 1: Logo + Navigation + Actions -->
                 <a href="index.html" class="logo" aria-label="SoundLightPro Home">
                     <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
                 </a>
-                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-nav-panel">
-                    <span class="hamburger-icon">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </span>
-                </button>
+                
+                <!-- Main Navigation -->
                 <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
                     <ul>
                         <li><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
@@ -81,44 +78,61 @@
                                 <!-- Content is loaded by ui.js -->
                             </div>
                         </li>
-                        <li><a href="about.html" class="nav-link" data-i18n="nav_about">About Us</a></li>
                         <li><a href="services.html" class="nav-link" data-i18n="nav_services">Services</a></li>
-                        <li><a href="contact.html" class="nav-link" data-i18n="nav_contact">Contact</a></li>
-                        <li>
-                            <a href="cart.html" class="nav-link cart-link">
-                                <i class="fas fa-shopping-cart" aria-hidden="true"></i>
-                                <span class="cart-label" data-i18n="nav_cart">Cart</span>
-                                <span class="cart-badge" id="cart-item-count" aria-live="polite">0</span>
-                            </a>
-                        </li>
+                        <li><a href="about.html" class="nav-link" data-i18n="nav_about">About Us</a></li>
+                        <li><a href="contact.html" class="nav-link">Contact</a></li>
                     </ul>
                 </nav>
-                <!-- Search bar on its own row under the navigation -->
+                
+                <div class="header-actions">
+                    <!-- User Menu Button -->
+                    <div id="auth-menu-container" class="auth-menu-container">
+                        <button class="user-icon-btn" aria-label="User menu" aria-expanded="false" id="user-icon-toggle">
+                            <i class="fas fa-user"></i>
+                        </button>
+                        <div class="user-auth-dropdown" id="user-auth-dropdown">
+                            <a href="login.html" class="auth-dropdown-link"><i class="fas fa-sign-in-alt"></i><span data-i18n="nav_login">Login</span></a>
+                            <a href="register.html" class="auth-dropdown-link"><i class="fas fa-user-plus"></i><span data-i18n="nav_register">Register</span></a>
+                        </div>
+                    </div>
+                    
+                    <!-- User Info (shown when logged in) -->
+                    <div id="user-info" class="user-info hidden">
+                        <div class="user-menu">
+                            <button class="user-icon-btn" id="user-info-toggle" aria-expanded="false" aria-controls="user-dropdown-menu" aria-label="User menu">
+                                <i class="fas fa-user-circle"></i>
+                            </button>
+                            <div id="user-dropdown-menu" class="user-dropdown">
+                                <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cart Icon Only -->
+                    <a href="cart.html" class="header-cart-icon" aria-label="Shopping cart">
+                        <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+                        <span class="cart-badge" id="cart-item-count" aria-live="polite">0</span>
+                    </a>
+                </div>
+                
+                <!-- Mobile Menu Toggle -->
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-nav-panel">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
+                
+                <!-- Row 2: Search Bar -->
                 <div class="header-search-row">
                     <div class="search-container">
                         <form id="search-form" role="search">
                             <input type="search" id="search-input" data-i18n="search_placeholder" placeholder="Search products..." aria-label="Search products" autocomplete="off">
                             <button type="submit" class="search-btn" aria-label="Submit search"><i class="fas fa-search"></i></button>
                         </form>
+                        <!-- Search suggestions dropdown -->
                         <div id="search-suggestions" class="hidden" aria-label="Search suggestions"></div>
-                    </div>
-                </div>
-                <div class="header-actions">
-                    <div class="user-actions">
-                        <div id="auth-links" class="auth-links">
-                            <a href="login.html" class="btn btn--secondary"><i class="fas fa-sign-in-alt"></i><span data-i18n="nav_login">Login</span></a>
-                            <a href="register.html" class="btn btn--primary"><i class="fas fa-user-plus"></i><span data-i18n="nav_register">Register</span></a>
-                        </div>
-                        <div id="user-info" class="user-info hidden">
-                            <div class="user-menu">
-                                <button class="user-menu-toggle" aria-expanded="false" aria-controls="user-dropdown-menu" aria-label="User menu">
-                                    <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
-                                </button>
-                                <div id="user-dropdown-menu" class="user-dropdown">
-                                    <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -127,49 +141,203 @@
 
     <main id="main-content" class="form-page-wrapper">
         <div class="form-container">
-            <h2 data-i18n="register_page_title">Create a New Account</h2>
-            <form id="register-form" class="auth-form">
-                <div id="form-message" class="hidden"></div>
+            <h2>Create a New Account</h2>
+            
+            <!-- Account Type Tabs -->
+            <div class="account-type-tabs">
+                <button type="button" class="tab-btn active" data-tab="individual" aria-label="Individual account">
+                    <i class="fas fa-user"></i>
+                    <span>Particulier</span>
+                </button>
+                <button type="button" class="tab-btn" data-tab="professional" aria-label="Professional account">
+                    <i class="fas fa-briefcase"></i>
+                    <span>Professionnel</span>
+                </button>
+            </div>
+
+            <!-- Individual Account Form -->
+            <form id="register-form-individual" class="auth-form tab-content active" data-content="individual">
+                <div id="form-message-individual" class="hidden"></div>
                 
                 <div>
-                    <label for="username" data-i18n="register_username">Username</label>
-                    <input type="text" id="username" name="username" required autocomplete="username">
+                    <label for="username-ind">Username</label>
+                    <input type="text" id="username-ind" name="username" required autocomplete="username">
                 </div>
                 
                 <div>
-                    <label for="email" data-i18n="register_email">Email</label>
-                    <input type="email" id="email" name="email" required autocomplete="email">
+                    <label for="email-ind">Email</label>
+                    <input type="email" id="email-ind" name="email" required autocomplete="email">
                 </div>
                 
-                <div>
-                    <label for="first_name" data-i18n="register_first_name">First Name</label>
-                    <input type="text" id="first_name" name="first_name" required autocomplete="given-name">
-                </div>
-                
-                <div>
-                    <label for="last_name" data-i18n="register_last_name">Last Name</label>
-                    <input type="text" id="last_name" name="last_name" required autocomplete="family-name">
+                <div class="form-row">
+                    <div>
+                        <label for="first_name-ind">First Name</label>
+                        <input type="text" id="first_name-ind" name="first_name" required autocomplete="given-name">
+                    </div>
+                    
+                    <div>
+                        <label for="last_name-ind">Last Name</label>
+                        <input type="text" id="last_name-ind" name="last_name" required autocomplete="family-name">
+                    </div>
                 </div>
 
                 <div>
-                    <label for="password" data-i18n="register_password">Password</label>
-                    <input type="password" id="password" name="password" required autocomplete="new-password" aria-describedby="password-strength">
-                    <div id="password-strength" class="password-strength-meter">
+                    <label for="phone-ind">Phone Number</label>
+                    <input type="tel" id="phone-ind" name="phone" required autocomplete="tel">
+                </div>
+
+                <div>
+                    <label for="password-ind">Password</label>
+                    <input type="password" id="password-ind" name="password" required autocomplete="new-password" aria-describedby="password-strength-ind">
+                    <div id="password-strength-ind" class="password-strength-meter">
                         <div class="strength-bar"></div>
                     </div>
-                    <small id="password-help" class="form-text"></small>
+                    <small id="password-help-ind" class="form-text"></small>
                 </div>
                 
                 <div>
-                    <label for="password2" data-i18n="register_confirm_password">Confirm Password</label>
-                    <input type="password" id="password2" name="password2" required autocomplete="new-password" aria-describedby="password-match-help">
-                    <small id="password-match-help" class="form-text"></small>
+                    <label for="password2-ind">Confirm Password</label>
+                    <input type="password" id="password2-ind" name="password2" required autocomplete="new-password" aria-describedby="password-match-help-ind">
+                    <small id="password-match-help-ind" class="form-text"></small>
                 </div>
                 
-                <button type="submit" class="btn btn-primary" aria-label="Register new account" data-i18n="register_button">Register</button>
+                <button type="submit" class="btn btn-primary" aria-label="Register individual account">
+                    <i class="fas fa-user-plus"></i> Create Individual Account
+                </button>
             </form>
-             <p style="text-align: center; margin-top: 1.5rem;">
-                <span data-i18n="register_have_account">Already have an account?</span> <a href="login.html" data-i18n="register_login_here">Login here</a>.
+
+            <!-- Professional Account Form -->
+            <form id="register-form-professional" class="auth-form tab-content" data-content="professional">
+                <div id="form-message-professional" class="hidden"></div>
+                
+                <div>
+                    <label for="company-name-pro">Company Name</label>
+                    <input type="text" id="company-name-pro" name="company_name" required autocomplete="organization">
+                </div>
+
+                <div>
+                    <label for="vat-number-pro">VAT Number</label>
+                    <input type="text" id="vat-number-pro" name="vat_number" required autocomplete="off">
+                </div>
+                
+                <div>
+                    <label for="username-pro">Username</label>
+                    <input type="text" id="username-pro" name="username" required autocomplete="username">
+                </div>
+                
+                <div>
+                    <label for="email-pro">Email</label>
+                    <input type="email" id="email-pro" name="email" required autocomplete="email">
+                </div>
+
+                <div class="form-section-title">
+                    <i class="fas fa-user-tie"></i> Contact Person
+                </div>
+
+                <div class="form-row">
+                    <div>
+                        <label for="first_name-pro">First Name</label>
+                        <input type="text" id="first_name-pro" name="first_name" required autocomplete="given-name">
+                    </div>
+                    
+                    <div>
+                        <label for="last_name-pro">Last Name</label>
+                        <input type="text" id="last_name-pro" name="last_name" required autocomplete="family-name">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="phone-pro">Phone Number</label>
+                    <input type="tel" id="phone-pro" name="phone" required autocomplete="tel">
+                </div>
+
+                <div class="form-section-title">
+                    <i class="fas fa-file-invoice"></i> Billing Address
+                </div>
+
+                <div>
+                    <label for="billing-address-pro">Street Address</label>
+                    <input type="text" id="billing-address-pro" name="billing_address" required autocomplete="billing street-address">
+                </div>
+
+                <div class="form-row">
+                    <div>
+                        <label for="billing-city-pro">City</label>
+                        <input type="text" id="billing-city-pro" name="billing_city" required autocomplete="billing address-level2">
+                    </div>
+                    
+                    <div>
+                        <label for="billing-postal-pro">Postal Code</label>
+                        <input type="text" id="billing-postal-pro" name="billing_postal" required autocomplete="billing postal-code">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="billing-country-pro">Country</label>
+                    <input type="text" id="billing-country-pro" name="billing_country" required autocomplete="billing country-name">
+                </div>
+
+                <div class="form-section-title">
+                    <i class="fas fa-shipping-fast"></i> Shipping Address
+                </div>
+
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="same-as-billing" name="same_as_billing">
+                        <span>Same as billing address</span>
+                    </label>
+                </div>
+
+                <div id="shipping-address-fields">
+                    <div>
+                        <label for="shipping-address-pro">Street Address</label>
+                        <input type="text" id="shipping-address-pro" name="shipping_address" autocomplete="shipping street-address">
+                    </div>
+
+                    <div class="form-row">
+                        <div>
+                            <label for="shipping-city-pro">City</label>
+                            <input type="text" id="shipping-city-pro" name="shipping_city" autocomplete="shipping address-level2">
+                        </div>
+                        
+                        <div>
+                            <label for="shipping-postal-pro">Postal Code</label>
+                            <input type="text" id="shipping-postal-pro" name="shipping_postal" autocomplete="shipping postal-code">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="shipping-country-pro">Country</label>
+                        <input type="text" id="shipping-country-pro" name="shipping_country" autocomplete="shipping country-name">
+                    </div>
+                </div>
+
+                <div class="form-section-title">
+                    <i class="fas fa-lock"></i> Account Security
+                </div>
+
+                <div>
+                    <label for="password-pro">Password</label>
+                    <input type="password" id="password-pro" name="password" required autocomplete="new-password" aria-describedby="password-strength-pro">
+                    <div id="password-strength-pro" class="password-strength-meter">
+                        <div class="strength-bar"></div>
+                    </div>
+                    <small id="password-help-pro" class="form-text"></small>
+                </div>
+                
+                <div>
+                    <label for="password2-pro">Confirm Password</label>
+                    <input type="password" id="password2-pro" name="password2" required autocomplete="new-password" aria-describedby="password-match-help-pro">
+                    <small id="password-match-help-pro" class="form-text"></small>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" aria-label="Register professional account">
+                    <i class="fas fa-briefcase"></i> Create Professional Account
+                </button>
+            </form>
+
+            <p style="text-align: center; margin-top: 1.5rem;">
+                Already have an account? <a href="login.html">Login here</a>.
             </p>
         </div>
     </main>
@@ -180,58 +348,31 @@
     </button>
     <!-- Chatbot Interface -->
     <dialog class="chatbot" id="chatbot-panel" aria-label="Assistant">
-        <header class="main-header has-overlay" role="banner">
-            <div class="container">
-                <div class="header-wrapper">
-                    <a href="index.html" class="logo" aria-label="SoundLightPro Home">SoundLightPro</a>
-                    <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
-                        <ul>
-                            <li><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
-                            <li class="nav-item mega-menu-container">
-                                <a href="index.html#products" class="nav-link dropdown-toggle" data-i18n="nav_products">Products</a>
-                                <div class="mega-menu" id="products-mega-menu">
-                                    <!-- Content is loaded by ui.js -->
-                                </div>
-                            </li>
-                            <li><a href="about.html" class="nav-link" data-i18n="nav_about">About Us</a></li>
-                            <li><a href="services.html" class="nav-link" data-i18n="nav_services">Services</a></li>
-                            <li><a href="contact.html" class="nav-link">Contact</a></li>
-                            <li>
-                                <a href="cart.html" class="nav-link cart-link">
-                                    <i class="fas fa-shopping-cart" aria-hidden="true"></i>
-                                    <span class="cart-label" data-i18n="nav_cart">Cart</span>
-                                    <span class="cart-badge" id="cart-item-count" aria-live="polite">0</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                    <div class="header-search-row">
-                        <div class="search-container">
-                            <form id="mobile-search-form" role="search">
-                                <input type="search" id="mobile-search-input" data-i18n="search_placeholder" placeholder="Search products..." aria-label="Search products" autocomplete="off">
-                                <button type="submit" class="search-btn" aria-label="Submit search"><i class="fas fa-search"></i></button>
-                            </form>
-                            <div id="mobile-search-suggestions" class="hidden" aria-label="Search suggestions"></div>
-                        </div>
-                    </div>
-                    <div class="header-actions">
-                        <div class="user-actions">
-                            <div id="auth-links" class="auth-links">
-                                <a href="login.html" class="btn btn--secondary"><i class="fas fa-sign-in-alt"></i><span data-i18n="nav_login">Login</span></a>
-                                <a href="register.html" class="btn btn--primary"><i class="fas fa-user-plus"></i><span data-i18n="nav_register">Register</span></a>
-                            </div>
-                            <div id="user-info" class="user-info hidden">
-                                <div class="user-menu">
-                                    <button class="user-menu-toggle" aria-expanded="false" aria-controls="user-dropdown-menu" aria-label="User menu">
-                                        <i class="fas fa-user-circle"></i><span id="username-display"></span><i class="fas fa-chevron-down"></i>
-                                    </button>
-                                    <div id="user-dropdown-menu" class="user-dropdown">
-                                        <button id="logout-button" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="nav_logout">Logout</span></button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <header class="chatbot-header">
+            <h2 data-i18n="chatbot_title">Chat Support</h2>
+            <button class="close-btn" aria-label="Close chatbot">
+                <i class="fas fa-times"></i>
+            </button>
         </header>
+        <ul class="chatbox">
+            <li class="chat incoming">
+                <span class="chat-icon"><i class="fas fa-robot"></i></span>
+                <p>Hi there! 👋<br>How can I help you today?</p>
+            </li>
+        </ul>
+        <div class="chat-input">
+            <textarea placeholder="Ask a question..." required></textarea>
+            <button id="send-btn" class="fas fa-paper-plane" aria-label="Send message"></button>
+        </div>
+    </dialog>
+
+    <div id="toast-container" class="toast-container" aria-live="assertive" aria-atomic="true"></div>
+    <script src="js/apiService.js" type="module"></script>
+    <script src="js/cart.js" type="module"></script>
+    <script src="js/ui.js" type="module"></script>
+    <script src="js/auth.js" type="module"></script>
+    <script src="js/main.js" type="module"></script>
+    <script src="js/chatbot.js" type="module"></script>
+    <script src="js/register-tabs.js"></script>
+</body>
+</html>
