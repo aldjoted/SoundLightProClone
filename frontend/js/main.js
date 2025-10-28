@@ -225,6 +225,9 @@ async function initApp() {
             const categories = await getCached('categories', () => apiService.getCategories(), 'categories');
             appState.categories = categories;
             ui.renderMegaMenu(categories);
+            
+            // Setup mega menu toggle on click
+            setupMegaMenuClickToggle();
         } catch (error) {
             console.error('Failed to load mega menu categories:', error);
             // Don't throw - mega menu failure shouldn't break the entire page
@@ -778,4 +781,29 @@ function filterProducts(categorySlug) {
  */
 function initSearchResultsPage() {
     // Nothing required here; page-specific logic lives in js/search-results.js
+}
+
+/**
+ * Sets up click toggle functionality for the mega menu
+ */
+function setupMegaMenuClickToggle() {
+    const productsLink = document.querySelector('.nav-item.mega-menu-container > .nav-link');
+    const megaMenu = document.getElementById('products-mega-menu');
+    
+    if (!productsLink || !megaMenu) return;
+    
+    // Toggle mega menu on click
+    globalListenerManager.add(productsLink, 'click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        megaMenu.classList.toggle('active');
+    });
+    
+    // Close mega menu when clicking outside
+    globalListenerManager.add(document, 'click', (e) => {
+        const isClickInside = e.target.closest('.nav-item.mega-menu-container');
+        if (!isClickInside && megaMenu.classList.contains('active')) {
+            megaMenu.classList.remove('active');
+        }
+    });
 }
