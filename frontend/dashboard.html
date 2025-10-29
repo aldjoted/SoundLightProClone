@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Manage your account, orders, reviews, and wishlist - SoundLightPro Customer Dashboard">
+    <title>My Dashboard - SoundLightPro</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/pages/dashboard.css">
+    <link rel="stylesheet" href="css/pages/dashboard-enhanced.css">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a1a1a">
+</head>
+<body>
+    <!-- Offline Indicator -->
+    <div id="offline-indicator" class="offline-indicator" style="display: none;">
+        <i class="fas fa-wifi-slash"></i>
+        <span data-i18n="offline.message">You are currently offline</span>
+    </div>
+
+    <!-- Header -->
+    <header class="main-header" role="banner">
+        <div class="container">
+            <div class="header-wrapper">
+                <!-- Row 1: Logo + Actions -->
+                <a href="index.html" class="logo" aria-label="SoundLightPro Home">
+                    <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
+                </a>
+                
+                <div class="header-actions">
+                    <!-- Language Switcher will be injected here by language-switcher.js -->
+                    
+                    <div class="user-actions">
+                        <a href="wishlist.html" class="btn btn--secondary" aria-label="Wishlist">
+                            <i class="fas fa-heart"></i>
+                            <span class="badge" id="wishlist-count">0</span>
+                        </a>
+                    </div>
+                    
+                    <a href="cart.html" class="header-cart-link">
+                        <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+                        <span class="cart-label" data-i18n="nav_cart">Cart</span>
+                        <span class="cart-badge" id="cart-count" aria-live="polite">0</span>
+                    </a>
+                </div>
+                
+                <!-- Mobile Menu Toggle -->
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-nav-panel">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
+                
+                <!-- Row 3: Main Navigation -->
+                <nav id="main-navigation" class="main-nav" role="navigation" aria-label="Main navigation">
+                    <ul>
+                        <li><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
+                        <li><a href="index.html#products" class="nav-link" data-i18n="nav_products">Products</a></li>
+                        <li><a href="services.html" class="nav-link" data-i18n="nav_services">Services</a></li>
+                        <li><a href="about.html" class="nav-link" data-i18n="nav_about">About Us</a></li>
+                        <li><a href="contact.html" class="nav-link" data-i18n="nav_contact">Contact</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <div class="container">
+            <div class="dashboard-container">
+                <!-- Sidebar Navigation -->
+                <aside class="dashboard-sidebar" id="dashboard-sidebar">
+                    <div class="sidebar-header">
+                        <h2 data-i18n="dashboard.title">My Dashboard</h2>
+                        <button class="sidebar-close" id="sidebar-close" aria-label="Close Sidebar">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <nav class="sidebar-nav">
+                        <ul>
+                            <li>
+                                <a href="#overview" class="nav-item active" data-section="overview">
+                                    <i class="fas fa-home"></i>
+                                    <span data-i18n="dashboard.nav.overview">Overview</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#profile" class="nav-item" data-section="profile">
+                                    <i class="fas fa-user"></i>
+                                    <span data-i18n="dashboard.nav.profile">My Profile</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#orders" class="nav-item" data-section="orders">
+                                    <i class="fas fa-box"></i>
+                                    <span data-i18n="dashboard.nav.orders">Orders</span>
+                                    <span class="badge" id="orders-badge">0</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#reviews" class="nav-item" data-section="reviews">
+                                    <i class="fas fa-star"></i>
+                                    <span data-i18n="dashboard.nav.reviews">My Reviews</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#wishlist" class="nav-item" data-section="wishlist">
+                                    <i class="fas fa-heart"></i>
+                                    <span data-i18n="dashboard.nav.wishlist">Wishlist</span>
+                                    <span class="badge" id="wishlist-badge">0</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#addresses" class="nav-item" data-section="addresses">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span data-i18n="dashboard.nav.addresses">Addresses</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#payment-methods" class="nav-item" data-section="payment-methods">
+                                    <i class="fas fa-credit-card"></i>
+                                    <span data-i18n="dashboard.nav.payment">Payment Methods</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#security" class="nav-item" data-section="security">
+                                    <i class="fas fa-lock"></i>
+                                    <span data-i18n="dashboard.nav.security">Security</span>
+                                </a>
+                            </li>
+                            <li class="nav-divider"></li>
+                            <li>
+                                <a href="#" class="nav-item nav-logout" id="logout-btn">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span data-i18n="dashboard.nav.logout">Logout</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    
+                    <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle Sidebar">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </aside>
+
+                <!-- Dashboard Content -->
+                <div class="dashboard-content">
+                    <!-- Loading State -->
+                    <div class="loading-state" id="loading-state">
+                        <div class="spinner"></div>
+                        <p data-i18n="dashboard.loading">Loading your dashboard...</p>
+                    </div>
+
+                    <!-- Overview Section -->
+                    <section class="dashboard-section active" id="section-overview">
+                        <h1 class="section-title" data-i18n="dashboard.overview.title">Welcome Back!</h1>
+                        <p class="section-subtitle" data-i18n="dashboard.overview.subtitle">Here's an overview of your account</p>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3 class="stat-value" id="stat-orders">0</h3>
+                                    <p class="stat-label" data-i18n="dashboard.overview.totalOrders">Total Orders</p>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3 class="stat-value" id="stat-reviews">0</h3>
+                                    <p class="stat-label" data-i18n="dashboard.overview.reviews">Reviews Written</p>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-heart"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3 class="stat-value" id="stat-wishlist">0</h3>
+                                    <p class="stat-label" data-i18n="dashboard.overview.wishlist">Wishlist Items</p>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3 class="stat-value" id="stat-addresses">0</h3>
+                                    <p class="stat-label" data-i18n="dashboard.overview.addresses">Saved Addresses</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Orders -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h2 data-i18n="dashboard.overview.recentOrders">Recent Orders</h2>
+                                <a href="#orders" class="btn btn-text" data-section="orders" data-i18n="dashboard.overview.viewAll">View All</a>
+                            </div>
+                            <div class="card-body">
+                                <div id="recent-orders-list" class="orders-list">
+                                    <!-- Recent orders will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Profile Section -->
+                    <section class="dashboard-section" id="section-profile">
+                        <h1 class="section-title" data-i18n="dashboard.profile.title">My Profile</h1>
+                        <p class="section-subtitle" data-i18n="dashboard.profile.subtitle">Manage your personal information</p>
+                        
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h2 data-i18n="dashboard.profile.personalInfo">Personal Information</h2>
+                            </div>
+                            <div class="card-body">
+                                <form id="profile-form" class="form">
+                                    <div class="form-grid">
+                                        <div class="form-group">
+                                            <label for="first_name" data-i18n="dashboard.profile.firstName">First Name</label>
+                                            <input type="text" id="first_name" name="first_name" required>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="last_name" data-i18n="dashboard.profile.lastName">Last Name</label>
+                                            <input type="text" id="last_name" name="last_name" required>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="email" data-i18n="dashboard.profile.email">Email</label>
+                                            <input type="email" id="email" name="email" disabled>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="phone" data-i18n="dashboard.profile.phone">Phone Number</label>
+                                            <input type="tel" id="phone" name="phone">
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="date_of_birth" data-i18n="dashboard.profile.dob">Date of Birth</label>
+                                            <input type="date" id="date_of_birth" name="date_of_birth">
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="preferred_language" data-i18n="dashboard.profile.language">Preferred Language</label>
+                                            <select id="preferred_language" name="preferred_language">
+                                                <option value="en">English</option>
+                                                <option value="fr">Français</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="bio" data-i18n="dashboard.profile.bio">Bio</label>
+                                        <textarea id="bio" name="bio" rows="4" maxlength="500"></textarea>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="email_notifications" name="email_notifications">
+                                            <span data-i18n="dashboard.profile.emailNotifications">Receive email notifications</span>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="newsletter_subscription" name="newsletter_subscription">
+                                            <span data-i18n="dashboard.profile.newsletter">Subscribe to newsletter</span>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary" data-i18n="dashboard.profile.save">Save Changes</button>
+                                        <button type="button" class="btn btn-secondary" id="cancel-profile-btn" data-i18n="dashboard.profile.cancel">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Orders Section -->
+                    <section class="dashboard-section" id="section-orders">
+                        <h1 class="section-title" data-i18n="dashboard.orders.title">My Orders</h1>
+                        <p class="section-subtitle" data-i18n="dashboard.orders.subtitle">Track and manage your orders</p>
+                        
+                        <!-- Order Filters -->
+                        <div class="filters-bar">
+                            <div class="filter-group">
+                                <label for="order-status-filter" data-i18n="dashboard.orders.filterStatus">Status:</label>
+                                <select id="order-status-filter" class="filter-select">
+                                    <option value="all" data-i18n="dashboard.orders.statusAll">All Orders</option>
+                                    <option value="pending" data-i18n="dashboard.orders.statusPending">Pending</option>
+                                    <option value="processing" data-i18n="dashboard.orders.statusProcessing">Processing</option>
+                                    <option value="shipped" data-i18n="dashboard.orders.statusShipped">Shipped</option>
+                                    <option value="delivered" data-i18n="dashboard.orders.statusDelivered">Delivered</option>
+                                    <option value="cancelled" data-i18n="dashboard.orders.statusCancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            
+                            <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="order-search" placeholder="Search orders..." data-i18n-placeholder="dashboard.orders.search">
+                            </div>
+                        </div>
+                        
+                        <div id="orders-container" class="orders-container">
+                            <!-- Orders will be loaded here -->
+                        </div>
+                    </section>
+
+                    <!-- Reviews Section -->
+                    <section class="dashboard-section" id="section-reviews">
+                        <h1 class="section-title" data-i18n="dashboard.reviews.title">My Reviews</h1>
+                        <p class="section-subtitle" data-i18n="dashboard.reviews.subtitle">Manage your product reviews</p>
+                        
+                        <div id="reviews-container" class="reviews-container">
+                            <!-- Reviews will be loaded here -->
+                        </div>
+                    </section>
+
+                    <!-- Wishlist Section -->
+                    <section class="dashboard-section" id="section-wishlist">
+                        <h1 class="section-title" data-i18n="dashboard.wishlist.title">My Wishlist</h1>
+                        <p class="section-subtitle" data-i18n="dashboard.wishlist.subtitle">Manage your favorite products</p>
+                        
+                        <div class="wishlist-actions">
+                            <button class="btn btn-secondary" id="clear-wishlist-btn" data-i18n="dashboard.wishlist.clearAll">Clear All</button>
+                            <button class="btn btn-primary" id="move-all-to-cart-btn" data-i18n="dashboard.wishlist.moveAllToCart">Move All to Cart</button>
+                        </div>
+                        
+                        <div id="wishlist-container" class="wishlist-grid">
+                            <!-- Wishlist items will be loaded here -->
+                        </div>
+                    </section>
+
+                    <!-- Addresses Section -->
+                    <section class="dashboard-section" id="section-addresses">
+                        <h1 class="section-title" data-i18n="dashboard.addresses.title">Shipping Addresses</h1>
+                        <p class="section-subtitle" data-i18n="dashboard.addresses.subtitle">Manage your delivery addresses</p>
+                        
+                        <button class="btn btn-primary mb-3" id="add-address-btn" data-i18n="dashboard.addresses.addNew">
+                            <i class="fas fa-plus"></i> Add New Address
+                        </button>
+                        
+                        <div id="addresses-container" class="addresses-grid">
+                            <!-- Addresses will be loaded here -->
+                        </div>
+                    </section>
+
+                    <!-- Payment Methods Section -->
+                    <section class="dashboard-section" id="section-payment-methods">
+                        <h1 class="section-title" data-i18n="dashboard.payment.title">Payment Methods</h1>
+                        <p class="section-subtitle" data-i18n="dashboard.payment.subtitle">Manage your payment options</p>
+                        
+                        <button class="btn btn-primary mb-3" id="add-payment-method-btn" data-i18n="dashboard.payment.addNew">
+                            <i class="fas fa-plus"></i> Add Payment Method
+                        </button>
+                        
+                        <div id="payment-methods-container" class="payment-methods-grid">
+                            <!-- Payment methods will be loaded here -->
+                        </div>
+                    </section>
+
+                    <!-- Security Section -->
+                    <section class="dashboard-section" id="section-security">
+                        <h1 class="section-title" data-i18n="dashboard.security.title">Security Settings</h1>
+                        <p class="section-subtitle" data-i18n="dashboard.security.subtitle">Manage your password and security preferences</p>
+                        
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h2 data-i18n="dashboard.security.changePassword">Change Password</h2>
+                            </div>
+                            <div class="card-body">
+                                <form id="password-form" class="form">
+                                    <div class="form-group">
+                                        <label for="old_password" data-i18n="dashboard.security.currentPassword">Current Password</label>
+                                        <input type="password" id="old_password" name="old_password" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="new_password" data-i18n="dashboard.security.newPassword">New Password</label>
+                                        <input type="password" id="new_password" name="new_password" required minlength="8">
+                                        <div class="strength-meter">
+                                            <div class="strength-bar"></div>
+                                        </div>
+                                        <small class="form-text" id="password-help"></small>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="confirm_password" data-i18n="dashboard.security.confirmPassword">Confirm New Password</label>
+                                        <input type="password" id="confirm_password" name="confirm_password" required>
+                                        <small class="form-text" id="password-match-help"></small>
+                                    </div>
+                                    
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary" data-i18n="dashboard.security.updatePassword">Update Password</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3 data-i18n="footer.company">Company</h3>
+                    <ul>
+                        <li><a href="about.html" data-i18n="footer.about">About Us</a></li>
+                        <li><a href="contact.html" data-i18n="footer.contact">Contact</a></li>
+                        <li><a href="services.html" data-i18n="footer.services">Services</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3 data-i18n="footer.support">Support</h3>
+                    <ul>
+                        <li><a href="support-center.html" data-i18n="footer.helpCenter">Help Center</a></li>
+                        <li><a href="shipping-info.html" data-i18n="footer.shipping">Shipping Info</a></li>
+                        <li><a href="returns.html" data-i18n="footer.returns">Returns</a></li>
+                        <li><a href="warranty.html" data-i18n="footer.warranty">Warranty</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3 data-i18n="footer.legal">Legal</h3>
+                    <ul>
+                        <li><a href="privacy-policy.html" data-i18n="footer.privacy">Privacy Policy</a></li>
+                        <li><a href="terms-of-service.html" data-i18n="footer.terms">Terms of Service</a></li>
+                        <li><a href="cookie-policy.html" data-i18n="footer.cookies">Cookie Policy</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3 data-i18n="footer.connect">Connect With Us</h3>
+                    <div class="social-links">
+                        <a href="https://www.facebook.com/beglec.cm/" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="https://www.youtube.com/@soundlightpro3226/featured" aria-label="YouTube" target="_blank" rel="noopener noreferrer">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 SoundLightPro. <span data-i18n="footer.copyright">All rights reserved.</span></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modals -->
+    <!-- Add/Edit Address Modal -->
+    <div class="modal" id="address-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="address-modal-title" data-i18n="dashboard.addresses.addNew">Add New Address</h2>
+                <button class="modal-close" data-modal="address-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="address-form" class="form">
+                    <input type="hidden" id="address_id" name="address_id">
+                    
+                    <div class="form-group">
+                        <label for="address_label" data-i18n="dashboard.addresses.label">Label</label>
+                        <input type="text" id="address_label" name="label" required placeholder="e.g., Home, Office">
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="address_first_name" data-i18n="dashboard.addresses.firstName">First Name</label>
+                            <input type="text" id="address_first_name" name="first_name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="address_last_name" data-i18n="dashboard.addresses.lastName">Last Name</label>
+                            <input type="text" id="address_last_name" name="last_name" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="address_company" data-i18n="dashboard.addresses.company">Company (Optional)</label>
+                        <input type="text" id="address_company" name="company">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="address_line1" data-i18n="dashboard.addresses.address1">Address Line 1</label>
+                        <input type="text" id="address_line1" name="address_line1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="address_line2" data-i18n="dashboard.addresses.address2">Address Line 2 (Optional)</label>
+                        <input type="text" id="address_line2" name="address_line2">
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="address_city" data-i18n="dashboard.addresses.city">City</label>
+                            <input type="text" id="address_city" name="city" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="address_state" data-i18n="dashboard.addresses.state">State/Province</label>
+                            <input type="text" id="address_state" name="state">
+                        </div>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="address_postal_code" data-i18n="dashboard.addresses.postal">Postal Code</label>
+                            <input type="text" id="address_postal_code" name="postal_code" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="address_country" data-i18n="dashboard.addresses.country">Country</label>
+                            <input type="text" id="address_country" name="country" value="Cameroon" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="address_phone" data-i18n="dashboard.addresses.phone">Phone Number</label>
+                        <input type="tel" id="address_phone" name="phone" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="address_is_default" name="is_default">
+                            <span data-i18n="dashboard.addresses.setDefault">Set as default address</span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" data-i18n="dashboard.addresses.save">Save Address</button>
+                        <button type="button" class="btn btn-secondary" data-modal-close="address-modal" data-i18n="dashboard.addresses.cancel">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div class="modal" id="order-details-modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 data-i18n="dashboard.orders.orderDetails">Order Details</h2>
+                <button class="modal-close" data-modal="order-details-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="order-details-content">
+                <!-- Order details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="toast-icon"></i>
+        <span class="toast-message"></span>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/dashboard.js"></script>
+</body>
+</html>

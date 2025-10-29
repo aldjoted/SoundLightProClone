@@ -1,0 +1,506 @@
+/**
+ * PWA Components Styles
+ * Styles for offline indicator, install prompt, and other PWA UI elements
+ */
+
+/* ============================================================================
+   OFFLINE BANNER
+   ============================================================================ */
+
+.offline-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: white;
+    padding: 1rem;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease-in-out;
+    z-index: var(--z-toast);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.offline-banner--visible {
+    transform: translateY(0);
+}
+
+.offline-banner__content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.offline-banner__icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.offline-banner__text {
+    flex: 1;
+}
+
+.offline-banner__title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.offline-banner__message {
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+.offline-banner__sync-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+
+.offline-banner__sync-status.hidden {
+    display: none;
+}
+
+/* ============================================================================
+   CONNECTION INDICATOR (Header)
+   ============================================================================ */
+
+.connection-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--gray-100);
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    transition: all 0.2s ease;
+}
+
+.connection-indicator--online {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.connection-indicator--offline {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.connection-indicator__icon {
+    font-size: 1rem;
+}
+
+.connection-indicator__text {
+    font-weight: 500;
+}
+
+/* Hide connection indicator text on small screens */
+@media (max-width: 768px) {
+    .connection-indicator__text {
+        display: none;
+    }
+}
+
+/* ============================================================================
+   INSTALL BUTTON
+   ============================================================================ */
+
+.install-button {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+.install-button--visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.install-button:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
+}
+
+.install-button__text {
+    white-space: nowrap;
+}
+
+/* Hide install button text on small screens */
+@media (max-width: 768px) {
+    .install-button__text {
+        display: none;
+    }
+    
+    .install-button {
+        padding: 0.625rem;
+    }
+}
+
+/* ============================================================================
+   INSTALL BANNER
+   ============================================================================ */
+
+.install-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid var(--gray-200);
+    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    transform: translateY(100%);
+    transition: transform 0.3s ease-in-out;
+    z-index: var(--z-modal);
+}
+
+.install-banner--visible {
+    transform: translateY(0);
+}
+
+.install-banner__content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.install-banner__icon {
+    width: 60px;
+    height: 60px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.install-banner__text {
+    flex: 1;
+}
+
+.install-banner__title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 0.25rem;
+}
+
+.install-banner__description {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    line-height: 1.5;
+}
+
+.install-banner__actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+
+.install-banner__install-btn,
+.install-banner__dismiss-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.install-banner__install-btn {
+    background: var(--primary-color);
+    color: white;
+}
+
+.install-banner__install-btn:hover {
+    background: var(--primary-dark);
+}
+
+.install-banner__dismiss-btn {
+    background: var(--gray-100);
+    color: var(--gray-700);
+}
+
+.install-banner__dismiss-btn:hover {
+    background: var(--gray-200);
+}
+
+@media (max-width: 768px) {
+    .install-banner__content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .install-banner__actions {
+        width: 100%;
+    }
+    
+    .install-banner__install-btn,
+    .install-banner__dismiss-btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+/* ============================================================================
+   INSTALL MODAL (Instructions)
+   ============================================================================ */
+
+.install-modal {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--z-modal) + 10);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.install-modal--visible {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.install-modal__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.install-modal__content {
+    position: relative;
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.install-modal--visible .install-modal__content {
+    transform: scale(1);
+}
+
+.install-instructions h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    color: var(--gray-900);
+    margin-bottom: 1.5rem;
+}
+
+.install-instructions ol,
+.install-instructions ul {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+}
+
+.install-instructions li {
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+    color: var(--gray-700);
+}
+
+.install-modal__close {
+    width: 100%;
+    margin-top: 1.5rem;
+}
+
+/* ============================================================================
+   INSTALL SUCCESS BANNER
+   ============================================================================ */
+
+.install-success-banner {
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(-150%);
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    z-index: var(--z-toast);
+    transition: transform 0.3s ease-in-out;
+}
+
+.install-success-banner--visible {
+    transform: translateX(-50%) translateY(0);
+}
+
+.install-success-banner__content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.install-success-banner__content i {
+    font-size: 1.25rem;
+}
+
+/* ============================================================================
+   OFFLINE WARNING (Checkout)
+   ============================================================================ */
+
+.offline-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #fef3c7;
+    border: 1px solid #fbbf24;
+    border-radius: 0.375rem;
+    color: #92400e;
+    font-size: 0.875rem;
+    margin-top: 0.75rem;
+}
+
+.offline-warning i {
+    flex-shrink: 0;
+}
+
+/* ============================================================================
+   OFFLINE MODE (Body Class)
+   ============================================================================ */
+
+/* Add subtle visual indicator when offline */
+body.offline-mode {
+    filter: grayscale(10%);
+}
+
+/* Disable certain interactive elements when offline */
+body.offline-mode .checkout-btn:disabled,
+body.offline-mode #proceed-checkout:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Show offline overlay on images that fail to load */
+body.offline-mode img[data-offline-fallback] {
+    background: var(--gray-200);
+    position: relative;
+}
+
+body.offline-mode img[data-offline-fallback]::after {
+    content: "📷";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    opacity: 0.5;
+}
+
+/* ============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================ */
+
+@media (max-width: 640px) {
+    .offline-banner__content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .offline-banner__sync-status {
+        width: 100%;
+    }
+    
+    .install-success-banner {
+        left: 1rem;
+        right: 1rem;
+        transform: translateY(-150%);
+    }
+    
+    .install-success-banner--visible {
+        transform: translateY(0);
+    }
+}
+
+/* ============================================================================
+   ANIMATIONS
+   ============================================================================ */
+
+@keyframes slideInFromTop {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideInFromBottom {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Apply animations with reduced motion support */
+@media (prefers-reduced-motion: no-preference) {
+    .offline-banner--visible {
+        animation: slideInFromTop 0.3s ease-out;
+    }
+    
+    .install-banner--visible {
+        animation: slideInFromBottom 0.3s ease-out;
+    }
+    
+    .install-modal--visible {
+        animation: fadeIn 0.3s ease-out;
+    }
+}

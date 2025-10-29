@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="View and manage your wishlist of favorite audio and lighting products">
+    <title data-i18n="wishlist_title">My Wishlist - Sound Light Pro</title>
+    
+    <!-- PWA Configuration -->
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SoundLightPro">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="/images/logo/logoslp.jpg">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" href="/images/logo/logoslp.jpg">
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://soundlightpro.com/wishlist.html">
+    <meta property="og:title" content="My Wishlist - Sound Light Pro">
+    <meta property="og:description" content="View and manage your wishlist of favorite audio and lighting products">
+    <meta property="og:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
+    
+    <!-- Preconnect to external resources -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- AOS (Animate On Scroll) CSS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="css/main.css">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "My Wishlist",
+      "description": "View and manage your wishlist of favorite products",
+      "url": "https://soundlightpro.com/wishlist.html",
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://soundlightpro.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Wishlist"
+          }
+        ]
+      }
+    }
+    </script>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <!-- Logo -->
+                <div class="nav-brand">
+                    <a href="index.html" class="logo-link">
+                        <img src="images/logo/logoslp.jpg" alt="Sound Light Pro Logo" class="logo-img">
+                        <span class="logo-text">SoundLightPro</span>
+                    </a>
+                </div>
+
+                <!-- Mobile Menu Toggle -->
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                </button>
+
+                <!-- Navigation Menu -->
+                <ul class="nav-menu">
+                    <li class="nav-item"><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
+                    <li class="nav-item"><a href="index.html#products" class="nav-link" data-i18n="nav_products">Products</a></li>
+                    <li class="nav-item"><a href="services.html" class="nav-link" data-i18n="nav_services">Services</a></li>
+                    <li class="nav-item"><a href="about.html" class="nav-link" data-i18n="nav_about">About</a></li>
+                    <li class="nav-item"><a href="contact.html" class="nav-link" data-i18n="nav_contact">Contact</a></li>
+                </ul>
+
+                <!-- User Actions -->
+                <div class="nav-actions">
+                    <!-- Language Switcher -->
+                    <div class="language-switcher">
+                        <button class="language-btn" aria-label="Change language">
+                            <i class="fas fa-globe"></i>
+                            <span class="current-lang">EN</span>
+                        </button>
+                        <ul class="language-dropdown">
+                            <li><button data-lang="en">English</button></li>
+                            <li><button data-lang="fr">Français</button></li>
+                        </ul>
+                    </div>
+
+                    <!-- Search -->
+                    <button class="icon-btn search-toggle" aria-label="Search">
+                        <i class="fas fa-search"></i>
+                    </button>
+
+                    <!-- Wishlist -->
+                    <a href="wishlist.html" class="icon-btn wishlist-link active" aria-label="Wishlist">
+                        <i class="fas fa-heart"></i>
+                        <span class="wishlist-count-badge">0</span>
+                    </a>
+
+                    <!-- Cart -->
+                    <a href="cart.html" class="icon-btn cart-link" aria-label="Shopping cart">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count-badge">0</span>
+                    </a>
+
+                    <!-- User Menu -->
+                    <div class="user-menu">
+                        <button class="icon-btn user-menu-toggle" aria-label="User menu" aria-expanded="false">
+                            <i class="fas fa-user"></i>
+                        </button>
+                        <div class="user-dropdown">
+                            <div class="user-dropdown-content">
+                                <!-- Content populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Mobile Search Bar -->
+            <div class="mobile-search-bar hidden">
+                <form class="search-form" role="search">
+                    <input type="search" class="search-input" placeholder="Search for products..." aria-label="Search">
+                    <button type="submit" class="search-submit" aria-label="Submit search">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="wishlist-page">
+        <div class="container">
+            <!-- Breadcrumb -->
+            <nav class="breadcrumb" aria-label="Breadcrumb">
+                <ol>
+                    <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+                    <li aria-current="page" data-i18n="wishlist_title">My Wishlist</li>
+                </ol>
+            </nav>
+
+            <!-- Page Header -->
+            <header class="page-header" data-aos="fade-up">
+                <h1 data-i18n="wishlist_title">My Wishlist</h1>
+                <p data-i18n="wishlist_subtitle">Save your favorite items for later</p>
+            </header>
+
+            <!-- Wishlist Container -->
+            <div id="wishlist-container" class="wishlist-container" data-aos="fade-up" data-aos-delay="100">
+                <!-- Loading state -->
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p data-i18n="loading">Loading your wishlist...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3 data-i18n="footer_about">About SoundLightPro</h3>
+                    <p data-i18n="footer_about_text">Professional audio and lighting equipment for events, concerts, and venues in Cameroon.</p>
+                    <div class="social-links">
+                        <a href="https://www.facebook.com/beglec.cm/" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="https://www.youtube.com/@soundlightpro3226/featured" aria-label="YouTube" target="_blank" rel="noopener noreferrer">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="footer-section">
+                    <h3 data-i18n="footer_quick_links">Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+                        <li><a href="index.html#products" data-i18n="nav_products">Products</a></li>
+                        <li><a href="services.html" data-i18n="nav_services">Services</a></li>
+                        <li><a href="about.html" data-i18n="nav_about">About</a></li>
+                        <li><a href="contact.html" data-i18n="nav_contact">Contact</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h3 data-i18n="footer_customer_service">Customer Service</h3>
+                    <ul class="footer-links">
+                        <li><a href="shipping-info.html" data-i18n="footer_shipping">Shipping Info</a></li>
+                        <li><a href="returns.html" data-i18n="footer_returns">Returns</a></li>
+                        <li><a href="warranty.html" data-i18n="footer_warranty">Warranty</a></li>
+                        <li><a href="support-center.html" data-i18n="footer_support">Support Center</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h3 data-i18n="footer_contact">Contact Us</h3>
+                    <ul class="footer-contact">
+                        <li><i class="fas fa-map-marker-alt"></i> 1451, 63 Bd de la République, Douala</li>
+                        <li><i class="fas fa-phone"></i> +237 6 80 49 49 49</li>
+                        <li><i class="fas fa-envelope"></i> info@soundlightpro.com</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2025 SoundLightPro. <span data-i18n="footer_rights">All rights reserved</span>.</p>
+                <div class="footer-legal">
+                    <a href="privacy-policy.html" data-i18n="footer_privacy">Privacy Policy</a>
+                    <a href="terms-of-service.html" data-i18n="footer_terms">Terms of Service</a>
+                    <a href="cookie-policy.html" data-i18n="footer_cookies">Cookie Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Offline Indicator -->
+    <div id="offline-indicator" class="offline-indicator hidden">
+        <i class="fas fa-wifi-slash"></i>
+        <span data-i18n="offline_message">You are offline. Some features may be limited.</span>
+    </div>
+
+    <!-- Scripts -->
+    <!-- AOS (Animate On Scroll) JS -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <!-- Main Application Script -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

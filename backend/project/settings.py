@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'mptt',
+    'django_ratelimit',
 
     # Our custom app
     'api',
@@ -207,23 +208,29 @@ CORS_ALLOWED_ORIGINS = [
     "http://192.168.0.198:5500", # Local network access for Live Server
 ]
 
-# Uncomment below when Redis is available
+# Cache Configuration
+# Using LocMemCache for development (stores cache in local memory)
+# For production, use Redis for better performance and persistence
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+        "OPTIONS": {
+            "MAX_ENTRIES": 1000,
+        }
+    }
+}
+
+# Uncomment below when Redis is available in production
 # CACHES = {
 #     "default": {
 #         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "redis://127.0.0.1:6379/1", # Your Redis instance
+#         "LOCATION": "redis://127.0.0.1:6379/1",
 #         "OPTIONS": {
 #             "CLIENT_CLASS": "django_redis.client.DefaultClient",
 #         }
 #     }
 # }
-
-# Use dummy cache when Redis is not available
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
-    }
-}
 
 # --- Security Headers Configuration ---
 # These headers help protect against common web vulnerabilities
@@ -250,3 +257,23 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+
+# ========================================
+# Rate Limiting Configuration
+# ========================================
+# Protect authentication endpoints from brute force attacks
+RATELIMIT_ENABLE = True
+RATELIMIT_USE_CACHE = 'default'
+RATELIMIT_VIEW = 'api.views.ratelimit_error'  # Custom error handler
+
+# Rate limit configuration for different endpoints
+RATELIMIT_LOGIN_ATTEMPTS = '5/m'  # 5 login attempts per minute per IP
+RATELIMIT_REGISTER_ATTEMPTS = '3/h'  # 3 registrations per hour per IP
+RATELIMIT_TOKEN_REFRESH = '10/m'  # 10 token refreshes per minute per IP
+
+# Silence warnings for development (LocMemCache is acceptable for dev/testing)
+# For production, use Redis or Memcached
+SILENCED_SYSTEM_CHECKS = [
+    'django_ratelimit.E003',  # Cache backend is not a shared cache
+    'django_ratelimit.W001',  # Cache backend is not officially supported
+]

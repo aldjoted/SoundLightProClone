@@ -4,7 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="View product details for professional audio and lighting equipment.">
-    <title>Product Details - SoundLightPro</title>
+    <title data-i18n="product_loading">Product Details - SoundLightPro</title>
+    
+    <!-- PWA Configuration -->
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SoundLightPro">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/images/logo/logoslp.jpg">
+    <link rel="icon" type="image/jpeg" href="/images/logo/logoslp.jpg">
     
     <!-- Security Headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -158,7 +167,50 @@
     <main id="main-content" class="container">
         <section id="product-detail-container" class="product-listing">
             <!-- Product details will be dynamically inserted here by JS -->
-            <div class="loading-spinner"><div class="spinner"></div><p>Loading product...</p></div>
+            <div class="loading-spinner"><div class="spinner"></div><p data-i18n="product_loading">Loading product...</p></div>
+        </section>
+
+        <!-- Reviews Section -->
+        <section class="product-reviews" id="product-reviews-section">
+            <div class="container">
+                <div class="reviews-header">
+                    <h2 data-i18n="reviews_title">Customer Reviews</h2>
+                    <div id="review-stats-container">
+                        <!-- Review stats will be loaded here -->
+                    </div>
+                </div>
+                
+                <div class="reviews-controls">
+                    <button class="btn btn-primary" id="write-review-btn" data-i18n="write_review">
+                        <i class="fas fa-edit"></i> Write a Review
+                    </button>
+                    <div class="review-sort">
+                        <label for="review-sort-select" data-i18n="sort_by">Sort by:</label>
+                        <select id="review-sort-select" class="form-control">
+                            <option value="recent" data-i18n="sort_recent">Most Recent</option>
+                            <option value="highest" data-i18n="sort_highest">Highest Rated</option>
+                            <option value="verified" data-i18n="sort_verified">Verified Purchases</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="review-form-container" class="hidden">
+                    <!-- Review form will be loaded here -->
+                </div>
+                
+                <div id="reviews-list-container">
+                    <!-- Reviews will be loaded here -->
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <p data-i18n="loading_reviews">Loading reviews...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Related Products Section -->
+        <section id="related-products-section" class="container">
+            <!-- Related products will be loaded here -->
         </section>
     </main>
 

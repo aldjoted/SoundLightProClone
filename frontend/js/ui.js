@@ -1688,4 +1688,3 @@ function updateProductSchema(product) {
     schemaScript.textContent = JSON.stringify(schema, null, 2);
 
 }
-

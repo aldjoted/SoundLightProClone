@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#6366f1">
+    <title data-i18n="offline_title">Offline - SoundLightPro</title>
+    
+    <style>
+        /* Inline styles for offline page to avoid external CSS dependencies */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-color: #6366f1;
+            --primary-dark: #4f46e5;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-600: #4b5563;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: var(--gray-900);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        .offline-container {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            padding: 3rem 2rem;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .offline-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 2rem;
+            background: var(--gray-100);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: var(--primary-color);
+        }
+        
+        .offline-icon svg {
+            width: 60px;
+            height: 60px;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 1rem;
+        }
+        
+        .offline-message {
+            font-size: 1.125rem;
+            color: var(--gray-600);
+            line-height: 1.75;
+            margin-bottom: 2rem;
+        }
+        
+        .offline-features {
+            background: var(--gray-50);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+        
+        .offline-features h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 1rem;
+        }
+        
+        .offline-features ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .offline-features li {
+            padding: 0.75rem 0;
+            color: var(--gray-600);
+            display: flex;
+            align-items: center;
+        }
+        
+        .offline-features li::before {
+            content: "✓";
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 1.5rem;
+            margin-right: 0.75rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .cached-pages {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--gray-200);
+        }
+        
+        .cached-pages h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 1rem;
+        }
+        
+        .page-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        
+        .page-link {
+            display: block;
+            padding: 0.75rem 1rem;
+            background: white;
+            border: 2px solid var(--gray-200);
+            border-radius: 0.5rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .page-link:hover {
+            border-color: var(--primary-color);
+            background: var(--gray-50);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .retry-button {
+            display: inline-block;
+            padding: 0.875rem 2rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        
+        .retry-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+        }
+        
+        .connection-status {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: var(--gray-100);
+            border-radius: 0.5rem;
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+        
+        .connection-status.online {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .connection-status-icon {
+            display: inline-block;
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            background: var(--gray-600);
+            margin-right: 0.5rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .connection-status.online .connection-status-icon {
+            background: #22c55e;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .offline-container {
+                padding: 2rem 1.5rem;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .offline-message {
+                font-size: 1rem;
+            }
+            
+            .offline-icon {
+                width: 100px;
+                height: 100px;
+                font-size: 2.5rem;
+            }
+            
+            .page-links {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+                <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+                <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+                <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+                <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+                <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                <line x1="12" y1="20" x2="12.01" y2="20"></line>
+            </svg>
+        </div>
+        
+        <h1 data-i18n="offline_title">You're Offline</h1>
+        
+        <p class="offline-message" data-i18n="offline_message">
+            It looks like you've lost your internet connection. Don't worry - some features are still available!
+        </p>
+        
+        <div class="offline-features">
+            <h2 data-i18n="offline_what_can_do">What You Can Do Offline:</h2>
+            <ul>
+                <li data-i18n="offline_browse_cached">Browse cached products and pages you've visited</li>
+                <li data-i18n="offline_add_cart">Add items to your cart (will sync when online)</li>
+                <li data-i18n="offline_view_cart">View your existing cart contents</li>
+                <li data-i18n="offline_access_content">Access previously loaded content</li>
+            </ul>
+        </div>
+        
+        <button class="retry-button" onclick="location.reload()" data-i18n="offline_try_again">
+            Try Again
+        </button>
+        
+        <div class="cached-pages">
+            <h3 data-i18n="offline_available_pages">Available Cached Pages:</h3>
+            <div class="page-links">
+                <a href="/" class="page-link" data-i18n="offline_home">Home</a>
+                <a href="/cart.html" class="page-link" data-i18n="offline_shopping_cart">Shopping Cart</a>
+                <a href="/about.html" class="page-link" data-i18n="offline_about">About Us</a>
+                <a href="/services.html" class="page-link" data-i18n="offline_services">Services</a>
+                <a href="/contact.html" class="page-link" data-i18n="offline_contact">Contact</a>
+            </div>
+        </div>
+        
+        <div class="connection-status" id="connection-status">
+            <span class="connection-status-icon"></span>
+            <span id="connection-text" data-i18n="offline_checking_connection">Checking connection...</span>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { i18n } from './js/i18n.js';
+        
+        // Initialize translations
+        document.addEventListener('DOMContentLoaded', () => {
+            i18n.translate();
+        });
+        
+        // Monitor connection status
+        function updateConnectionStatus() {
+            const statusEl = document.getElementById('connection-status');
+            const textEl = document.getElementById('connection-text');
+            
+            if (navigator.onLine) {
+                statusEl.classList.add('online');
+                textEl.setAttribute('data-i18n', 'offline_connection_restored');
+                textEl.textContent = i18n.t('offline_connection_restored');
+                
+                // Auto-reload after 2 seconds
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            } else {
+                statusEl.classList.remove('online');
+                textEl.setAttribute('data-i18n', 'offline_still_offline');
+                textEl.textContent = i18n.t('offline_still_offline');
+            }
+        }
+        
+        // Check connection status on load
+        updateConnectionStatus();
+        
+        // Listen for online/offline events
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+        
+        // Periodic check (every 5 seconds)
+        setInterval(() => {
+            if (navigator.onLine) {
+                updateConnectionStatus();
+            }
+        }, 5000);
+        
+        // Check which pages are actually cached
+        if ('caches' in window) {
+            caches.keys().then(cacheNames => {
+                if (cacheNames.length > 0) {
+                    // Pages are cached, user can navigate
+                    console.log('Cached content available:', cacheNames);
+                } else {
+                    // No cached content
+                    const cachedPagesEl = document.querySelector('.cached-pages');
+                    if (cachedPagesEl) {
+                        cachedPagesEl.innerHTML = `
+                            <p style="color: var(--gray-600); font-size: 0.875rem;">
+                                No cached pages available. Visit pages while online to access them offline later.
+                            </p>
+                        `;
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

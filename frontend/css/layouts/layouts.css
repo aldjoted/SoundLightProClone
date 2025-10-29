@@ -25,7 +25,8 @@
     align-items: center;
     gap: var(--spacing-md);
     padding: var(--spacing-md) 0;
-    width: 100%;
+    width: 90%;
+    margin: 0 auto;
 }
 
 /* Ensure all row 1 items are vertically centered */

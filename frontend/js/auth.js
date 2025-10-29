@@ -66,3 +66,35 @@ export function initRegisterPageValidation() {
     
     // La validation finale avant la soumission peut être ajoutée ici.
 }
+
+/**
+ * Authenticate user on page load
+ * Checks if user has a valid refresh token and attempts to get user profile
+ * @returns {Promise<Object|null>} User profile object or null if not authenticated
+ */
+export async function authenticateUser() {
+    try {
+        // Check if we have a refresh token
+        const refreshToken = localStorage.getItem('refreshToken');
+        
+        if (!refreshToken) {
+            console.log('[Auth] No refresh token found, user not logged in');
+            return null;
+        }
+        
+        // Try to get user profile (this will automatically refresh access token if needed)
+        const { getUserProfile } = await import('./apiService.js');
+        const user = await getUserProfile();
+        
+        console.log('[Auth] User authenticated:', user.username);
+        return user;
+        
+    } catch (error) {
+        console.error('[Auth] Authentication failed:', error);
+        
+        // If authentication fails, clear tokens
+        localStorage.removeItem('refreshToken');
+        
+        return null;
+    }
+}

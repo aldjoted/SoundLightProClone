@@ -392,9 +392,10 @@ export const getCategories = async (options = {}, useRetry = true) => {
  * Logs in a user and stores authentication tokens.
  * @param {string} username - The user's username.
  * @param {string} password - The user's password.
+ * @param {boolean} [useCookie=false] - Reserved for future httpOnly cookie support (not implemented).
  * @returns {Promise<Object>} A promise that resolves to the token object.
  */
-export const loginUser = async (username, password) => {
+export const loginUser = async (username, password, useCookie = false) => {
     if (!username || !password) {
         throw new APIError('Username and password are required', 400, 'MISSING_CREDENTIALS');
     }
@@ -405,22 +406,29 @@ export const loginUser = async (username, password) => {
             body: JSON.stringify({ username, password }),
         });
         
-        if (!response.access || !response.refresh) {
+        if (!response.access) {
             throw new APIError('Invalid response format from login', 500, 'INVALID_LOGIN_RESPONSE');
         }
         
+        // Store access token in memory
         tokenManager.setAccessToken(response.access);
-        tokenManager.setRefreshToken(response.refresh);
+        
+        // Store refresh token in localStorage if present
+        if (response.refresh) {
+            tokenManager.setRefreshToken(response.refresh);
+        }
+        
         return response;
     } catch (error) {
         console.error('Login failed:', error);
         if (error instanceof APIError) {
-            throw new APIError(
-                error.status === 401 ? 'Invalid username or password' : error.getUserMessage(),
-                error.status,
-                error.code,
-                error.response
-            );
+            let message = error.getUserMessage();
+            if (error.status === 401) {
+                message = 'Invalid username or password';
+            } else if (error.status === 429) {
+                message = 'Too many login attempts. Please try again in a few minutes.';
+            }
+            throw new APIError(message, error.status, error.code, error.response);
         }
         throw error;
     }
@@ -444,12 +452,11 @@ export const registerUser = async (userData) => {
     } catch (error) {
         console.error('Registration failed:', error);
         if (error instanceof APIError) {
-            throw new APIError(
-                `Registration failed: ${error.getUserMessage()}`,
-                error.status,
-                error.code,
-                error.response
-            );
+            let message = error.getUserMessage();
+            if (error.status === 429) {
+                message = 'Too many registration attempts. Please try again later.';
+            }
+            throw new APIError(message, error.status, error.code, error.response);
         }
         throw error;
     }
@@ -482,15 +489,17 @@ export const getUserProfile = async (useRetry = true) => {
 };
 
 /**
- * Logs out the user by clearing stored tokens.
+ * Logs out the user by clearing stored tokens and notifying the backend.
  */
-export const logoutUser = () => {
+export const logoutUser = async () => {
     try {
-        tokenManager.clearTokens();
+        // Notify backend to invalidate refresh token cookie
+        await apiFetch('/logout/', { method: 'POST' });
     } catch (error) {
-        console.error('Error during logout:', error);
-        // Force clear even if there's an error
-        localStorage.removeItem('refreshToken');
+        console.error('Backend logout failed, proceeding with client-side cleanup:', error);
+    } finally {
+        // Always clear client-side tokens
+        tokenManager.clearTokens();
     }
 };
 
@@ -514,6 +523,693 @@ export const createOrder = async (orderData) => {
         if (error instanceof APIError) {
             throw new APIError(
                 `Failed to create order: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+// --- Wishlist API Functions ---
+
+/**
+ * Fetches the user's wishlist.
+ * @returns {Promise<Object>} A promise that resolves to the wishlist object with items.
+ */
+export const getWishlist = async () => {
+    try {
+        return await apiFetch('/wishlist/');
+    } catch (error) {
+        console.error('Failed to fetch wishlist:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load wishlist: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Adds a product to the user's wishlist.
+ * @param {number} productId - The ID of the product to add.
+ * @returns {Promise<Object>} A promise that resolves to the wishlist item.
+ */
+export const addToWishlist = async (productId) => {
+    if (!productId) {
+        throw new APIError('Product ID is required', 400, 'INVALID_PRODUCT_ID');
+    }
+    
+    try {
+        return await apiFetch('/wishlist/', {
+            method: 'POST',
+            body: JSON.stringify({ product_id: productId }),
+        });
+    } catch (error) {
+        console.error('Failed to add to wishlist:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to add to wishlist: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Removes a product from the user's wishlist.
+ * @param {number} productId - The ID of the product to remove.
+ * @returns {Promise<Object>} A promise that resolves to the response.
+ */
+export const removeFromWishlist = async (productId) => {
+    if (!productId) {
+        throw new APIError('Product ID is required', 400, 'INVALID_PRODUCT_ID');
+    }
+    
+    try {
+        return await apiFetch('/wishlist/', {
+            method: 'DELETE',
+            body: JSON.stringify({ product_id: productId }),
+        });
+    } catch (error) {
+        console.error('Failed to remove from wishlist:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to remove from wishlist: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Syncs guest wishlist with authenticated user's wishlist.
+ * @param {Array<number>} productIds - Array of product IDs from guest wishlist.
+ * @returns {Promise<Object>} A promise that resolves to the synced wishlist.
+ */
+export const syncWishlist = async (productIds) => {
+    if (!Array.isArray(productIds)) {
+        throw new APIError('Product IDs must be an array', 400, 'INVALID_PRODUCT_IDS');
+    }
+    
+    try {
+        return await apiFetch('/wishlist/sync/', {
+            method: 'POST',
+            body: JSON.stringify({ product_ids: productIds }),
+        });
+    } catch (error) {
+        console.error('Failed to sync wishlist:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to sync wishlist: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+// --- Product Reviews API Functions ---
+
+/**
+ * Fetches reviews for a product.
+ * @param {number} productId - The ID of the product.
+ * @param {string} [sort='recent'] - Sort order (recent, highest, verified).
+ * @returns {Promise<Array>} A promise that resolves to an array of reviews.
+ */
+export const getProductReviews = async (productId, sort = 'recent') => {
+    if (!productId) {
+        throw new APIError('Product ID is required', 400, 'INVALID_PRODUCT_ID');
+    }
+    
+    try {
+        const url = `/products/${productId}/reviews/${sort ? `?sort=${sort}` : ''}`;
+        return await apiFetch(url);
+    } catch (error) {
+        console.error('Failed to fetch product reviews:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load reviews: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Fetches review statistics for a product.
+ * @param {number} productId - The ID of the product.
+ * @returns {Promise<Object>} A promise that resolves to review stats.
+ */
+export const getProductReviewStats = async (productId) => {
+    if (!productId) {
+        throw new APIError('Product ID is required', 400, 'INVALID_PRODUCT_ID');
+    }
+    
+    try {
+        return await apiFetch(`/products/${productId}/reviews/stats/`);
+    } catch (error) {
+        console.error('Failed to fetch product review stats:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load review stats: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Creates a new product review.
+ * @param {number} productId - The ID of the product.
+ * @param {Object} reviewData - The review data (rating, title, comment).
+ * @returns {Promise<Object>} A promise that resolves to the created review.
+ */
+export const createProductReview = async (productId, reviewData) => {
+    if (!productId) {
+        throw new APIError('Product ID is required', 400, 'INVALID_PRODUCT_ID');
+    }
+    
+    if (!reviewData?.rating || !reviewData?.comment) {
+        throw new APIError('Rating and comment are required', 400, 'INVALID_REVIEW_DATA');
+    }
+    
+    try {
+        return await apiFetch(`/products/${productId}/reviews/`, {
+            method: 'POST',
+            body: JSON.stringify(reviewData),
+        });
+    } catch (error) {
+        console.error('Failed to create product review:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to submit review: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+// --- Related Products API Function ---
+
+/**
+ * Fetches related products for a product.
+ * @param {number} productId - The ID of the product.
+ * @param {number} [limit=6] - Maximum number of related products to fetch.
+ * @returns {Promise<Array>} A promise that resolves to an array of related products.
+ */
+export const getRelatedProducts = async (productId, limit = 6) => {
+    if (!productId) {
+        throw new APIError('Product ID is required', 400, 'INVALID_PRODUCT_ID');
+    }
+    
+    try {
+        return await apiFetch(`/products/${productId}/related/?limit=${limit}`);
+    } catch (error) {
+        console.error('Failed to fetch related products:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load related products: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+// --- Dashboard API Functions ---
+
+/**
+ * Fetches extended user profile data from dashboard.
+ * @returns {Promise<Object>} A promise that resolves to the user profile.
+ */
+export const getDashboardProfile = async () => {
+    try {
+        return await apiFetch('/dashboard/profile/');
+    } catch (error) {
+        console.error('Failed to fetch dashboard profile:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load profile: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Updates user profile data.
+ * @param {Object} profileData - The profile data to update.
+ * @returns {Promise<Object>} A promise that resolves to the updated profile.
+ */
+export const updateUserProfile = async (profileData) => {
+    try {
+        return await apiFetch('/dashboard/profile/', {
+            method: 'PATCH',
+            body: JSON.stringify(profileData),
+        });
+    } catch (error) {
+        console.error('Failed to update user profile:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to update profile: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Updates user password.
+ * @param {Object} passwordData - The password data (old_password, new_password, confirm_password).
+ * @returns {Promise<Object>} A promise that resolves to the response.
+ */
+export const updatePassword = async (passwordData) => {
+    if (!passwordData?.old_password || !passwordData?.new_password) {
+        throw new APIError('Old and new passwords are required', 400, 'INVALID_PASSWORD_DATA');
+    }
+    
+    try {
+        return await apiFetch('/dashboard/profile/password/', {
+            method: 'POST',
+            body: JSON.stringify(passwordData),
+        });
+    } catch (error) {
+        console.error('Failed to update password:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to update password: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Fetches shipping addresses for the user.
+ * @returns {Promise<Array>} A promise that resolves to an array of addresses.
+ */
+export const getShippingAddresses = async () => {
+    try {
+        return await apiFetch('/dashboard/addresses/');
+    } catch (error) {
+        console.error('Failed to fetch shipping addresses:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load addresses: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Creates a new shipping address.
+ * @param {Object} addressData - The address data.
+ * @returns {Promise<Object>} A promise that resolves to the created address.
+ */
+export const createShippingAddress = async (addressData) => {
+    try {
+        return await apiFetch('/dashboard/addresses/', {
+            method: 'POST',
+            body: JSON.stringify(addressData),
+        });
+    } catch (error) {
+        console.error('Failed to create shipping address:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to create address: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Updates a shipping address.
+ * @param {number} addressId - The ID of the address.
+ * @param {Object} addressData - The address data to update.
+ * @returns {Promise<Object>} A promise that resolves to the updated address.
+ */
+export const updateShippingAddress = async (addressId, addressData) => {
+    if (!addressId) {
+        throw new APIError('Address ID is required', 400, 'INVALID_ADDRESS_ID');
+    }
+    
+    try {
+        return await apiFetch(`/dashboard/addresses/${addressId}/`, {
+            method: 'PATCH',
+            body: JSON.stringify(addressData),
+        });
+    } catch (error) {
+        console.error('Failed to update shipping address:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to update address: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Deletes a shipping address.
+ * @param {number} addressId - The ID of the address.
+ * @returns {Promise<void>}
+ */
+export const deleteShippingAddress = async (addressId) => {
+    if (!addressId) {
+        throw new APIError('Address ID is required', 400, 'INVALID_ADDRESS_ID');
+    }
+    
+    try {
+        return await apiFetch(`/dashboard/addresses/${addressId}/`, {
+            method: 'DELETE',
+        });
+    } catch (error) {
+        console.error('Failed to delete shipping address:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to delete address: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Fetches payment methods for the user.
+ * @returns {Promise<Array>} A promise that resolves to an array of payment methods.
+ */
+export const getPaymentMethods = async () => {
+    try {
+        return await apiFetch('/dashboard/payment-methods/');
+    } catch (error) {
+        console.error('Failed to fetch payment methods:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load payment methods: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Creates a new payment method.
+ * @param {Object} paymentMethodData - The payment method data.
+ * @returns {Promise<Object>} A promise that resolves to the created payment method.
+ */
+export const createPaymentMethod = async (paymentMethodData) => {
+    try {
+        return await apiFetch('/dashboard/payment-methods/', {
+            method: 'POST',
+            body: JSON.stringify(paymentMethodData),
+        });
+    } catch (error) {
+        console.error('Failed to create payment method:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to create payment method: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Updates a payment method.
+ * @param {number} pmId - The ID of the payment method.
+ * @param {Object} paymentMethodData - The payment method data to update.
+ * @returns {Promise<Object>} A promise that resolves to the updated payment method.
+ */
+export const updatePaymentMethod = async (pmId, paymentMethodData) => {
+    if (!pmId) {
+        throw new APIError('Payment method ID is required', 400, 'INVALID_PM_ID');
+    }
+    
+    try {
+        return await apiFetch(`/dashboard/payment-methods/${pmId}/`, {
+            method: 'PATCH',
+            body: JSON.stringify(paymentMethodData),
+        });
+    } catch (error) {
+        console.error('Failed to update payment method:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to update payment method: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Deletes a payment method.
+ * @param {number} pmId - The ID of the payment method.
+ * @returns {Promise<void>}
+ */
+export const deletePaymentMethod = async (pmId) => {
+    if (!pmId) {
+        throw new APIError('Payment method ID is required', 400, 'INVALID_PM_ID');
+    }
+    
+    try {
+        return await apiFetch(`/dashboard/payment-methods/${pmId}/`, {
+            method: 'DELETE',
+        });
+    } catch (error) {
+        console.error('Failed to delete payment method:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to delete payment method: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Fetches orders for the dashboard with optional filters.
+ * @param {Object} [filters={}] - The filters (status, date_from, date_to, search).
+ * @returns {Promise<Array>} A promise that resolves to an array of orders.
+ */
+export const getDashboardOrders = async (filters = {}) => {
+    try {
+        const queryParams = new URLSearchParams();
+        if (filters.status && filters.status !== 'all') {
+            queryParams.append('status', filters.status);
+        }
+        if (filters.date_from) {
+            queryParams.append('date_from', filters.date_from);
+        }
+        if (filters.date_to) {
+            queryParams.append('date_to', filters.date_to);
+        }
+        if (filters.search) {
+            queryParams.append('search', filters.search);
+        }
+        
+        const queryString = queryParams.toString();
+        const url = queryString ? `/dashboard/orders/?${queryString}` : '/dashboard/orders/';
+        
+        return await apiFetch(url);
+    } catch (error) {
+        console.error('Failed to fetch dashboard orders:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load orders: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Fetches detailed order information.
+ * @param {number} orderId - The ID of the order.
+ * @returns {Promise<Object>} A promise that resolves to the order details.
+ */
+export const getOrderDetails = async (orderId) => {
+    if (!orderId) {
+        throw new APIError('Order ID is required', 400, 'INVALID_ORDER_ID');
+    }
+    
+    try {
+        return await apiFetch(`/dashboard/orders/${orderId}/`);
+    } catch (error) {
+        console.error('Failed to fetch order details:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load order details: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Cancels an order.
+ * @param {number} orderId - The ID of the order.
+ * @returns {Promise<Object>} A promise that resolves to the updated order.
+ */
+export const cancelOrder = async (orderId) => {
+    if (!orderId) {
+        throw new APIError('Order ID is required', 400, 'INVALID_ORDER_ID');
+    }
+    
+    try {
+        return await apiFetch(`/dashboard/orders/${orderId}/`, {
+            method: 'PATCH',
+            body: JSON.stringify({ action: 'cancel' }),
+        });
+    } catch (error) {
+        console.error('Failed to cancel order:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to cancel order: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Fetches reviews written by the user.
+ * @returns {Promise<Array>} A promise that resolves to an array of reviews.
+ */
+export const getUserReviews = async () => {
+    try {
+        return await apiFetch('/dashboard/reviews/');
+    } catch (error) {
+        console.error('Failed to fetch user reviews:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load reviews: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Updates a review.
+ * @param {number} reviewId - The ID of the review.
+ * @param {Object} reviewData - The review data to update.
+ * @returns {Promise<Object>} A promise that resolves to the updated review.
+ */
+export const updateReview = async (reviewId, reviewData) => {
+    if (!reviewId) {
+        throw new APIError('Review ID is required', 400, 'INVALID_REVIEW_ID');
+    }
+    
+    try {
+        return await apiFetch(`/dashboard/reviews/${reviewId}/`, {
+            method: 'PATCH',
+            body: JSON.stringify(reviewData),
+        });
+    } catch (error) {
+        console.error('Failed to update review:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to update review: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Deletes a review.
+ * @param {number} reviewId - The ID of the review.
+ * @returns {Promise<void>}
+ */
+export const deleteReview = async (reviewId) => {
+    if (!reviewId) {
+        throw new APIError('Review ID is required', 400, 'INVALID_REVIEW_ID');
+    }
+    
+    try {
+        return await apiFetch(`/dashboard/reviews/${reviewId}/`, {
+            method: 'DELETE',
+        });
+    } catch (error) {
+        console.error('Failed to delete review:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to delete review: ${error.getUserMessage()}`,
                 error.status,
                 error.code,
                 error.response

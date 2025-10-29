@@ -167,15 +167,17 @@
     cursor: pointer;
     transition: background-color var(--transition-fast);
     font-size: 0.875rem;
+    text-decoration: none;
 }
 .user-dropdown a:hover,
 .user-dropdown button:hover {
     background: rgba(255, 255, 255, 0.1);
 }
 
-/* Mega Menu Container - must have position relative for absolute mega-menu */
-.nav-item.mega-menu-container {
-    position: relative;
+.dropdown-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: var(--spacing-xs) 0;
 }
 
 /* Mega Menu */

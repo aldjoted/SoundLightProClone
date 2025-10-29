@@ -137,7 +137,8 @@ export class PerformanceMonitor {
       pageLoads: [],
       apiCalls: [],
       userInteractions: [],
-      errors: []
+      errors: [],
+      connectivity: [] // Track online/offline events
     };
     this.thresholds = {
       lcp: 2500,      // Good < 2.5s (Largest Contentful Paint)
@@ -153,6 +154,9 @@ export class PerformanceMonitor {
       this.observeWebVitals();
       this.observeResources();
     }
+    
+    // Initialize connectivity monitoring
+    this.initConnectivityMonitoring();
   }
 
   /**
@@ -332,6 +336,120 @@ export class PerformanceMonitor {
 
   getMetrics() {
     return this.metrics;
+  }
+  
+  /**
+   * Initialize connectivity monitoring
+   * Tracks online/offline events for PWA performance analysis
+   */
+  initConnectivityMonitoring() {
+    // Track initial state
+    this.recordMetric('connectivity', {
+      event: 'init',
+      online: navigator.onLine,
+      timestamp: Date.now()
+    });
+    
+    // Listen for online event
+    window.addEventListener('online', () => {
+      const metric = {
+        event: 'online',
+        timestamp: Date.now()
+      };
+      
+      this.recordMetric('connectivity', metric);
+      
+      // Send to analytics
+      if (window.gtag) {
+        window.gtag('event', 'connection_restored', {
+          event_category: 'Connectivity',
+          event_label: 'online',
+          non_interaction: true
+        });
+      }
+      
+      console.log('[Performance] Connection restored');
+    });
+    
+    // Listen for offline event
+    window.addEventListener('offline', () => {
+      const metric = {
+        event: 'offline',
+        timestamp: Date.now()
+      };
+      
+      this.recordMetric('connectivity', metric);
+      
+      // Send to analytics
+      if (window.gtag) {
+        window.gtag('event', 'connection_lost', {
+          event_category: 'Connectivity',
+          event_label: 'offline',
+          non_interaction: true
+        });
+      }
+      
+      console.log('[Performance] Connection lost');
+    });
+    
+    // Monitor connection quality (if Network Information API is available)
+    if ('connection' in navigator) {
+      const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      
+      if (connection) {
+        // Track initial connection type
+        this.recordMetric('connectivity', {
+          event: 'connection_type',
+          type: connection.effectiveType,
+          downlink: connection.downlink,
+          rtt: connection.rtt,
+          saveData: connection.saveData
+        });
+        
+        // Listen for connection changes
+        connection.addEventListener('change', () => {
+          this.recordMetric('connectivity', {
+            event: 'connection_change',
+            type: connection.effectiveType,
+            downlink: connection.downlink,
+            rtt: connection.rtt,
+            saveData: connection.saveData,
+            timestamp: Date.now()
+          });
+          
+          console.log('[Performance] Connection changed:', connection.effectiveType);
+        });
+      }
+    }
+  }
+  
+  /**
+   * Get connectivity statistics
+   * @returns {Object} Connectivity stats
+   */
+  getConnectivityStats() {
+    const events = this.metrics.connectivity || [];
+    
+    if (events.length === 0) {
+      return {
+        online: navigator.onLine,
+        totalEvents: 0,
+        offlineCount: 0,
+        onlineCount: 0
+      };
+    }
+    
+    const offlineEvents = events.filter(e => e.event === 'offline');
+    const onlineEvents = events.filter(e => e.event === 'online');
+    
+    return {
+      online: navigator.onLine,
+      totalEvents: events.length,
+      offlineCount: offlineEvents.length,
+      onlineCount: onlineEvents.length,
+      lastOffline: offlineEvents.length > 0 ? offlineEvents[offlineEvents.length - 1].timestamp : null,
+      lastOnline: onlineEvents.length > 0 ? onlineEvents[onlineEvents.length - 1].timestamp : null
+    };
   }
 }
 

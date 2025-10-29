@@ -19,6 +19,10 @@ import { initSecurity } from './security.js';
 import { initAnalytics } from './analytics.js';
 import i18n from './i18n.js';
 import './language-switcher.js';
+// PWA imports
+import { initOfflineIndicator } from './offline-indicator.js';
+import { initSyncManager } from './sync-manager.js';
+import { initInstallPrompt } from './install-prompt.js';
 
 // --- State Management & Cache ---
 
@@ -160,6 +164,7 @@ function router() {
         'index.html': initHomePage,
         'product.html': initProductDetailPage,
         'cart.html': initCartPage,
+        'wishlist.html': initWishlistPage,
         'login.html': initLoginPage,
         'register.html': initRegisterPage,
         'search-results.html': initSearchResultsPage,
@@ -187,39 +192,29 @@ function router() {
  */
 async function initApp() {
     try {
-        // Initialize security measures first
+        // Initialize i18n first (synchronous)
+        setupI18n();
+
+        // Initialize security and performance optimizations
         initSecurity();
-        
-        // Initialize performance optimizations
         initPerformanceOptimizations();
+        
+        // Attempt to authenticate the user and load profile
+        const user = await auth.authenticateUser();
+        ui.updateUserAuthUI(user);
+
+        // Initialize PWA features (now that user state is known)
+        initPWAFeatures();
         
         // Initialize analytics and monitoring
         initAnalytics();
         
-        // Initialize internationalization
-        setupI18n();
-        
         if (window.AOS) AOS.init({ duration: 800, once: true });
 
+        // Update UI elements that depend on user state
         ui.updateCartCount(cart.getCartItemCount());
         globalListenerManager.add(document, 'cartUpdated', () => ui.updateCartCount(cart.getCartItemCount()));
         
-        try {
-            // Try to get user profile only if we might have a refresh token
-            // This reduces unnecessary 401 calls for anonymous users
-            const refreshToken = localStorage.getItem('refreshToken');
-            if (refreshToken) {
-                const user = await apiService.getUserProfile();
-                ui.updateUserAuthUI(user);
-            } else {
-                // No refresh token, user is not logged in
-                ui.updateUserAuthUI(null);
-            }
-        } catch (error) {
-            // If getUserProfile fails, user is not authenticated or token expired
-            ui.updateUserAuthUI(null);
-        }
-
         // Load categories for mega menu on all pages
         try {
             const categories = await getCached('categories', () => apiService.getCategories(), 'categories');
@@ -230,11 +225,9 @@ async function initApp() {
             setupMegaMenuClickToggle();
         } catch (error) {
             console.error('Failed to load mega menu categories:', error);
-            // Don't throw - mega menu failure shouldn't break the entire page
         }
 
         // --- Orchestration ---
-        // Instantiate the imported modules to activate them.
         new AdvancedSearch();
         new MobileNavigation();
 
@@ -245,7 +238,43 @@ async function initApp() {
         
     } catch (error) {
         console.error('Error in initApp:', error);
-        throw error;
+        // If auth fails, proceed gracefully
+        ui.updateUserAuthUI(null);
+        
+        // Still initialize PWA features and event listeners for logged-out users
+        try {
+            initPWAFeatures();
+        } catch (pwaError) {
+            console.error('Failed to initialize PWA features:', pwaError);
+        }
+        
+        setupGlobalEventListeners();
+    }
+}
+
+/**
+ * Initialize PWA features (offline support, sync, install prompt)
+ */
+function initPWAFeatures() {
+    try {
+        console.log('[PWA] Initializing PWA features...');
+        
+        // Initialize offline indicator
+        initOfflineIndicator();
+        console.log('[PWA] Offline indicator initialized');
+        
+        // Initialize sync manager
+        initSyncManager();
+        console.log('[PWA] Sync manager initialized');
+        
+        // Initialize install prompt
+        initInstallPrompt();
+        console.log('[PWA] Install prompt initialized');
+        
+        console.log('[PWA] All PWA features initialized successfully');
+    } catch (error) {
+        console.error('[PWA] Failed to initialize PWA features:', error);
+        // Don't throw - PWA features are enhancements, not critical
     }
 }
 
@@ -557,10 +586,330 @@ async function initProductDetailPage(signal) {
         const product = await apiService.getProductById(productId, { signal });
         ui.renderProductDetail(product, container);
         setupProductDetailPageEventListeners(product);
+        
+        // Load reviews and related products
+        await loadProductReviews(productId);
+        await loadRelatedProducts(productId);
     } catch (error) {
         console.error("Error fetching product details:", error);
         container.innerHTML = `<p class="error-message">Could not load product. It may not exist. <a href="index.html">Return to products</a>.</p>`;
     }
+}
+
+/**
+ * Loads and renders product reviews
+ * @param {string|number} productId - The product ID
+ */
+async function loadProductReviews(productId) {
+    const statsContainer = document.getElementById('review-stats-container');
+    const listContainer = document.getElementById('reviews-list-container');
+    const formContainer = document.getElementById('review-form-container');
+    
+    if (!statsContainer || !listContainer) {
+        console.warn('Review containers not found on page');
+        return;
+    }
+
+    try {
+        // Dynamically import reviews module
+        const { ReviewManager } = await import('./reviews.js');
+        const reviewManager = new ReviewManager(productId);
+        
+        // Load and render stats
+        const stats = await reviewManager.loadStats();
+        if (stats) {
+            ui.renderReviewStats(stats, statsContainer);
+        }
+        
+        // Load and render reviews
+        const reviews = await reviewManager.loadReviews();
+        if (reviews && reviews.length > 0) {
+            reviews.forEach(review => {
+                const reviewCard = ui.renderReviewCard(review);
+                listContainer.appendChild(reviewCard);
+            });
+        } else {
+            listContainer.innerHTML = `
+                <div class="no-reviews">
+                    <i class="far fa-comment-alt"></i>
+                    <h3>${i18n.t('no_reviews')}</h3>
+                    <p>${i18n.t('be_first_review')}</p>
+                </div>
+            `;
+        }
+        
+        // Setup write review button
+        const writeReviewBtn = document.getElementById('write-review-btn');
+        if (writeReviewBtn && formContainer) {
+            writeReviewBtn.addEventListener('click', () => {
+                formContainer.classList.toggle('hidden');
+                if (!formContainer.classList.contains('hidden')) {
+                    // Render the review form
+                    const reviewForm = ui.renderReviewForm(productId);
+                    formContainer.innerHTML = '';
+                    formContainer.appendChild(reviewForm);
+                    
+                    // Setup form submission
+                    const form = formContainer.querySelector('form');
+                    if (form) {
+                        form.addEventListener('submit', async (e) => {
+                            e.preventDefault();
+                            try {
+                                await reviewManager.submitReview({
+                                    rating: form.rating.value,
+                                    title: form.title.value,
+                                    comment: form.comment.value
+                                });
+                                
+                                ui.showToast(i18n.t('review_submitted'), 'success');
+                                formContainer.classList.add('hidden');
+                                
+                                // Reload reviews
+                                listContainer.innerHTML = '<div class="reviews-loading"><div class="spinner"></div></div>';
+                                const updatedReviews = await reviewManager.loadReviews();
+                                listContainer.innerHTML = '';
+                                updatedReviews.forEach(review => {
+                                    const reviewCard = ui.renderReviewCard(review);
+                                    listContainer.appendChild(reviewCard);
+                                });
+                                
+                                // Reload stats
+                                const updatedStats = await reviewManager.loadStats();
+                                if (updatedStats) {
+                                    ui.renderReviewStats(updatedStats, statsContainer);
+                                }
+                            } catch (error) {
+                                ui.showToast(error.message || i18n.t('review_submit_error'), 'error');
+                            }
+                        });
+                        
+                        // Setup cancel button
+                        const cancelBtn = form.querySelector('.btn-secondary');
+                        if (cancelBtn) {
+                            cancelBtn.addEventListener('click', () => {
+                                formContainer.classList.add('hidden');
+                            });
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Setup sort dropdown
+        const sortSelect = document.getElementById('review-sort-select');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', async (e) => {
+                listContainer.innerHTML = '<div class="reviews-loading"><div class="spinner"></div></div>';
+                const sortedReviews = await reviewManager.loadReviews(e.target.value);
+                listContainer.innerHTML = '';
+                sortedReviews.forEach(review => {
+                    const reviewCard = ui.renderReviewCard(review);
+                    listContainer.appendChild(reviewCard);
+                });
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error loading product reviews:', error);
+        if (listContainer) {
+            listContainer.innerHTML = `<p class="error-message">${i18n.t('error_loading_reviews')}</p>`;
+        }
+    }
+}
+
+/**
+ * Loads and renders related products
+ * @param {string|number} productId - The product ID
+ */
+async function loadRelatedProducts(productId) {
+    const relatedSection = document.getElementById('related-products-section');
+    if (!relatedSection) {
+        console.warn('Related products section not found on page');
+        return;
+    }
+
+    try {
+        // Show loading state
+        relatedSection.innerHTML = `
+            <div class="related-products-loading">
+                <div class="spinner"></div>
+                <p>${i18n.t('loading_related_products')}</p>
+            </div>
+        `;
+        
+        // Fetch related products
+        const relatedProducts = await apiService.getRelatedProducts(productId);
+        
+        if (relatedProducts && relatedProducts.length > 0) {
+            ui.renderRelatedProducts(relatedProducts, relatedSection);
+        } else {
+            relatedSection.innerHTML = `
+                <div class="no-related-products">
+                    <i class="fas fa-boxes"></i>
+                    <h3>${i18n.t('no_related_products')}</h3>
+                    <p>${i18n.t('check_back_later')}</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading related products:', error);
+        relatedSection.innerHTML = `<p class="error-message">${i18n.t('error_loading_related')}</p>`;
+    }
+}
+
+/**
+ * Initializes the Wishlist Page.
+ */
+async function initWishlistPage(signal) {
+    const container = document.getElementById('wishlist-container');
+    if (!container) {
+        console.warn('Wishlist container not found');
+        return;
+    }
+
+    // Page-specific listener manager
+    const pageListenerManager = new ListenerManager();
+
+    try {
+        // Show loading state
+        container.innerHTML = `
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>${i18n.t('loading_wishlist')}</p>
+            </div>
+        `;
+        
+        // Dynamically import wishlist module
+        const wishlist = await import('./wishlist.js');
+        
+        // Initialize wishlist (syncs if authenticated)
+        await wishlist.initWishlist();
+        
+        // Get wishlist items
+        const items = wishlist.getWishlist();
+        
+        if (items.length === 0) {
+            container.innerHTML = `
+                <div class="empty-wishlist">
+                    <i class="far fa-heart"></i>
+                    <h2>${i18n.t('empty_wishlist')}</h2>
+                    <p>${i18n.t('empty_wishlist_message')}</p>
+                    <a href="index.html" class="btn btn-primary">
+                        <i class="fas fa-shopping-bag"></i> ${i18n.t('continue_shopping')}
+                    </a>
+                </div>
+            `;
+            return;
+        }
+        
+        // Render wishlist items
+        container.innerHTML = '';
+        for (const item of items) {
+            try {
+                // Fetch full product details
+                const product = await apiService.getProductById(item.product_id || item.id, { signal });
+                const itemElement = ui.renderWishlistItem(product);
+                container.appendChild(itemElement);
+            } catch (error) {
+                console.error(`Error loading wishlist item ${item.product_id}:`, error);
+            }
+        }
+        
+        // Setup event listeners for wishlist actions
+        pageListenerManager.add(container, 'click', async (e) => {
+            // Remove from wishlist
+            const removeBtn = e.target.closest('.remove-from-wishlist-btn');
+            if (removeBtn) {
+                const productId = parseInt(removeBtn.dataset.productId, 10);
+                try {
+                    await wishlist.removeFromWishlist(productId);
+                    ui.showToast(i18n.t('removed_from_wishlist'), 'success');
+                    
+                    // Remove the item element
+                    const itemElement = removeBtn.closest('.wishlist-item');
+                    if (itemElement) {
+                        itemElement.style.opacity = '0';
+                        setTimeout(() => {
+                            itemElement.remove();
+                            
+                            // Check if wishlist is now empty
+                            if (container.children.length === 0) {
+                                container.innerHTML = `
+                                    <div class="empty-wishlist">
+                                        <i class="far fa-heart"></i>
+                                        <h2>${i18n.t('empty_wishlist')}</h2>
+                                        <p>${i18n.t('empty_wishlist_message')}</p>
+                                        <a href="index.html" class="btn btn-primary">
+                                            <i class="fas fa-shopping-bag"></i> ${i18n.t('continue_shopping')}
+                                        </a>
+                                    </div>
+                                `;
+                            }
+                        }, 300);
+                    }
+                } catch (error) {
+                    ui.showToast(i18n.t('error_removing_wishlist'), 'error');
+                }
+                return;
+            }
+            
+            // Move to cart
+            const moveToCartBtn = e.target.closest('.move-to-cart-btn');
+            if (moveToCartBtn) {
+                const productId = parseInt(moveToCartBtn.dataset.productId, 10);
+                try {
+                    const product = await apiService.getProductById(productId);
+                    cart.addToCart(product, 1);
+                    ui.showToast(i18n.t('moved_to_cart'), 'success');
+                    
+                    // Optionally remove from wishlist after moving to cart
+                    await wishlist.removeFromWishlist(productId);
+                    
+                    // Remove the item element
+                    const itemElement = moveToCartBtn.closest('.wishlist-item');
+                    if (itemElement) {
+                        itemElement.style.opacity = '0';
+                        setTimeout(() => {
+                            itemElement.remove();
+                            
+                            if (container.children.length === 0) {
+                                container.innerHTML = `
+                                    <div class="empty-wishlist">
+                                        <i class="far fa-heart"></i>
+                                        <h2>${i18n.t('empty_wishlist')}</h2>
+                                        <p>${i18n.t('empty_wishlist_message')}</p>
+                                        <a href="index.html" class="btn btn-primary">
+                                            <i class="fas fa-shopping-bag"></i> ${i18n.t('continue_shopping')}
+                                        </a>
+                                    </div>
+                                `;
+                            }
+                        }, 300);
+                    }
+                } catch (error) {
+                    ui.showToast(i18n.t('error_moving_to_cart'), 'error');
+                }
+                return;
+            }
+        });
+        
+        // Update wishlist count in header
+        ui.updateWishlistCount(items.length);
+        
+    } catch (error) {
+        console.error('Error initializing wishlist page:', error);
+        container.innerHTML = `
+            <p class="error-message">
+                ${i18n.t('error_loading_wishlist')} 
+                <button onclick="location.reload()" class="btn btn-primary">${i18n.t('retry')}</button>
+            </p>
+        `;
+    }
+
+    // Cleanup function for when leaving the page
+    window.addEventListener('beforeunload', () => {
+        pageListenerManager.removeAll();
+    });
 }
 
 /**
@@ -642,19 +991,52 @@ function initCartPage() {
  * Initializes the Login Page.
  */
 function initLoginPage() {
-    const form = document.getElementById('login-form');
-    if (!form) return;
+    const form = document.querySelector('#login-form');
+    if (!form) {
+        console.error('Login form not found');
+        return;
+    }
 
+    const formMessage = document.getElementById('form-message');
     const pageListenerManager = new ListenerManager();
 
-    pageListenerManager.add(form, 'submit', async (e) => {
+    // Add form submission handler
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        // Get submit button and store original text
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        // Clear any previous error messages
+        if (formMessage) {
+            formMessage.className = 'hidden';
+            formMessage.textContent = '';
+        }
+        
+        // Set loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span data-i18n="loading">Loading...</span>';
+        
         try {
-            await apiService.loginUser(form.username.value.trim(), form.password.value);
+            await apiService.loginUser(form.username.value.trim(), form.password.value, true);
             ui.showToast('Login successful!', 'success');
+            // Keep button disabled during redirect
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> <span data-i18n="login_success">Success! Redirecting...</span>';
             window.location.href = 'index.html';
         } catch (err) {
+            // Display error in form
+            if (formMessage) {
+                formMessage.textContent = err.message || 'Login failed. Please check your credentials.';
+                formMessage.className = 'alert alert-error';
+            }
             ui.showToast('Login failed. Please check your credentials.', 'error');
+        } finally {
+            // Restore button state if still on page
+            if (!window.location.href.includes('index.html')) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
         }
     });
 
@@ -672,26 +1054,88 @@ function initRegisterPage() {
     const form = document.getElementById('register-form');
     if (!form) return;
 
+    const formMessage = document.getElementById('form-message');
     const pageListenerManager = new ListenerManager();
 
     pageListenerManager.add(form, 'submit', async (e) => {
         e.preventDefault();
+        
+        // Get submit button and store original text
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        // Clear any previous error messages
+        if (formMessage) {
+            formMessage.className = 'hidden';
+            formMessage.textContent = '';
+        }
+        
         const data = {
-            username: form.username.value.trim(), email: form.email.value.trim(),
-            first_name: form.first_name.value.trim(), last_name: form.last_name.value.trim(),
-            password: form.password.value, password2: form.password2.value
+            username: form.username.value.trim(), 
+            email: form.email.value.trim(),
+            first_name: form.first_name.value.trim(), 
+            last_name: form.last_name.value.trim(),
+            password: form.password.value, 
+            password2: form.password2.value
         };
 
+        // Client-side validation
         if (data.password !== data.password2) {
+            if (formMessage) {
+                formMessage.textContent = 'Passwords do not match.';
+                formMessage.className = 'alert alert-error';
+            }
             ui.showToast('Passwords do not match.', 'error');
             return;
         }
 
+        // Set loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span data-i18n="creating_account">Creating account...</span>';
+
         try {
             await apiService.registerUser(data);
+            // Show success state
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> <span data-i18n="registration_success">Success! Redirecting...</span>';
+            if (formMessage) {
+                formMessage.textContent = 'Account created successfully! Redirecting to login...';
+                formMessage.className = 'alert alert-success';
+            }
+            ui.showToast('Registration successful!', 'success');
             window.location.href = 'login.html?registered=true';
         } catch (err) {
-            ui.showToast(`Registration failed: ${err.message}`, 'error');
+            // Parse and display detailed error messages
+            let errorMessage = 'Registration failed. Please check your information.';
+            
+            if (err.response && typeof err.response === 'object') {
+                // Handle field-specific errors from Django
+                const errors = [];
+                for (const [field, messages] of Object.entries(err.response)) {
+                    if (Array.isArray(messages)) {
+                        errors.push(`${field}: ${messages.join(', ')}`);
+                    } else {
+                        errors.push(`${field}: ${messages}`);
+                    }
+                }
+                if (errors.length > 0) {
+                    errorMessage = errors.join('; ');
+                }
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+            
+            // Display error in form
+            if (formMessage) {
+                formMessage.textContent = errorMessage;
+                formMessage.className = 'alert alert-error';
+            }
+            ui.showToast(`Registration failed: ${errorMessage}`, 'error');
+        } finally {
+            // Restore button state if still on page
+            if (!window.location.href.includes('login.html')) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
         }
     });
 
@@ -746,6 +1190,49 @@ function setupProductDetailPageEventListeners(product) {
             cart.addToCart(product, qty);
             ui.showToast(`${product.name} (x${qty}) added to cart!`, 'success');
             ui.renderMiniCart(cart.getCart());
+        });
+    }
+    
+    // Setup wishlist button if present
+    const wishlistBtn = document.querySelector('.wishlist-btn');
+    if (wishlistBtn) {
+        // Dynamically import and setup wishlist functionality
+        import('./wishlist.js').then(wishlist => {
+            // Check if product is already in wishlist
+            wishlist.initWishlist().then(() => {
+                const isInWishlist = wishlist.isInWishlist(product.id);
+                if (isInWishlist) {
+                    wishlistBtn.classList.add('in-wishlist');
+                    wishlistBtn.innerHTML = '<i class="fas fa-heart"></i> <span class="btn-text">' + i18n.t('in_wishlist') + '</span>';
+                }
+                
+                // Add click handler
+                pageListenerManager.add(wishlistBtn, 'click', async () => {
+                    try {
+                        await wishlist.toggleWishlist(product.id);
+                        const nowInWishlist = wishlist.isInWishlist(product.id);
+                        
+                        if (nowInWishlist) {
+                            wishlistBtn.classList.add('in-wishlist');
+                            wishlistBtn.innerHTML = '<i class="fas fa-heart"></i> <span class="btn-text">' + i18n.t('in_wishlist') + '</span>';
+                            ui.showToast(i18n.t('added_to_wishlist'), 'success');
+                        } else {
+                            wishlistBtn.classList.remove('in-wishlist');
+                            wishlistBtn.innerHTML = '<i class="far fa-heart"></i> <span class="btn-text">' + i18n.t('add_to_wishlist') + '</span>';
+                            ui.showToast(i18n.t('removed_from_wishlist'), 'info');
+                        }
+                        
+                        // Update wishlist count
+                        const wishlistItems = wishlist.getWishlist();
+                        ui.updateWishlistCount(wishlistItems.length);
+                    } catch (error) {
+                        console.error('Error toggling wishlist:', error);
+                        ui.showToast(i18n.t('error_wishlist'), 'error');
+                    }
+                });
+            });
+        }).catch(error => {
+            console.error('Error loading wishlist module:', error);
         });
     }
 
