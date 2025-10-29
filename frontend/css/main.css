@@ -21,6 +21,7 @@
 @import url('pages/cart.css');
 @import url('pages/contact.css');
 @import url('pages/home-responsive.css');
+@import url('pages/support-pages.css');
 
 /* 5. Utilities Layer: Helper classes, states, and widgets */
 @import url('utilities/utilities.css');
