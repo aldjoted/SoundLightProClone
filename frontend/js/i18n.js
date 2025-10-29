@@ -161,7 +161,7 @@ const translations = {
         chatbot_title: "Chat Support",
         chatbot_placeholder: "Type your message here...",
         chatbot_send: "Send",
-        chatbot_greeting: "Hi there! 👋<br>How can I help you today?",
+        chatbot_greeting: "Hi there! 👋\nHow can I help you today?",
         
         // Language switcher
         language_english: "English",
@@ -869,7 +869,7 @@ const translations = {
         chatbot_title: "Support Client",
         chatbot_placeholder: "Tapez votre message ici...",
         chatbot_send: "Envoyer",
-        chatbot_greeting: "Bonjour ! 👋<br>Comment puis-je vous aider aujourd'hui ?",
+        chatbot_greeting: "Bonjour ! 👋\nComment puis-je vous aider aujourd'hui ?",
         
         // Language switcher
         language_english: "English",
@@ -1539,7 +1539,9 @@ class I18n {
             if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
                 element.placeholder = translation;
             } else {
-                element.textContent = translation;
+                // Convert \n to <br> for display in HTML
+                const htmlTranslation = translation.replace(/\n/g, '<br>');
+                element.innerHTML = htmlTranslation;
             }
         });
         
