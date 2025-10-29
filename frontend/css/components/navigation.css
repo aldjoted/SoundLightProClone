@@ -181,11 +181,15 @@
 }
 
 /* Mega Menu */
+.nav-item.mega-menu-container {
+    position: static; /* Changed from relative to allow centering relative to viewport */
+}
 .mega-menu {
-    position: absolute;
-    top: calc(100% + 10px);
+    position: fixed;
+    top: 140px; /* Adjust based on your header height */
     left: 50%;
-    transform: translateX(-38%) translateY(-20px);
+    /* FIXED: Use proper centering with translateX(-50%) for consistency across all screen sizes */
+    transform: translateX(-50%) translateY(-20px);
     width: 1200px;
     max-width: 95vw;
     background: linear-gradient(135deg, rgba(26, 26, 46, 0.98) 0%, rgba(30, 30, 56, 0.98) 100%);
@@ -196,7 +200,8 @@
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
     opacity: 0;
     visibility: hidden;
-    z-index: var(--z-dropdown);
+    /* FIXED: Add explicit z-index to ensure menu appears above all other content */
+    z-index: 1000;
     overflow: visible;
     box-sizing: border-box;
 }
@@ -206,12 +211,20 @@
     }
 }
 
-/* Show mega menu on hover or when active */
-.nav-item.mega-menu-container:hover .mega-menu,
-.mega-menu.active {
+/* FIXED: Desktop only - Show mega menu on hover (>1024px) */
+@media (min-width: 1025px) {
+    .nav-item.mega-menu-container:hover .mega-menu {
         opacity: 1;
         visibility: visible;
-        transform: translateX(-38%) translateY(0);
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* FIXED: Show mega menu when active (for click toggle on mobile/tablet) */
+.mega-menu.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
 }
 
 .mega-menu-header { 
@@ -365,12 +378,6 @@
     .mega-menu {
         width: 1000px;
         max-width: 90vw;
-        transform: translateX(-40%) translateY(-20px);
-    }
-    
-    .nav-item.mega-menu-container:hover .mega-menu,
-    .mega-menu.active {
-        transform: translateX(-40%) translateY(0);
     }
 }
 
@@ -379,12 +386,12 @@
     .mega-menu {
         width: 800px;
         max-width: 90vw;
-        transform: translateX(-50%) translateY(-20px);
     }
     
-    .nav-item.mega-menu-container:hover .mega-menu,
-    .mega-menu.active {
-        transform: translateX(-50%) translateY(0);
+    /* FIXED: Disable hover behavior on mobile/tablet (≤1024px) */
+    .nav-item.mega-menu-container:hover .mega-menu {
+        opacity: 0;
+        visibility: hidden;
     }
     
     .mega-menu-pane.active {
@@ -427,13 +434,6 @@
     .mega-menu {
         width: 100%;
         max-width: 95vw;
-        left: 2.5vw;
-        transform: translateX(0) translateY(-20px);
-    }
-    
-    .nav-item.mega-menu-container:hover .mega-menu,
-    .mega-menu.active {
-        transform: translateX(0) translateY(0);
     }
     
     .mega-menu-pane.active {

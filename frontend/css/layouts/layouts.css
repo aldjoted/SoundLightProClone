@@ -441,6 +441,66 @@
     background: var(--bg-dark);
 }
 
+/* Categories overlay rendered on top of the hero slider */
+.hero-categories {
+    position: absolute;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    max-width: min(1100px, 92vw);
+    padding: 10px 12px;
+    border-radius: 9999px;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    z-index: 3;
+}
+
+.hero-categories .cat-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .hero-categories .cat-chip {
+        transition: background-color var(--transition-base), border-color var(--transition-base), transform var(--transition-base);
+    }
+    .hero-categories .cat-chip:hover {
+        background: rgba(255, 255, 255, 0.18);
+        border-color: rgba(255, 255, 255, 0.55);
+        transform: translateY(-1px);
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-categories {
+        bottom: 16px;
+        padding: 8px 10px;
+        gap: 6px;
+    }
+    .hero-categories .cat-chip {
+        padding: 6px 10px;
+        font-size: 0.8125rem;
+    }
+}
+
 /* Swiper.js Overrides */
 :root {
     --swiper-navigation-color: #ffffff;

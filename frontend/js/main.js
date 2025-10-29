@@ -137,8 +137,9 @@ async function getCached(key, fetcher, strategy = 'products') {
 
 globalListenerManager.add(document, 'DOMContentLoaded', () => {
     try {
-        initApp();
-        router();
+        initApp().then(() => {
+            router();
+        });
     } catch (error) {
         console.error('App initialization failed:', error);
         // Show error message to user
@@ -215,18 +216,6 @@ async function initApp() {
         ui.updateCartCount(cart.getCartItemCount());
         globalListenerManager.add(document, 'cartUpdated', () => ui.updateCartCount(cart.getCartItemCount()));
         
-        // Load categories for mega menu on all pages
-        try {
-            const categories = await getCached('categories', () => apiService.getCategories(), 'categories');
-            appState.categories = categories;
-            ui.renderMegaMenu(categories);
-            
-            // Setup mega menu toggle on click
-            setupMegaMenuClickToggle();
-        } catch (error) {
-            console.error('Failed to load mega menu categories:', error);
-        }
-
         // --- Orchestration ---
         new AdvancedSearch();
         new MobileNavigation();
@@ -235,6 +224,19 @@ async function initApp() {
         
         // Highlight the active page in navigation
         highlightActivePage();
+
+        // Load categories for mega menu on all pages and return the promise
+        return getCached('categories', () => apiService.getCategories(), 'categories')
+            .then(categories => {
+                appState.categories = categories;
+                ui.renderMegaMenu(categories);
+                setupMegaMenuClickToggle();
+                return categories; // Pass categories along
+            })
+            .catch(error => {
+                console.error('Failed to load mega menu categories:', error);
+                return []; // Return empty array on failure
+            });
         
     } catch (error) {
         console.error('Error in initApp:', error);
@@ -249,6 +251,7 @@ async function initApp() {
         }
         
         setupGlobalEventListeners();
+        return Promise.resolve([]); // Return empty array on failure
     }
 }
 
@@ -540,7 +543,7 @@ async function initHomePage(signal) {
         }
         
         ui.renderFeaturedGrid(products.slice(0, 3));
-        ui.renderCategoryFilters(appState.categories.filter(c => !c.parent));
+        ui.renderCategoryFilters(appState.categories);
         ui.renderProductGrid(products, productGrid);
         
         const filterControls = document.querySelector('.filter-controls');
@@ -1272,6 +1275,9 @@ function initSearchResultsPage() {
 
 /**
  * Sets up click toggle functionality for the mega menu
+ * FIXED: Added breakpoint logic to separate mobile and desktop behavior
+ * - Desktop (>1024px): Hover-only, no click toggle
+ * - Mobile/Tablet (≤1024px): Click toggle only, no hover
  */
 function setupMegaMenuClickToggle() {
     const productsLink = document.querySelector('.nav-item.mega-menu-container > .nav-link');
@@ -1279,18 +1285,48 @@ function setupMegaMenuClickToggle() {
     
     if (!productsLink || !megaMenu) return;
     
-    // Toggle mega menu on click
+    // FIXED: Click toggle handler with window width check
     globalListenerManager.add(productsLink, 'click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        megaMenu.classList.toggle('active');
+        // Only activate click toggle on screens ≤1024px (mobile/tablet)
+        if (window.innerWidth <= 1024) {
+            e.preventDefault();
+            e.stopPropagation();
+            megaMenu.classList.toggle('active');
+        }
+        // On desktop (>1024px), allow default link behavior and rely on CSS hover
     });
     
-    // Close mega menu when clicking outside
+    // FIXED: Close mega menu when clicking outside (mobile only)
     globalListenerManager.add(document, 'click', (e) => {
-        const isClickInside = e.target.closest('.nav-item.mega-menu-container');
-        if (!isClickInside && megaMenu.classList.contains('active')) {
-            megaMenu.classList.remove('active');
+        // Only apply click-outside on mobile/tablet (≤1024px)
+        if (window.innerWidth <= 1024) {
+            const isClickInside = e.target.closest('.nav-item.mega-menu-container');
+            if (!isClickInside && megaMenu.classList.contains('active')) {
+                megaMenu.classList.remove('active');
+            }
         }
+    });
+    
+    // FIXED: Add Escape key handler to close mega menu
+    globalListenerManager.add(document, 'keydown', (e) => {
+        if (e.key === 'Escape' && megaMenu.classList.contains('active')) {
+            megaMenu.classList.remove('active');
+            // Return focus to the products link for accessibility
+            if (window.innerWidth <= 1024) {
+                productsLink.focus();
+            }
+        }
+    });
+    
+    // FIXED: Handle window resize to close menu if switching from mobile to desktop
+    let resizeTimer;
+    globalListenerManager.add(window, 'resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            // Close menu when resizing from mobile to desktop
+            if (window.innerWidth > 1024 && megaMenu.classList.contains('active')) {
+                megaMenu.classList.remove('active');
+            }
+        }, 250);
     });
 }

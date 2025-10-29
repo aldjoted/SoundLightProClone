@@ -334,6 +334,10 @@ export function renderHeroSlider(_unused = []) {
 
 
 
+
+
+
+
 /**
 
  * Renders an interactive tabbed mega menu.
@@ -460,21 +464,41 @@ export function renderMegaMenu(categories) {
 
  * Sets up tab switching functionality for the mega menu.
 
+ * FIXED: Prevent duplicate event listeners by checking if already initialized
+
  * @param {HTMLElement} megaMenuContainer - The mega menu container element.
 
  */
 
 function setupMegaMenuTabSwitching(megaMenuContainer) {
 
+    // FIXED: Check if already initialized to prevent duplicate listeners
+
+    if (megaMenuContainer._tabSwitchingInitialized) {
+
+        return;
+
+    }
+
+    
+
     const tabButtons = megaMenuContainer.querySelectorAll('.mega-menu-tab-btn');
 
     const tabPanes = megaMenuContainer.querySelectorAll('.mega-menu-pane');
 
     
+
+    // FIXED: Use a scoped listener manager for cleanup
+
+    const listenerManager = new ListenerManager();
+
+    megaMenuContainer._listenerManager = listenerManager;
+
+    
     
     tabButtons.forEach(button => {
 
-        button.addEventListener('click', (e) => {
+        listenerManager.add(button, 'click', (e) => {
 
             e.preventDefault();
 
@@ -509,6 +533,12 @@ function setupMegaMenuTabSwitching(megaMenuContainer) {
         });
 
     });
+
+    
+
+    // FIXED: Mark as initialized to prevent duplicate setup
+
+    megaMenuContainer._tabSwitchingInitialized = true;
 
 }
 
