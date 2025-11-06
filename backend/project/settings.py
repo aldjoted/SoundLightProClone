@@ -25,7 +25,16 @@ load_dotenv(os.path.join(BASE_DIR, '.env'), encoding='utf-8')
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '383euga!whnvj9x)_(%5i^qkz5f#b21%4z-0dv15qj9z13hy#4')
+# ✅ SECURITY FIX: Require SECRET_KEY in production, no insecure default
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    if os.getenv('DEBUG', 'True') == 'True':
+        SECRET_KEY = 'dev-only-insecure-key-DO-NOT-USE-IN-PRODUCTION'
+    else:
+        raise ValueError(
+            "DJANGO_SECRET_KEY environment variable must be set in production. "
+            "Generate one with: python -c \"from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())\""
+        )
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
@@ -46,6 +55,7 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',  # ✅ SECURITY: Enable token blacklisting
     'corsheaders',
     'mptt',
     'django_ratelimit',
@@ -181,7 +191,8 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20
+    'PAGE_SIZE': 20,
+    'EXCEPTION_HANDLER': 'api.exceptions.custom_exception_handler',  # ✅ ADD custom error handling
 }
 
 # --- Simple JWT Configuration ---
@@ -191,6 +202,14 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
+    
+    # ✅ SECURITY: httpOnly cookie configuration for refresh tokens
+    'AUTH_COOKIE': 'refreshToken',
+    'AUTH_COOKIE_SECURE': not DEBUG,  # HTTPS only in production
+    'AUTH_COOKIE_HTTP_ONLY': True,    # Prevent JavaScript access
+    'AUTH_COOKIE_SAMESITE': 'Strict', # CSRF protection
+    'AUTH_COOKIE_PATH': '/api/',      # Restrict cookie path
+    'AUTH_COOKIE_DOMAIN': None,       # Use default domain
 }
 
 # --- CORS Headers Configuration ---
@@ -207,6 +226,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://192.168.0.198:3000", # Local network access for Vite dev
     "http://192.168.0.198:5500", # Local network access for Live Server
 ]
+
+# ✅ SECURITY: Enable credentials for httpOnly cookies
+CORS_ALLOW_CREDENTIALS = True
 
 # Cache Configuration
 # Using LocMemCache for development (stores cache in local memory)
@@ -249,6 +271,9 @@ if not DEBUG:
     # Redirect all HTTP requests to HTTPS
     SECURE_SSL_REDIRECT = True
     
+    # ✅ SECURITY: Trust X-Forwarded-Proto header from proxy (nginx, etc.)
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    
     # Use secure cookies
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
@@ -277,3 +302,58 @@ SILENCED_SYSTEM_CHECKS = [
     'django_ratelimit.E003',  # Cache backend is not a shared cache
     'django_ratelimit.W001',  # Cache backend is not officially supported
 ]
+
+# ========================================
+# Logging Configuration
+# ========================================
+import os
+os.makedirs(BASE_DIR / 'logs', exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{levelname}] {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '[{levelname}] {message}',
+            'style': '{',
+        },
+    },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'django.log',
+            'maxBytes': 1024 * 1024 * 15,  # 15MB
+            'backupCount': 10,
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+        },
+        'api': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+    },
+}

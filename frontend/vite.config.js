@@ -39,16 +39,37 @@ export default defineConfig({
       },
       output: {
         manualChunks: {
+          // ✅ IMPROVED: Better code splitting for optimal bundle sizes
+          // Core utilities (small, frequently used)
           utils: ['./js/utils.js'],
+          
+          // API and state management (critical, shared)
           api: ['./js/apiService.js'],
+          
+          // UI rendering (large, page-specific)
           ui: ['./js/ui.js'],
-          auth: ['./js/auth.js'],
+          
+          // Authentication (security-critical, separate bundle)
+          auth: ['./js/auth.js', './js/validators.js'],
+          
+          // Cart functionality (frequently accessed)
           cart: ['./js/cart.js'],
-          i18n: ['./js/i18n.js']
+          
+          // Internationalization (shared across all pages)
+          i18n: ['./js/i18n.js', './js/language-switcher.js'],
+          
+          // Security and performance (critical infrastructure)
+          core: ['./js/security.js', './js/performance.js'],
+          
+          // PWA features (optional, can be lazy loaded)
+          pwa: ['./js/offline-indicator.js', './js/sync-manager.js', './js/install-prompt.js'],
+          
+          // Analytics (non-critical, separate bundle)
+          analytics: ['./js/analytics.js']
         }
       }
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 600, // ✅ IMPROVED: More aggressive warning threshold to catch large bundles
   },
   plugins: [
     legacy({
@@ -74,9 +95,6 @@ export default defineConfig({
   preview: {
     host: true,
     port: 8080,
-  },
-  optimizeDeps: {
-    include: ['swiper', 'aos'],
   },
   css: {
     devSourcemap: false,

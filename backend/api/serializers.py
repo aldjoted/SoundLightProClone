@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
+import re  # ✅ ADD for validation patterns
 from .models import (
     Category, Brand, Product, ProductImage, Order, OrderItem,
     Wishlist, WishlistItem, ProductReview, UserProfile, ShippingAddress, PaymentMethod
@@ -135,11 +136,13 @@ class ProductSerializer(serializers.ModelSerializer):
     
     def get_average_rating(self, obj):
         """Return average rating from approved reviews"""
-        return obj.get_average_rating()
+        # ✅ IMPROVEMENT: Use prefetched data if available, fallback to query
+        return getattr(obj, 'avg_rating', None) or obj.get_average_rating()
     
     def get_review_count(self, obj):
         """Return count of approved reviews"""
-        return obj.get_review_count()
+        # ✅ IMPROVEMENT: Use prefetched data if available, fallback to query
+        return getattr(obj, 'review_count_cached', None) or obj.get_review_count()
 
 # --- User Authentication Serializers ---
 
@@ -499,6 +502,7 @@ class UpdatePasswordSerializer(serializers.Serializer):
 class ShippingAddressSerializer(serializers.ModelSerializer):
     """
     Serializer for ShippingAddress model.
+    ✅ IMPROVEMENT: Added comprehensive input validation
     """
     class Meta:
         model = ShippingAddress
@@ -509,6 +513,43 @@ class ShippingAddressSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at']
+    
+    def validate_phone(self, value):
+        """✅ IMPROVEMENT: Validate phone number format"""
+        # Remove common separators
+        cleaned = re.sub(r'[\s\-\(\)]', '', value)
+        
+        # Check if it's a valid phone number (digits and +)
+        if not re.match(r'^\+?[0-9]{8,15}$', cleaned):
+            raise serializers.ValidationError(
+                "Phone number must be between 8 and 15 digits, optionally starting with +"
+            )
+        return value
+    
+    def validate_postal_code(self, value):
+        """✅ IMPROVEMENT: Validate postal code format"""
+        # Remove spaces
+        cleaned = value.replace(' ', '')
+        
+        # Basic validation (alphanumeric, 3-10 characters)
+        if not re.match(r'^[A-Z0-9]{3,10}$', cleaned.upper()):
+            raise serializers.ValidationError(
+                "Postal code must be 3-10 alphanumeric characters"
+            )
+        return cleaned.upper()
+    
+    def validate_email(self, value):
+        """✅ IMPROVEMENT: Additional email validation beyond Django's default"""
+        # Check for disposable email domains
+        disposable_domains = ['tempmail.com', 'throwaway.email', '10minutemail.com', 'guerrillamail.com']
+        if '@' in value:
+            domain = value.split('@')[1].lower()
+            
+            if domain in disposable_domains:
+                raise serializers.ValidationError(
+                    "Disposable email addresses are not allowed"
+                )
+        return value.lower()
 
     def validate(self, data):
         """Ensure user always has at least one address, and validate phone"""

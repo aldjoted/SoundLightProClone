@@ -15,7 +15,10 @@ export class CSPManager {
       'default-src': ["'self'"],
       'script-src': [
         "'self'",
-        "'unsafe-inline'", // Required for inline scripts, should be minimized in production
+        // ⚠️ SECURITY NOTE: 'unsafe-inline' should be removed in production
+        // TODO: Implement nonce-based CSP for inline scripts
+        // For now, keeping for compatibility with inline event handlers
+        "'unsafe-inline'",
         'https://cdnjs.cloudflare.com',
         'https://cdn.jsdelivr.net',
         'https://www.googletagmanager.com',
@@ -24,7 +27,7 @@ export class CSPManager {
       ],
       'style-src': [
         "'self'",
-        "'unsafe-inline'", // Required for CSS-in-JS and dynamic styles
+        "'unsafe-inline'", // Safer for styles than scripts
         'https://fonts.googleapis.com',
         'https://cdnjs.cloudflare.com',
         'https://cdn.jsdelivr.net',
@@ -39,10 +42,19 @@ export class CSPManager {
         "'self'",
         'data:',
         'blob:',
+        // ✅ FIXED: Allow media files from backend API server
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+        'http://192.168.0.198:8000',
+        // Production URLs
         'https://images.soundlightpro.com',
         'https://cdn.soundlightpro.com',
+        'https://api.soundlightpro.com',
+        // Analytics
         'https://www.google-analytics.com',
-        'https://www.googletagmanager.com'
+        'https://www.googletagmanager.com',
+        // Placeholder service
+        'https://via.placeholder.com'
       ],
       'connect-src': [
         "'self'",
@@ -62,12 +74,18 @@ export class CSPManager {
       ],
       'media-src': [
         "'self'",
+        // ✅ FIXED: Allow media files from backend API server
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+        'http://192.168.0.198:8000',
+        'https://api.soundlightpro.com',
         'https://cdn.soundlightpro.com'
       ],
       'object-src': ["'none'"],
       'base-uri': ["'self'"],
       'form-action': ["'self'"],
-      'frame-ancestors': ["'none'"],
+      // Note: 'frame-ancestors' is ignored in meta tags - must be set via HTTP header
+      // 'frame-ancestors': ["'none'"],
       'upgrade-insecure-requests': [],
       'block-all-mixed-content': []
     };
@@ -93,15 +111,23 @@ export class CSPManager {
   }
 
   static applyCSP() {
-    // In preview mode (served via vite preview, http on LAN), injecting CSP via meta
-    // can block expected connections and triggers console warnings. Apply only when
-    // explicitly in production AND not on a local network host.
-    if (IS_PRODUCTION && !IS_LOCAL_HOST) {
+    // ✅ IMPROVED: Apply CSP in all environments for consistent security
+    // CSP is now applied even in development to catch issues early
+    // Only exception: completely disable via explicit flag
+    const explicitlyDisabled = IS_PRODUCTION === false && 
+                               typeof window !== 'undefined' && 
+                               window.__DISABLE_CSP__ === true;
+    
+    if (!explicitlyDisabled) {
       const cspString = this.generateCSPString();
       const meta = document.createElement('meta');
       meta.setAttribute('http-equiv', 'Content-Security-Policy');
       meta.setAttribute('content', cspString);
       document.head.appendChild(meta);
+      
+      console.log('[Security] Content Security Policy applied');
+    } else {
+      console.warn('[Security] CSP explicitly disabled - USE ONLY FOR DEBUGGING');
     }
   }
 }

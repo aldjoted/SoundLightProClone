@@ -404,6 +404,23 @@ self.addEventListener('message', (event) => {
     } else if (event.data && event.data.type === 'CLEAR_CACHE') {
         // Clear specific cache
         clearCache(event.data.cacheName);
+    } else if (event.data && event.data.type === 'LOGOUT') {
+        // ✅ SECURITY: Clear auth-related caches on logout
+        console.log('[SW] Logout detected - clearing auth caches');
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames
+                    .filter(name => name.includes('api') || name.includes('dynamic'))
+                    .map(name => {
+                        console.log('[SW] Clearing cache:', name);
+                        return caches.delete(name);
+                    })
+            );
+        }).then(() => {
+            console.log('[SW] Auth caches cleared successfully');
+            // Notify client that cache is cleared
+            event.ports[0]?.postMessage({ success: true });
+        });
     }
 });
 
@@ -499,6 +516,28 @@ function isStaticAsset(url) {
 function isNavigationRequest(request) {
     return request.mode === 'navigate' || 
            (request.method === 'GET' && request.headers.get('accept').includes('text/html'));
+}
+
+/**
+ * ✅ SECURITY: Generate cache key with auth awareness
+ * Ensures authenticated requests don't serve stale data after login/logout
+ */
+function getCacheKey(request) {
+    const url = new URL(request.url);
+    const isAuthRequest = url.pathname.includes('/user/') || 
+                          url.pathname.includes('/dashboard/') ||
+                          url.pathname.includes('/wishlist/') ||
+                          url.pathname.includes('/orders/');
+    
+    if (isAuthRequest) {
+        // Include auth token hash in cache key
+        const authHeader = request.headers.get('Authorization');
+        const tokenHash = authHeader ? 
+            btoa(authHeader.split(' ')[1].slice(-20)) : 'anon';
+        return `${request.url}-${tokenHash}`;
+    }
+    
+    return request.url;
 }
 
 /**

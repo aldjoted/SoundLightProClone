@@ -80,6 +80,13 @@ class Product(models.Model):
 
     class Meta:
         ordering = ('-created_at',) # Default ordering for products
+        # ✅ PERFORMANCE: Add indexes for frequently queried fields
+        indexes = [
+            models.Index(fields=['available', 'category']),  # For category filtering
+            models.Index(fields=['available', 'brand']),     # For brand filtering
+            models.Index(fields=['-created_at']),            # For sorting by date
+            models.Index(fields=['name']),                    # For search operations
+        ]
 
     def __str__(self):
         return self.name

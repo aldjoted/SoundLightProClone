@@ -153,6 +153,7 @@
     top: 100px;
     box-shadow: var(--shadow-lg);
     transition: transform var(--transition-base), box-shadow var(--transition-base);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     background: rgba(255, 255, 255, 0.95);
     border: 1px solid rgba(0, 0, 0, 0.05);
@@ -379,6 +380,7 @@
     box-shadow: var(--shadow-lg);
     min-height: 600px;
     position: relative;
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     background: rgba(255, 255, 255, 0.95);
     border: 1px solid rgba(0, 0, 0, 0.05);

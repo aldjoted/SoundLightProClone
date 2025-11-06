@@ -165,7 +165,7 @@
         </div>
     </header>
 
-    <main id="main-content">
+    <main id="main-content" tabindex="-1">
         <!-- Hero Slider: la logique Swiper dans main.js utilise ces classes et active le lazy loading. -->
         <section id="hero-slider" class="hero-slider swiper" aria-roledescription="carousel" aria-label="Featured promotions">
             <div class="swiper-wrapper">
@@ -231,7 +231,7 @@
                 <div class="newsletter-content">
                     <h2>Stay Updated</h2><p>Get the latest news about new products and exclusive offers</p>
                     <form class="newsletter-form" id="newsletter-form">
-                        <input type="email" placeholder="Enter your email" required aria-label="Email for newsletter"><button type="submit" class="btn btn--primary" aria-label="Subscribe to newsletter">Subscribe</button>
+                        <input type="email" id="newsletter-email" name="email" placeholder="Enter your email" required aria-label="Email for newsletter"><button type="submit" class="btn btn--primary" aria-label="Subscribe to newsletter">Subscribe</button>
                     </form>
                 </div>
             </div>

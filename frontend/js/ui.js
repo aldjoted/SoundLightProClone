@@ -359,6 +359,8 @@ export function renderMegaMenu(categories) {
 
 
     // Clear container and rebuild safely
+    // FIXED: Reset initialization flag when rebuilding
+    megaMenuContainer._tabSwitchingInitialized = false;
 
     megaMenuContainer.innerHTML = '';
 
@@ -434,6 +436,36 @@ export function renderMegaMenu(categories) {
 
             col.appendChild(link);
 
+            
+
+            // Add grandchildren (sub-subcategories) if they exist
+
+            if (child.children && child.children.length > 0) {
+
+                const list = createElement('ul', { class: 'mega-menu-list' });
+
+                child.children.forEach(grandchild => {
+
+                    const item = createElement('li');
+
+                    const sublink = createElement('a', { 
+
+                        href: `search-results.html?category=${encodeURIComponent(grandchild.slug)}` 
+
+                    }, [grandchild.name]);
+
+                    item.appendChild(sublink);
+
+                    list.appendChild(item);
+
+                });
+
+                col.appendChild(list);
+
+            }
+
+            
+
             pane.appendChild(col);
 
         });
@@ -476,6 +508,8 @@ function setupMegaMenuTabSwitching(megaMenuContainer) {
 
     if (megaMenuContainer._tabSwitchingInitialized) {
 
+        console.log('Mega menu tabs already initialized, skipping...');
+
         return;
 
     }
@@ -488,21 +522,24 @@ function setupMegaMenuTabSwitching(megaMenuContainer) {
 
     
 
-    // FIXED: Use a scoped listener manager for cleanup
-
-    const listenerManager = new ListenerManager();
-
-    megaMenuContainer._listenerManager = listenerManager;
+    console.log('Setting up mega menu tab switching:', tabButtons.length, 'buttons,', tabPanes.length, 'panes');
 
     
     
-    tabButtons.forEach(button => {
+    tabButtons.forEach((button, index) => {
 
-        listenerManager.add(button, 'click', (e) => {
+        // Use direct event listener instead of ListenerManager for reliability
+        button.addEventListener('click', (e) => {
 
             e.preventDefault();
 
+            e.stopPropagation();
+
+            
+
             const targetId = button.dataset.target;
+
+            console.log('Tab clicked:', button.textContent, 'target:', targetId);
 
             
             
@@ -527,6 +564,12 @@ function setupMegaMenuTabSwitching(megaMenuContainer) {
             if (targetPane) {
 
                 targetPane.classList.add('active');
+
+                console.log('Activated pane:', targetId);
+
+            } else {
+
+                console.error('Target pane not found:', targetId);
 
             }
 
@@ -1026,7 +1069,7 @@ export function renderProductDetail(product, container) {
 
                 <div class="main-image-container">
 
-                    <img id="main-product-image" src="${mainImageSrc}" alt="${escapeHtml(product.name)}" width="800" height="500" loading="lazy">
+                    <img id="main-product-image" src="${mainImageSrc}" alt="${escapeHtml(product.name)}" width="800" height="500">
 
                 </div>
 

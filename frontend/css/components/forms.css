@@ -116,8 +116,8 @@
     border: 1px solid rgba(0,0,0,.08);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-xl);
-    backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
     z-index: var(--z-dropdown);
     width: clamp(260px, 40vw, 360px);
     max-width: 90vw;

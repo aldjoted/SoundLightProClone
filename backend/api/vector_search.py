@@ -8,6 +8,10 @@ from .embeddings import generate_product_embeddings
 EMBEDDINGS_PATH = os.path.join(settings.BASE_DIR, 'product_embeddings.npy')
 INDEX_PATH = os.path.join(settings.BASE_DIR, 'product_faiss.index')
 
+# ✅ IMPROVEMENT: Cache loaded index and embeddings in memory
+_cached_index = None
+_cached_embeddings = None
+
 
 def build_and_save_faiss_index():
     """
@@ -28,16 +32,34 @@ def build_and_save_faiss_index():
     index = faiss.IndexFlatIP(dim)
     index.add(embeddings)
     faiss.write_index(index, INDEX_PATH)
+    
+    # ✅ IMPROVEMENT: Clear cache to force reload with new index
+    global _cached_index, _cached_embeddings
+    _cached_index = None
+    _cached_embeddings = None
+    
     return len(products)
 
 
-def load_faiss_index_and_embeddings():
+def load_faiss_index_and_embeddings(force_reload=False):
     """
-    Load the Faiss index and embeddings from disk.
-    Returns (index, embeddings) tuple.
+    Load the Faiss index and embeddings from disk with caching.
+    
+    ✅ IMPROVEMENT: Caches index and embeddings in memory to avoid repeated disk I/O.
+    
+    Args:
+        force_reload: Force reload from disk even if cached
+        
+    Returns:
+        Tuple of (index, embeddings) or (None, None) if not found
     """
-    if not os.path.exists(EMBEDDINGS_PATH) or not os.path.exists(INDEX_PATH):
-        return None, None
-    embeddings = np.load(EMBEDDINGS_PATH)
-    index = faiss.read_index(INDEX_PATH)
-    return index, embeddings
+    global _cached_index, _cached_embeddings
+    
+    if force_reload or _cached_index is None or _cached_embeddings is None:
+        if not os.path.exists(EMBEDDINGS_PATH) or not os.path.exists(INDEX_PATH):
+            return None, None
+        
+        _cached_embeddings = np.load(EMBEDDINGS_PATH)
+        _cached_index = faiss.read_index(INDEX_PATH)
+    
+    return _cached_index, _cached_embeddings

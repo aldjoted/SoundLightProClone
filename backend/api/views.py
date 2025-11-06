@@ -15,7 +15,13 @@ from rest_framework import generics, permissions, status, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from stripe.error import StripeError # type: ignore
+from rest_framework_simplejwt.tokens import RefreshToken  # ✅ ADD for token blacklisting
+from django.conf import settings  # ✅ ADD for cookie settings
 import google.generativeai as genai # type: ignore
+import logging  # ✅ ADD for proper logging
+
+# ✅ ADD: Logger for this module
+logger = logging.getLogger(__name__)
 # from google import genai    # type: ignore
 
 from .models import (
@@ -92,14 +98,48 @@ class UserDetailView(APIView):
 class LogoutView(APIView):
     """
     API view to handle user logout.
-    Clears any server-side session data if needed.
+    ✅ SECURITY IMPROVEMENT:
+    - Clears refresh token httpOnly cookie
+    - Blacklists the refresh token to prevent reuse
     """
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request, *args, **kwargs):
-        # With JWT, logout is primarily handled client-side by removing tokens
-        # This endpoint exists for consistency and future enhancements (e.g., token blacklisting)
-        return Response({'detail': 'Successfully logged out.'}, status=status.HTTP_200_OK)
+        # Get cookie settings
+        cookie_settings = {
+            'key': settings.SIMPLE_JWT.get('AUTH_COOKIE', 'refreshToken'),
+            'path': settings.SIMPLE_JWT.get('AUTH_COOKIE_PATH', '/api/'),
+            'samesite': settings.SIMPLE_JWT.get('AUTH_COOKIE_SAMESITE', 'Strict'),
+            'secure': settings.SIMPLE_JWT.get('AUTH_COOKIE_SECURE', not settings.DEBUG),
+        }
+        
+        # Get refresh token from cookie
+        refresh_token = request.COOKIES.get(cookie_settings['key'])
+        
+        # Blacklist the refresh token if present
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+                logger.info(f"Token blacklisted for user logout")
+            except Exception as e:
+                # Token might already be blacklisted or invalid
+                logger.warning(f"Failed to blacklist token on logout: {e}")
+        
+        # Create response
+        response = Response(
+            {'detail': 'Successfully logged out'},
+            status=status.HTTP_200_OK
+        )
+        
+        # Delete the refresh token cookie
+        response.delete_cookie(
+            cookie_settings['key'],
+            path=cookie_settings['path'],
+            samesite=cookie_settings['samesite'],
+        )
+        
+        return response
 
 
 # --- Product Catalog Views ---
@@ -110,6 +150,8 @@ class ProductList(generics.ListAPIView):
     Includes search functionality via a 'search' query parameter.
     Includes filtering by brand slug via a 'brand' query parameter.
     Includes filtering by category slug via a 'category' query parameter.
+    
+    ✅ IMPROVEMENT: Optimized queryset with review stats annotations to prevent N+1 queries
     """
     serializer_class = ProductSerializer
     permission_classes = (permissions.AllowAny,)
@@ -127,9 +169,19 @@ class ProductList(generics.ListAPIView):
         Optionally filters the products by a 'category' query parameter in the URL.
         When filtering by category, includes products from all descendant categories.
         Includes explicit ordering for consistent pagination results.
+        
+        ✅ IMPROVEMENT: Annotates review statistics to avoid N+1 queries
         """
+        from django.db.models import Avg, Count, Q
+        
         # Note: self.request is a DRF Request object, which has .query_params
-        queryset = Product.objects.filter(available=True).select_related('brand', 'category').order_by('name')
+        queryset = Product.objects.filter(available=True)\
+            .select_related('brand', 'category')\
+            .annotate(
+                avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
+                review_count_cached=Count('reviews', filter=Q(reviews__is_approved=True))
+            )\
+            .order_by('name')
         
         # Filter by brand if specified
         brand_slug = self.request.query_params.get('brand') # type: ignore
@@ -241,37 +293,59 @@ class OrderView(APIView):
 
 # --- Chatbot View ---
 
-# Configure the Gemini API client at the module level
-try:
-    genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-    generation_config = {
-        "temperature": 0.7,
-        "top_p": 1,
-        "top_k": 1,
-        "max_output_tokens": 2048,
-    }
-    gemini_model = genai.GenerativeModel(
-        model_name="gemini-2.5-flash",
-        generation_config=generation_config,
-    )
-except Exception as e:
-    print(f"Error configuring Gemini API: {e}")
-    gemini_model = None
+# ✅ IMPROVEMENT: Lazy load Gemini model instead of module-level initialization
+_gemini_model = None
+
+def get_gemini_model():
+    """
+    Lazy load and configure Gemini model.
+    Raises ValueError if GEMINI_API_KEY is not set.
+    """
+    global _gemini_model
+    if _gemini_model is None:
+        api_key = os.getenv('GEMINI_API_KEY')
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY environment variable is required for chatbot functionality")
+        
+        genai.configure(api_key=api_key)
+        generation_config = {
+            "temperature": 0.7,
+            "top_p": 1,
+            "top_k": 1,
+            "max_output_tokens": 2048,
+        }
+        _gemini_model = genai.GenerativeModel(
+            model_name="gemini-2.5-flash",
+            generation_config=generation_config,
+        )
+        logger.info("Gemini model configured successfully")
+    return _gemini_model
 
 
+@method_decorator(ratelimit(key='ip', rate='10/h', method='POST', block=True), name='dispatch')
 class ChatbotView(APIView):
     """
     API view to handle chatbot conversations.
     It takes a user message, finds relevant products,
     and uses Gemini to generate a helpful response.
+    
+    ✅ IMPROVEMENT: Rate limited to 10 requests per hour per IP to manage API costs
     """
     permission_classes = [permissions.AllowAny] # Allow anyone to use the chatbot
 
     def post(self, request, *args, **kwargs):
-        if not gemini_model:
+        try:
+            gemini_model = get_gemini_model()
+        except ValueError as e:
+            logger.error(f"Gemini configuration error: {e}")
             return Response(
                 {"error": "Chatbot is not configured correctly."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except Ratelimited:
+            return Response(
+                {"error": "You've reached the chat limit. Please try again later."},
+                status=status.HTTP_429_TOO_MANY_REQUESTS
             )
 
         user_message = request.data.get('message', '').strip()
@@ -358,7 +432,7 @@ class ChatbotView(APIView):
             return Response({"reply": bot_response})
 
         except Exception as e:
-            print(f"Error calling Gemini API: {e}")
+            logger.error(f"Error calling Gemini API: {e}", exc_info=True)
             return Response(
                 {"error": "Sorry, I'm having trouble connecting right now. Please try again later."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE
@@ -496,16 +570,28 @@ class WishlistSyncView(APIView):
 
 # --- Product Review Views ---
 
+from rest_framework.pagination import PageNumberPagination
+
+class ReviewPagination(PageNumberPagination):
+    """✅ IMPROVEMENT: Custom pagination for reviews"""
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+
+
 class ProductReviewListCreateView(APIView):
     """
     API view to list reviews for a product and create new reviews.
     GET: List all approved reviews for a product
     POST: Create a new review (requires authentication)
+    
+    ✅ IMPROVEMENT: Added pagination support
     """
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    pagination_class = ReviewPagination
 
     def get(self, request, product_id, *args, **kwargs):
-        """Get all approved reviews for a product"""
+        """Get all approved reviews for a product with pagination"""
         try:
             product = Product.objects.get(id=product_id, available=True)
         except Product.DoesNotExist:
@@ -529,6 +615,14 @@ class ProductReviewListCreateView(APIView):
             reviews = reviews.filter(is_verified_purchase=True).order_by('-created_at')
         else:  # recent (default)
             reviews = reviews.order_by('-created_at')
+        
+        # ✅ IMPROVEMENT: Paginate results
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(reviews, request)
+        
+        if page is not None:
+            serializer = ProductReviewSerializer(page, many=True, context={'request': request})
+            return paginator.get_paginated_response(serializer.data)
         
         serializer = ProductReviewSerializer(reviews, many=True, context={'request': request})
         return Response(serializer.data)

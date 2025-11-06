@@ -9,6 +9,7 @@ import stripe
 from decimal import Decimal
 from typing import Dict, List, Any, TYPE_CHECKING, cast
 from dotenv import load_dotenv
+import logging
 
 from django.db import transaction
 from django.contrib.auth.models import User
@@ -19,9 +20,25 @@ if TYPE_CHECKING:
 
 from .models import Product, Order, OrderItem
 
-# Load environment variables and configure Stripe
+# ✅ IMPROVEMENT: Setup logger
+logger = logging.getLogger(__name__)
+
+# Load environment variables
 load_dotenv()
-stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+
+
+# ✅ IMPROVEMENT: Lazy load Stripe API key
+def get_stripe_key():
+    """
+    Lazy load and configure Stripe API key.
+    Raises ValueError if STRIPE_SECRET_KEY is not set.
+    """
+    if not stripe.api_key:
+        stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+        if not stripe.api_key:
+            raise ValueError("STRIPE_SECRET_KEY environment variable is required for payment processing")
+        logger.info("Stripe API configured")
+    return stripe.api_key
 
 
 class OrderCreationError(Exception):
@@ -132,21 +149,62 @@ def create_order_from_cart(
             
             # 3. Process payment with Stripe
             try:
+                # ✅ IMPROVEMENT: Ensure Stripe is configured
+                get_stripe_key()
+                
                 charge = stripe.Charge.create(
                     amount=int(total_cost * 100),  # Stripe expects amount in cents
                     currency='usd',
                     description=f'Order {order.pk} for {order.email}',
                     source=stripe_token,
+                    metadata={
+                        'order_id': order.pk,
+                        'user_id': user.pk,
+                        'user_email': user.email,
+                    }
                 )
                 
                 # 4. Finalize the order if payment is successful
                 order.paid = True
                 order.stripe_id = charge.id
+                order.status = 'processing'
                 order.save()
                 
+                logger.info(f"Order {order.pk} created successfully for user {user.pk}")
+                
+            except stripe.error.CardError as e:
+                # ✅ IMPROVEMENT: Specific card error messages
+                err = e.error
+                error_msg = f"Payment declined: {err.get('message', 'Card was declined')}"
+                logger.warning(f"Card error for order {order.pk}: {error_msg}")
+                raise OrderCreationError(error_msg) from e
+                
+            except stripe.error.RateLimitError as e:
+                error_msg = "Too many payment requests. Please try again in a moment."
+                logger.warning(f"Stripe rate limit hit for order {order.pk}")
+                raise OrderCreationError(error_msg) from e
+                
+            except stripe.error.InvalidRequestError as e:
+                error_msg = f"Invalid payment request: {str(e)}"
+                logger.error(f"Invalid Stripe request for order {order.pk}: {e}")
+                raise OrderCreationError(error_msg) from e
+                
+            except stripe.error.AuthenticationError as e:
+                # Don't expose internal errors to users
+                logger.error(f"Stripe authentication error: {e}", exc_info=True)
+                raise OrderCreationError(
+                    "Payment system configuration error. Please contact support."
+                ) from e
+                
+            except stripe.error.APIConnectionError as e:
+                error_msg = "Payment service is temporarily unavailable. Please try again."
+                logger.error(f"Stripe API connection error for order {order.pk}: {e}")
+                raise OrderCreationError(error_msg) from e
+                
             except StripeError as e:
-                # The transaction will rollback automatically due to the exception
-                raise OrderCreationError(f"Payment failed: {str(e)}") from e
+                error_msg = f"Payment processing error: {str(e)}"
+                logger.error(f"Stripe error for order {order.pk}: {e}", exc_info=True)
+                raise OrderCreationError(error_msg) from e
 
             return order
             
