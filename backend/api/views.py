@@ -25,13 +25,13 @@ logger = logging.getLogger(__name__)
 # from google import genai    # type: ignore
 
 from .models import (
-    Category, Product, Order, OrderItem, Wishlist, WishlistItem, ProductReview,
+    Category, Brand, Product, Order, OrderItem, Wishlist, WishlistItem, ProductReview,
     UserProfile, ShippingAddress, PaymentMethod
 )
 from .embeddings import model as embedding_model, get_product_text
 from .vector_search import load_faiss_index_and_embeddings
 from .serializers import (
-    CategorySerializer, ProductSerializer, RegisterSerializer, 
+    CategorySerializer, ProductSerializer, BrandListSerializer, RegisterSerializer, 
     UserSerializer, OrderSerializer, CreateOrderRequestSerializer,
     WishlistSerializer, WishlistItemSerializer, AddToWishlistSerializer,
     ProductReviewSerializer, CreateReviewSerializer, ProductReviewStatsSerializer,
@@ -230,6 +230,24 @@ class CategoryList(generics.ListAPIView):
     def get_queryset(self) -> QuerySet[Category]:  # type: ignore
         # Use django-mptt's get_cached_trees() for efficient tree loading
         return Category.objects.filter(parent__isnull=True).order_by('name')
+
+
+class BrandList(generics.ListAPIView):
+    """API view returning partner brands with available products."""
+    serializer_class = BrandListSerializer
+    permission_classes = (permissions.AllowAny,)
+    pagination_class = None
+
+    @method_decorator(cache_page(60 * 60))
+    def get(self, *args, **kwargs):
+        return super().get(*args, **kwargs)
+
+    def get_queryset(self):
+        return (
+            Brand.objects.filter(products__available=True)
+            .distinct()
+            .order_by('name')
+        )
 
 
 # --- Checkout and Order Views ---

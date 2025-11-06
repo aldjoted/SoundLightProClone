@@ -19,6 +19,7 @@ import { initSecurity } from './security.js';
 import { initAnalytics } from './analytics.js';
 import i18n from './i18n.js';
 import './language-switcher.js';
+import { initBrandGallery } from './brand-gallery.js';
 // PWA imports
 import { initOfflineIndicator } from './offline-indicator.js';
 import { initSyncManager } from './sync-manager.js';
@@ -833,6 +834,8 @@ async function initHomePage(signal) {
 
         // Page-specific listener manager
         const pageListenerManager = new ListenerManager();
+
+        initBrandGallery({ signal });
 
         ui.showSkeletonLoader(productGrid, 8);
         ui.showSkeletonLoader(featuredGrid, 3);

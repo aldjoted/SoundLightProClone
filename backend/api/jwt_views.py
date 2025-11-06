@@ -170,33 +170,26 @@ class RateLimitedTokenRefreshView(TokenRefreshView):
                     status=status.HTTP_401_UNAUTHORIZED
                 )
             
-            # Add refresh token to request data for validation
-            request.data._mutable = True
-            request.data['refresh'] = refresh_token
-            request.data._mutable = False
-            
-            # Get new tokens from parent class
-            response = super().post(request, *args, **kwargs)
-            
-            if response.status_code == 200:
-                # Extract new refresh token if rotation is enabled
-                new_refresh_token = response.data.get('refresh')
-                
-                if new_refresh_token:
-                    # Remove refresh token from response body (security)
-                    response.data.pop('refresh', None)
-                    
-                    # Update refresh token cookie
-                    response.set_cookie(
-                        cookie_settings['key'],
-                        new_refresh_token,
-                        max_age=cookie_settings['max_age'],
-                        httponly=cookie_settings['httponly'],
-                        secure=cookie_settings['secure'],
-                        samesite=cookie_settings['samesite'],
-                        path=cookie_settings['path'],
-                    )
-            
+            # Validate the refresh token using the serializer directly
+            serializer = self.get_serializer(data={'refresh': refresh_token})
+            serializer.is_valid(raise_exception=True)
+
+            response = Response(serializer.validated_data, status=status.HTTP_200_OK)
+
+            # Rotate refresh token if present in response payload
+            new_refresh_token = serializer.validated_data.get('refresh')
+            if new_refresh_token:
+                response.data.pop('refresh', None)
+                response.set_cookie(
+                    cookie_settings['key'],
+                    new_refresh_token,
+                    max_age=cookie_settings['max_age'],
+                    httponly=cookie_settings['httponly'],
+                    secure=cookie_settings['secure'],
+                    samesite=cookie_settings['samesite'],
+                    path=cookie_settings['path'],
+                )
+
             return response
             
         except Ratelimited:

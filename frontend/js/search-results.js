@@ -11,6 +11,11 @@ function getCategorySlug() {
     return (params.get('category') || '').trim();
 }
 
+function getBrandSlug() {
+    const params = new URLSearchParams(window.location.search);
+    return (params.get('brand') || '').trim();
+}
+
 /**
  * Find a category by slug in the categories tree
  * @param {Array} categories - Array of categories
@@ -37,6 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const searchQuery = getQuery();
     const categorySlug = getCategorySlug();
+    const brandSlug = getBrandSlug();
     
     showSkeletonLoader(grid, 8);
     const abort = new AbortController();
@@ -44,19 +50,39 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         // Fetch products and categories in parallel if we need category name
-        const promises = [apiService.getProducts(searchQuery, { signal }, categorySlug)];
-        
+        const promises = [apiService.getProducts(searchQuery, { signal }, categorySlug, brandSlug)];
+
         if (categorySlug) {
             promises.push(apiService.getCategories({ signal }));
         }
-        
+
+        if (brandSlug) {
+            promises.push(apiService.getBrands({ signal }));
+        }
+
         const results = await Promise.all(promises);
-        const products = results[0];
-        const categories = results[1] || [];
+
+        let index = 0;
+        const products = results[index++] || [];
+        const categories = categorySlug ? (results[index++] || []) : [];
+        const brands = brandSlug ? (results[index++] || []) : [];
+
+        const brandList = Array.isArray(brands) ? brands : (Array.isArray(brands?.results) ? brands.results : []);
+        const selectedBrand = brandSlug ? brandList.find((brand) => brand.slug === brandSlug) : null;
         
         // Update subtitle based on what we're searching/filtering
         if (subtitle) {
-            if (categorySlug) {
+            if (categorySlug && brandSlug) {
+                const category = findCategoryBySlug(categories, categorySlug);
+                const categoryName = category ? category.name : 'this category';
+                const brandName = selectedBrand ? selectedBrand.name : brandSlug.replace(/-/g, ' ');
+
+                if (searchQuery) {
+                    subtitle.textContent = `Looking for "${searchQuery}" in ${brandName} · ${categoryName}`;
+                } else {
+                    subtitle.textContent = `Showing ${brandName} products in ${categoryName}`;
+                }
+            } else if (categorySlug) {
                 const category = findCategoryBySlug(categories, categorySlug);
                 const categoryName = category ? category.name : 'this category';
                 
@@ -64,6 +90,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     subtitle.textContent = `Looking for "${searchQuery}" in ${categoryName}`;
                 } else {
                     subtitle.textContent = `Browsing ${categoryName}`;
+                }
+            } else if (brandSlug) {
+                const brandName = selectedBrand ? selectedBrand.name : brandSlug.replace(/-/g, ' ');
+
+                if (searchQuery) {
+                    subtitle.textContent = `Looking for "${searchQuery}" in ${brandName}`;
+                } else {
+                    subtitle.textContent = `Showing products from ${brandName}`;
                 }
             } else if (searchQuery) {
                 subtitle.textContent = `Looking for "${searchQuery}"`;
@@ -79,10 +113,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             const p = document.createElement('p');
             p.className = 'info-message';
             
-            if (searchQuery && categorySlug) {
+            if (searchQuery && categorySlug && brandSlug) {
+                p.textContent = `No results for "${searchQuery}" in this brand and category.`;
+            } else if (searchQuery && brandSlug) {
+                p.textContent = `No results for "${searchQuery}" in this brand. Try a different term.`;
+            } else if (searchQuery && categorySlug) {
                 p.textContent = `No results for "${searchQuery}" in this category. Try a different term or browse other categories.`;
             } else if (searchQuery) {
                 p.textContent = `No results for "${searchQuery}". Try a different term.`;
+            } else if (categorySlug && brandSlug) {
+                p.textContent = 'No products found for this brand in the selected category.';
+            } else if (brandSlug) {
+                p.textContent = 'No products found for this brand yet.';
             } else if (categorySlug) {
                 p.textContent = 'No products found in this category.';
             } else {

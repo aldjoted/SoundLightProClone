@@ -485,7 +485,7 @@ const normalizeProductsResponse = (response) => {
  * @param {boolean} [useRetry=true] - Whether to use retry logic.
  * @returns {Promise<Array<Object>>} A promise that resolves to an array of product objects.
  */
-export const getProducts = async (searchQuery = '', options = {}, categorySlug = '', useRetry = true) => {
+export const getProducts = async (searchQuery = '', options = {}, categorySlug = '', brandSlug = '', useRetry = true) => {
     let url = '/products/';
     const params = [];
     
@@ -495,6 +495,10 @@ export const getProducts = async (searchQuery = '', options = {}, categorySlug =
     
     if (categorySlug) {
         params.push(`category=${encodeURIComponent(categorySlug)}`);
+    }
+
+    if (brandSlug) {
+        params.push(`brand=${encodeURIComponent(brandSlug)}`);
     }
     
     if (params.length > 0) {
@@ -569,6 +573,33 @@ export const getCategories = async (options = {}, useRetry = true) => {
         if (error instanceof APIError) {
             throw new APIError(
                 `Failed to load categories: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Fetches partner brands.
+ * @param {Object} [options={}] - Fetch options (e.g., { signal }).
+ * @param {boolean} [useRetry=true] - Whether to retry on transient errors.
+ * @returns {Promise<Array<Object>>} A promise resolving to the list of brands.
+ */
+export const getBrands = async (options = {}, useRetry = true) => {
+    const fetchFn = useRetry ?
+        () => apiFetchWithRetry('/brands/', options) :
+        () => apiFetch('/brands/', options);
+
+    try {
+        return await fetchFn();
+    } catch (error) {
+        console.error('Failed to fetch brands:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load brands: ${error.getUserMessage()}`,
                 error.status,
                 error.code,
                 error.response

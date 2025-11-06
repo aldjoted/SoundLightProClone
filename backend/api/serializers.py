@@ -69,6 +69,26 @@ class BrandSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(url)
         return url
 
+
+class BrandListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for brand directory endpoints."""
+    logo = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Brand
+        fields = ['id', 'name', 'slug', 'logo']
+
+    def get_logo(self, obj):
+        try:
+            url = obj.image.url if obj.image else ''
+        except Exception:
+            url = ''
+
+        request = self.context.get('request')
+        if request and url:
+            return request.build_absolute_uri(url)
+        return url
+
 class ProductImageSerializer(serializers.ModelSerializer):
     """
     Serializer for the ProductImage model.

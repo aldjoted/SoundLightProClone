@@ -26,6 +26,8 @@ urlpatterns = [
     path('products/<int:pk>/', views.ProductDetail.as_view(), name='product_detail'),
     # List all top-level categories (children are nested by the serializer)
     path('categories/', views.CategoryList.as_view(), name='category_list'),
+    # List partner brands
+    path('brands/', views.BrandList.as_view(), name='brand_list'),
 
     # --- Checkout Endpoint ---
     # To list user's orders (GET) and create a new order (POST)
