@@ -1,4 +1,11 @@
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.html import format_html
+
+from mptt.admin import DraggableMPTTAdmin
+from import_export import resources
+from import_export.admin import ImportExportModelAdmin
+
 from .models import (
     Category, Brand, Product, ProductImage, Order, OrderItem, 
     Wishlist, WishlistItem, ProductReview, UserProfile, ShippingAddress, PaymentMethod
@@ -6,15 +13,34 @@ from .models import (
 
 # Register your models here.
 
+class ProductResource(resources.ModelResource):
+    class Meta:
+        model = Product
+        fields = (
+            'id',
+            'name',
+            'name_fr',
+            'brand',
+            'category',
+            'price',
+            'stock',
+            'available',
+            'created_at',
+            'updated_at',
+        )
+        export_order = fields
+        import_id_fields = ('id',)
+
+
 @admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
+class CategoryAdmin(DraggableMPTTAdmin):
     """
-    Admin configuration for the Category model.
+    Admin configuration for the Category model using drag and drop ordering.
     """
-    list_display = ['name', 'slug', 'parent']
+    list_display = ('tree_actions', 'indented_title', 'slug')
+    list_display_links = ('indented_title',)
     prepopulated_fields = {'slug': ('name',)}
-    search_fields = ['name'] 
-    raw_id_fields = ['parent']
+    search_fields = ['name']
 
 @admin.register(Brand)
 class BrandAdmin(admin.ModelAdmin):
@@ -34,15 +60,65 @@ class ProductImageInline(admin.TabularInline):
     fields = ['image', 'alt_text']
 
 @admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
+class ProductAdmin(ImportExportModelAdmin):
     """
     Admin configuration for the Product model.
     """
-    list_display = ['name', 'brand', 'category', 'price', 'stock', 'available', 'created_at']
+    resource_class = ProductResource
+    list_display = ['image_preview', 'name', 'link_to_brand', 'link_to_category', 'price', 'stock', 'available', 'created_at']
     list_filter = ['available', 'created_at', 'updated_at', 'category', 'brand']
     list_editable = ['price', 'stock', 'available']
     search_fields = ['name', 'description']
-    inlines = [ProductImageInline] # Add the inline here
+    readonly_fields = ['created_at', 'updated_at', 'image_preview']
+    inlines = [ProductImageInline]
+    fieldsets = (
+        (None, {
+            'fields': (
+                'image_preview',
+                'category',
+                'brand',
+                'name',
+                'name_fr',
+                'description',
+                'description_fr',
+            )
+        }),
+        ('Inventory', {
+            'fields': ('price', 'stock', 'available')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.select_related('brand', 'category').prefetch_related('images')
+
+    @admin.display(description='Image')
+    def image_preview(self, obj):
+        first_image = obj.images.first()
+        if first_image:
+            return format_html(
+                '<img src="{}" width="50" height="50" style="object-fit: cover;" />',
+                first_image.image.url,
+            )
+        return 'No Image'
+
+    @admin.display(description='Brand')
+    def link_to_brand(self, obj):
+        if obj.brand:
+            link = reverse('admin:api_brand_change', args=[obj.brand.id])
+            return format_html('<a href="{}">{}</a>', link, obj.brand.name)
+        return 'N/A'
+
+    @admin.display(description='Category')
+    def link_to_category(self, obj):
+        if obj.category:
+            link = reverse('admin:api_category_change', args=[obj.category.id])
+            return format_html('<a href="{}">{}</a>', link, obj.category.name)
+        return 'N/A'
 
 
 class OrderItemInline(admin.TabularInline):
@@ -67,6 +143,7 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ['id', 'first_name', 'last_name', 'email', 'tracking_number']
     list_editable = ['status']
     readonly_fields = ['created_at', 'updated_at']
+    actions = ['mark_as_shipped']
     # Include the OrderItemInline to show order items on the order detail page
     inlines = [OrderItemInline]
     
@@ -89,6 +166,12 @@ class OrderAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+    @admin.action(description='Mark selected orders as Shipped')
+    def mark_as_shipped(self, request, queryset):
+        updated = queryset.update(status='shipped')
+        if updated:
+            self.message_user(request, f"Marked {updated} order(s) as shipped.")
 
 
 class WishlistItemInline(admin.TabularInline):
@@ -127,6 +210,7 @@ class ProductReviewAdmin(admin.ModelAdmin):
     list_filter = ['rating', 'is_verified_purchase', 'is_approved', 'created_at']
     search_fields = ['product__name', 'user__username', 'title', 'comment']
     list_editable = ['is_approved']
+    actions = ['make_approved', 'make_rejected']
     readonly_fields = ['is_verified_purchase', 'created_at', 'updated_at']
     raw_id_fields = ['product', 'user']
     
@@ -142,6 +226,18 @@ class ProductReviewAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+    @admin.action(description='Mark selected reviews as Approved')
+    def make_approved(self, request, queryset):
+        updated = queryset.update(is_approved=True)
+        if updated:
+            self.message_user(request, f"Approved {updated} review(s).")
+
+    @admin.action(description='Mark selected reviews as Rejected')
+    def make_rejected(self, request, queryset):
+        updated = queryset.update(is_approved=False)
+        if updated:
+            self.message_user(request, f"Rejected {updated} review(s).")
 
 
 @admin.register(UserProfile)

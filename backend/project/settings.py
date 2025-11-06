@@ -58,6 +58,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',  # ✅ SECURITY: Enable token blacklisting
     'corsheaders',
     'mptt',
+    'django_mptt_admin',
+    'import_export',
     'django_ratelimit',
 
     # Our custom app
