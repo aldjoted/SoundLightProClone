@@ -30,8 +30,8 @@ function resolveLoginUrl() {
  * Manages JWT access tokens in memory and refresh tokens.
  * 
  * SECURITY ARCHITECTURE:
- * - Access tokens: Stored in memory (secure, lost on page reload)
- * - Refresh tokens: Currently in localStorage (temporary implementation)
+ * - Access tokens: Stored in memory and mirrored to sessionStorage for per-tab persistence
+ * - Refresh tokens: Legacy fallback via localStorage until cookie-only flow is complete
  * 
  * ⚠️ CRITICAL SECURITY LIMITATION:
  * =================================
@@ -120,8 +120,49 @@ function resolveLoginUrl() {
  * @see https://owasp.org/www-community/HttpOnly
  * @see https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html
  */
+const ACCESS_TOKEN_KEY = 'slp_access_token';
+const USER_STORAGE_KEY = 'slp_user_profile';
+
+function setStoredUserProfile(user) {
+    try {
+        if (user) {
+            sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+        } else {
+            sessionStorage.removeItem(USER_STORAGE_KEY);
+        }
+    } catch (storageError) {
+        console.warn('User profile persistence unavailable:', storageError);
+    }
+}
+
+function getStoredUserProfile() {
+    try {
+        const raw = sessionStorage.getItem(USER_STORAGE_KEY);
+        if (!raw) {
+            return null;
+        }
+        return JSON.parse(raw);
+    } catch (storageError) {
+        console.warn('Failed to read cached user profile:', storageError);
+        return null;
+    }
+}
+
+function clearStoredUserProfile() {
+    setStoredUserProfile(null);
+}
+
 const tokenManager = (() => {
     let accessToken = null;
+
+    try {
+        const storedToken = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+        if (storedToken) {
+            accessToken = storedToken;
+        }
+    } catch (storageError) {
+        console.warn('Session storage is not accessible. Tokens will not persist across pages.', storageError);
+    }
     
     return {
         /** @returns {string|null} */
@@ -130,30 +171,36 @@ const tokenManager = (() => {
         /** @param {string} token */
         setAccessToken: (token) => { 
             accessToken = token; 
+            try {
+                if (token) {
+                    sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
+                } else {
+                    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+                }
+            } catch (storageError) {
+                console.warn('Failed to persist access token in session storage:', storageError);
+            }
         },
         
         /** 
          * Gets the refresh token.
-         * ⚠️ Currently reads from localStorage - not secure against XSS
-         * 
+         * ⚠️ Legacy fallback: reads from localStorage when cookies are unavailable
+         *
          * TODO [SECURITY]: After backend httpOnly cookie implementation:
          * - Change this to return null (backend reads from cookie automatically)
          * - Remove localStorage.getItem() call
          * - Backend will handle refresh token via httpOnly cookie
-         * 
+         *
          * @returns {string|null} 
          */
         getRefreshToken: () => {
-            // ⚠️ SECURITY LIMITATION: Using localStorage instead of httpOnly cookies
-            // TODO [BACKEND]: Implement httpOnly cookie for refresh tokens
-            // Risk: Vulnerable to XSS attacks
             return localStorage.getItem('refreshToken');
         },
         
         /** 
          * Sets the refresh token.
-         * ⚠️ Currently stores in localStorage - not secure against XSS
-         * 
+         * ⚠️ Legacy fallback: stores in localStorage until cookie-only flow is adopted
+         *
          * TODO [SECURITY]: After backend httpOnly cookie implementation:
          * - Change this to a no-op function (backend sets cookie automatically)
          * - Remove localStorage.setItem() call
@@ -162,9 +209,10 @@ const tokenManager = (() => {
          * @param {string} token 
          */
         setRefreshToken: (token) => {
-            // ⚠️ SECURITY LIMITATION: Using localStorage instead of httpOnly cookies
-            // TODO [BACKEND]: Implement httpOnly cookie for refresh tokens
-            // Risk: Vulnerable to XSS attacks
+            if (!token) {
+                localStorage.removeItem('refreshToken');
+                return;
+            }
             localStorage.setItem('refreshToken', token);
         },
         
@@ -178,7 +226,13 @@ const tokenManager = (() => {
          */
         clearTokens: () => {
             accessToken = null;
+            try {
+                sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+            } catch (storageError) {
+                console.warn('Failed to clear access token from session storage:', storageError);
+            }
             localStorage.removeItem('refreshToken');
+            setStoredUserProfile(null);
             // TODO [BACKEND]: When httpOnly cookies are implemented, 
             // POST /api/auth/logout/ should clear the cookie with:
             // Set-Cookie: refreshToken=; HttpOnly; Secure; SameSite=Strict; Path=/api/auth; Max-Age=0
@@ -287,6 +341,26 @@ async function refreshAccessToken(getRefreshToken) {
     return refreshPromise;
 }
 
+async function ensureAccessToken() {
+    const existingToken = tokenManager.getAccessToken();
+    if (existingToken) {
+        return existingToken;
+    }
+
+    try {
+        const tokens = await refreshAccessToken(tokenManager.getRefreshToken);
+        if (tokens?.access) {
+            tokenManager.setAccessToken(tokens.access);
+            return tokens.access;
+        }
+    } catch (error) {
+        console.warn('Unable to ensure access token:', error);
+    }
+
+    tokenManager.clearTokens();
+    return null;
+}
+
 /**
  * Core fetch function with built-in authentication and token refresh logic.
  * @param {string} url The API endpoint (e.g., '/products/').
@@ -312,22 +386,21 @@ async function apiFetch(url, options = {}) {
         let response = await fetch(`${API_BASE_URL}${url}`, options);
 
         if (response.status === 401) {
-            if (!tokenManager.getRefreshToken()) {
-                // If no refresh token, logout and redirect.
-                tokenManager.clearTokens();
-                window.location.href = resolveLoginUrl();
-                throw new APIError('Authentication required.', 401, 'NO_REFRESH_TOKEN');
-            }
-
             try {
                 const newTokens = await refreshAccessToken(tokenManager.getRefreshToken);
-                tokenManager.setAccessToken(newTokens.access);
-                options.headers['Authorization'] = `Bearer ${newTokens.access}`;
-                response = await fetch(`${API_BASE_URL}${url}`, options);
+                if (newTokens?.access) {
+                    tokenManager.setAccessToken(newTokens.access);
+                    options.headers['Authorization'] = `Bearer ${newTokens.access}`;
+                    response = await fetch(`${API_BASE_URL}${url}`, options);
+                } else {
+                    throw new APIError('Unable to refresh session.', 401, 'TOKEN_REFRESH_EMPTY');
+                }
             } catch (refreshError) {
                 console.error('Failed to refresh token:', refreshError);
                 tokenManager.clearTokens();
-                window.location.href = resolveLoginUrl();
+                if (!window.location.pathname.endsWith('login.html')) {
+                    window.location.href = resolveLoginUrl();
+                }
                 throw new APIError('Session expired. Please log in again.', 401, 'TOKEN_REFRESH_FAILED');
             }
         }
@@ -356,7 +429,7 @@ async function apiFetch(url, options = {}) {
 }
 
 // --- Exported API functions ---
-export { apiFetch };
+export { apiFetch, ensureAccessToken, getStoredUserProfile, clearStoredUserProfile };
 
 /**
  * API fetch with retry logic for better resilience.
@@ -508,34 +581,64 @@ export const getCategories = async (options = {}, useRetry = true) => {
 /**
  * Logs in a user and stores authentication tokens.
  * 
+ * ✅ SECURITY IMPROVEMENT: Now includes 2FA email verification
+ * - First step: Validates credentials and sends verification code to email
+ * - Returns requires_verification flag instead of tokens
+ * - Actual tokens are obtained after verification via verifyLoginCode()
+ * 
  * TODO [SECURITY]: After backend httpOnly cookie implementation:
  * - Remove refresh token handling from response (backend sets httpOnly cookie)
  * - Keep only access token storage in memory
  * - Remove tokenManager.setRefreshToken() call
  * - Backend will set refresh token via Set-Cookie header
  * 
- * @param {string} username - The user's username.
+ * @param {string} identifier - The user's username or email address.
  * @param {string} password - The user's password.
  * @param {boolean} [useCookie=false] - Reserved for future httpOnly cookie support (not implemented).
- * @returns {Promise<Object>} A promise that resolves to the token object.
+ * @returns {Promise<Object>} A promise that resolves to the response (may require verification).
  */
-export const loginUser = async (username, password, useCookie = false) => {
-    if (!username || !password) {
-        throw new APIError('Username and password are required', 400, 'MISSING_CREDENTIALS');
+export const loginUser = async (identifier, password, useCookie = false) => {
+    if (!identifier || !password) {
+        throw new APIError('Username or email and password are required', 400, 'MISSING_CREDENTIALS');
     }
     
     try {
+        const trimmedIdentifier = identifier.trim();
+        const payload = {
+            username: trimmedIdentifier,
+            identifier: trimmedIdentifier,
+        };
+
+        if (trimmedIdentifier.includes('@')) {
+            payload.email = trimmedIdentifier;
+        }
+
         const response = await apiFetch('/token/', {
             method: 'POST',
-            body: JSON.stringify({ username, password }),
+            body: JSON.stringify({
+                ...payload,
+                password,
+            }),
         });
         
+        // Check if 2FA verification is required
+        if (response.requires_verification) {
+            tokenManager.clearTokens();
+            // Don't store tokens yet - they'll be provided after verification
+            return response;
+        }
+        
+        // Legacy path (if backend doesn't require verification yet)
         if (!response.access) {
             throw new APIError('Invalid response format from login', 500, 'INVALID_LOGIN_RESPONSE');
         }
         
         // Store access token in memory
         tokenManager.setAccessToken(response.access);
+        
+        if (response.user) {
+            setStoredUserProfile(response.user);
+        }
         
         // ⚠️ SECURITY LIMITATION: Store refresh token in localStorage
         // TODO [BACKEND]: After httpOnly cookie implementation, remove this block
@@ -553,6 +656,55 @@ export const loginUser = async (username, password, useCookie = false) => {
                 message = 'Invalid username or password';
             } else if (error.status === 429) {
                 message = 'Too many login attempts. Please try again in a few minutes.';
+            }
+            throw new APIError(message, error.status, error.code, error.response);
+        }
+        throw error;
+    }
+};
+
+/**
+ * Verifies the 6-digit login code and completes authentication.
+ * 
+ * ✅ NEW: 2FA email verification
+ * - Verifies the code sent to user's email
+ * - Returns JWT tokens upon successful verification
+ * - Stores tokens in memory and localStorage
+ * 
+ * @param {string} email - The user's email address.
+ * @param {string} code - The 6-digit verification code.
+ * @returns {Promise<Object>} A promise that resolves to the token object.
+ */
+export const verifyLoginCode = async (email, code) => {
+    if (!email || !code) {
+        throw new APIError('Email and verification code are required', 400, 'MISSING_VERIFICATION_DATA');
+    }
+    
+    try {
+        const response = await apiFetch('/verify-login/', {
+            method: 'POST',
+            body: JSON.stringify({ email, code }),
+        });
+        
+        if (!response.access) {
+            throw new APIError('Invalid response format from verification', 500, 'INVALID_VERIFICATION_RESPONSE');
+        }
+        
+        // Store access token in memory
+        tokenManager.setAccessToken(response.access);
+        
+        // Note: Refresh token is set via httpOnly cookie by the backend
+        // No need to store it in localStorage anymore
+        
+        return response;
+    } catch (error) {
+        console.error('Verification failed:', error);
+        if (error instanceof APIError) {
+            let message = error.getUserMessage();
+            if (error.status === 401) {
+                message = 'Invalid or expired verification code';
+            } else if (error.status === 429) {
+                message = 'Too many verification attempts. Please try again in a few minutes.';
             }
             throw new APIError(message, error.status, error.code, error.response);
         }
@@ -605,7 +757,9 @@ export const getUserProfile = async (useRetry = true) => {
         () => apiFetch('/user/');
     
     try {
-        return await fetchFn();
+        const profile = await fetchFn();
+        setStoredUserProfile(profile);
+        return profile;
     } catch (error) {
         console.error('Failed to fetch user profile:', error);
         if (error instanceof APIError) {

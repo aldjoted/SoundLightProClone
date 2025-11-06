@@ -499,9 +499,19 @@ async function initApp() {
         initSecurity();
         initPerformanceOptimizations();
         
-        // Attempt to authenticate the user and load profile
-        const user = await auth.authenticateUser();
-        ui.updateUserAuthUI(user);
+        const cachedUser = auth.getCachedUser();
+        if (cachedUser) {
+            ui.updateUserAuthUI(cachedUser);
+        }
+
+        auth.authenticateUser()
+            .then((user) => {
+                ui.updateUserAuthUI(user);
+            })
+            .catch((error) => {
+                console.error('Deferred auth initialization failed:', error);
+                ui.updateUserAuthUI(null);
+            });
 
         // Initialize PWA features (now that user state is known)
         initPWAFeatures();
@@ -521,6 +531,7 @@ async function initApp() {
         new MobileNavigation();
 
         setupGlobalEventListeners();
+        enhanceFooterAddressLinks();
         
         // Highlight the active page in navigation
         highlightActivePage();
@@ -1321,11 +1332,27 @@ function initLoginPage() {
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span data-i18n="loading">Loading...</span>';
         
         try {
-            await apiService.loginUser(form.username.value.trim(), form.password.value, true);
-            ui.showToast('Login successful!', 'success');
-            // Keep button disabled during redirect
-            submitBtn.innerHTML = '<i class="fas fa-check"></i> <span data-i18n="login_success">Success! Redirecting...</span>';
-            window.location.href = 'index.html';
+            const identifier = form.username.value.trim();
+            const response = await apiService.loginUser(identifier, form.password.value, true);
+            
+            // Check if 2FA verification is required
+            if (response.requires_verification) {
+                // Store email in sessionStorage for verification page
+                sessionStorage.setItem('verification_email', response.email);
+                
+                ui.showToast('Verification code sent to your email!', 'success');
+                submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>Redirecting to verification...</span>';
+                
+                // Redirect to verification page
+                setTimeout(() => {
+                    window.location.href = 'verify-login.html';
+                }, 1000);
+            } else {
+                // Legacy path - direct login (if backend doesn't require verification)
+                ui.showToast('Login successful!', 'success');
+                submitBtn.innerHTML = '<i class="fas fa-check"></i> <span data-i18n="login_success">Success! Redirecting...</span>';
+                window.location.href = 'index.html';
+            }
         } catch (err) {
             // Display error in form
             if (formMessage) {
@@ -1335,7 +1362,7 @@ function initLoginPage() {
             ui.showToast('Login failed. Please check your credentials.', 'error');
         } finally {
             // Restore button state if still on page
-            if (!window.location.href.includes('index.html')) {
+            if (!window.location.href.includes('verify-login.html') && !window.location.href.includes('index.html')) {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
             }
@@ -1353,95 +1380,114 @@ function initLoginPage() {
  */
 function initRegisterPage() {
     auth.initRegisterPageValidation();
-    const form = document.getElementById('register-form');
-    if (!form) return;
+    const forms = document.querySelectorAll('form.auth-form[data-content]');
+    if (!forms.length) {
+        return;
+    }
 
-    const formMessage = document.getElementById('form-message');
     const pageListenerManager = new ListenerManager();
 
-    pageListenerManager.add(form, 'submit', async (e) => {
-        e.preventDefault();
-        
-        // Get submit button and store original text
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-        
-        // Clear any previous error messages
-        if (formMessage) {
-            formMessage.className = 'hidden';
-            formMessage.textContent = '';
-        }
-        
-        const data = {
-            username: form.username.value.trim(), 
-            email: form.email.value.trim(),
-            first_name: form.first_name.value.trim(), 
-            last_name: form.last_name.value.trim(),
-            password: form.password.value, 
-            password2: form.password2.value
-        };
+    forms.forEach((form) => {
+        const formMessage = form.querySelector('[id^="form-message"]');
 
-        // Client-side validation
-        if (data.password !== data.password2) {
+        pageListenerManager.add(form, 'submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn ? submitBtn.innerHTML : '';
+
             if (formMessage) {
-                formMessage.textContent = 'Passwords do not match.';
-                formMessage.className = 'alert alert-error';
+                formMessage.className = 'hidden';
+                formMessage.textContent = '';
             }
-            ui.showToast('Passwords do not match.', 'error');
-            return;
-        }
 
-        // Set loading state
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span data-i18n="creating_account">Creating account...</span>';
+            const usernameInput = form.querySelector('[name="username"]');
+            const emailInput = form.querySelector('[name="email"]');
+            const firstNameInput = form.querySelector('[name="first_name"]');
+            const lastNameInput = form.querySelector('[name="last_name"]');
+            const passwordInput = form.querySelector('[name="password"]');
+            const password2Input = form.querySelector('[name="password2"]');
 
-        try {
-            await apiService.registerUser(data);
-            // Show success state
-            submitBtn.innerHTML = '<i class="fas fa-check"></i> <span data-i18n="registration_success">Success! Redirecting...</span>';
-            if (formMessage) {
-                formMessage.textContent = 'Account created successfully! Redirecting to login...';
-                formMessage.className = 'alert alert-success';
+            const data = {
+                username: usernameInput ? usernameInput.value.trim() : '',
+                email: emailInput ? emailInput.value.trim() : '',
+                first_name: firstNameInput ? firstNameInput.value.trim() : '',
+                last_name: lastNameInput ? lastNameInput.value.trim() : '',
+                password: passwordInput ? passwordInput.value : '',
+                password2: password2Input ? password2Input.value : '',
+            };
+
+            if (data.password !== data.password2) {
+                if (formMessage) {
+                    formMessage.textContent = 'Passwords do not match.';
+                    formMessage.className = 'alert alert-error';
+                }
+                ui.showToast('Passwords do not match.', 'error');
+                return;
             }
-            ui.showToast('Registration successful!', 'success');
-            window.location.href = 'login.html?registered=true';
-        } catch (err) {
-            // Parse and display detailed error messages
-            let errorMessage = 'Registration failed. Please check your information.';
-            
-            if (err.response && typeof err.response === 'object') {
-                // Handle field-specific errors from Django
-                const errors = [];
-                for (const [field, messages] of Object.entries(err.response)) {
-                    if (Array.isArray(messages)) {
-                        errors.push(`${field}: ${messages.join(', ')}`);
-                    } else {
-                        errors.push(`${field}: ${messages}`);
+
+            if (!data.username || !data.email || !data.first_name || !data.last_name || !data.password) {
+                if (formMessage) {
+                    formMessage.textContent = 'Please fill in all required fields.';
+                    formMessage.className = 'alert alert-error';
+                }
+                ui.showToast('Please fill in all required fields.', 'error');
+                return;
+            }
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span data-i18n="creating_account">Creating account...</span>';
+            }
+
+            try {
+                await apiService.registerUser(data);
+
+                if (submitBtn) {
+                    submitBtn.innerHTML = '<i class="fas fa-check"></i> <span data-i18n="registration_success">Success! Redirecting...</span>';
+                }
+
+                if (formMessage) {
+                    formMessage.textContent = 'Account created successfully! Redirecting to login...';
+                    formMessage.className = 'alert alert-success';
+                }
+
+                ui.showToast('Registration successful!', 'success');
+                window.location.href = 'login.html?registered=true';
+            } catch (err) {
+                let errorMessage = 'Registration failed. Please check your information.';
+
+                if (err.response && typeof err.response === 'object') {
+                    const errors = [];
+                    for (const [field, messages] of Object.entries(err.response)) {
+                        if (Array.isArray(messages)) {
+                            errors.push(`${field}: ${messages.join(', ')}`);
+                        } else {
+                            errors.push(`${field}: ${messages}`);
+                        }
                     }
+                    if (errors.length > 0) {
+                        errorMessage = errors.join('; ');
+                    }
+                } else if (err.message) {
+                    errorMessage = err.message;
                 }
-                if (errors.length > 0) {
-                    errorMessage = errors.join('; ');
+
+                if (formMessage) {
+                    formMessage.textContent = errorMessage;
+                    formMessage.className = 'alert alert-error';
                 }
-            } else if (err.message) {
-                errorMessage = err.message;
+
+                ui.showToast(`Registration failed: ${errorMessage}`, 'error');
+            } finally {
+                if (submitBtn && !window.location.href.includes('login.html')) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
             }
-            
-            // Display error in form
-            if (formMessage) {
-                formMessage.textContent = errorMessage;
-                formMessage.className = 'alert alert-error';
-            }
-            ui.showToast(`Registration failed: ${errorMessage}`, 'error');
-        } finally {
-            // Restore button state if still on page
-            if (!window.location.href.includes('login.html')) {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-            }
-        }
+        });
     });
 
-    // Cleanup function for when leaving the page
     window.addEventListener('beforeunload', () => {
         pageListenerManager.removeAll();
     });
@@ -1628,4 +1674,65 @@ function setupMegaMenuClickToggle() {
             }
         }, 250);
     });
+}
+
+function enhanceFooterAddressLinks() {
+    try {
+        const locationIcons = document.querySelectorAll('.footer-contact .fa-map-marker-alt');
+        locationIcons.forEach((icon) => {
+            const container = icon.closest('.contact-item') || icon.parentElement;
+            if (!container || container.querySelector('a[data-map-link]')) {
+                return;
+            }
+
+            const addressSpan = container.querySelector('span');
+            const link = document.createElement('a');
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.dataset.mapLink = 'true';
+            link.className = 'footer-address-link';
+
+            if (addressSpan) {
+                const spanText = addressSpan.textContent.replace(/\s+/g, ' ').trim();
+                if (!spanText) {
+                    return;
+                }
+                link.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(spanText)}`;
+                link.innerHTML = addressSpan.innerHTML;
+                container.replaceChild(link, addressSpan);
+                return;
+            }
+
+            const nodesToWrap = [];
+            let node = icon.nextSibling;
+            while (node) {
+                nodesToWrap.push(node);
+                node = node.nextSibling;
+            }
+
+            const textContent = nodesToWrap
+                .map((n) => (n.textContent || '').trim())
+                .join(' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            if (!textContent) {
+                return;
+            }
+
+            link.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(textContent)}`;
+
+            nodesToWrap.forEach((originalNode) => {
+                link.appendChild(originalNode.cloneNode(true));
+            });
+
+            nodesToWrap.forEach((originalNode) => {
+                container.removeChild(originalNode);
+            });
+
+            container.appendChild(link);
+        });
+    } catch (error) {
+        console.warn('Failed to enhance footer address link:', error);
+    }
 }

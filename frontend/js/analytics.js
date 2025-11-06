@@ -135,10 +135,10 @@ export class ErrorTracking {
 
   static getCurrentUser() {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (refreshToken) {
-        // Parse user info from token if available
-        const payload = JSON.parse(atob(refreshToken.split('.')[1]));
+      const accessToken = sessionStorage.getItem('slp_access_token');
+      const tokenToDecode = accessToken || localStorage.getItem('refreshToken');
+      if (tokenToDecode) {
+        const payload = JSON.parse(atob(tokenToDecode.split('.')[1]));
         return {
           id: payload.user_id,
           email: payload.email

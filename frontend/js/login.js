@@ -25,11 +25,11 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
         
         try {
-            const username = form.username.value.trim();
+            const identifier = form.username.value.trim();
             const password = form.password.value;
             
             // Login (backend always returns both tokens)
-            const response = await apiService.loginUser(username, password, false);
+            const response = await apiService.loginUser(identifier, password, false);
             
             submitBtn.innerHTML = '<i class="fas fa-check"></i> Success!';
             ui.showToast('Login successful!', 'success');

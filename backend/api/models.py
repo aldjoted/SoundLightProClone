@@ -187,6 +187,10 @@ class UserProfile(models.Model):
     email_notifications = models.BooleanField(default=True, verbose_name=_("Email Notifications"))
     newsletter_subscription = models.BooleanField(default=False, verbose_name=_("Newsletter Subscription"))
     
+    # 2FA Email Verification fields
+    login_verification_code = models.CharField(max_length=6, blank=True, verbose_name=_("Login Verification Code"))
+    login_verification_code_expires = models.DateTimeField(null=True, blank=True, verbose_name=_("Verification Code Expiry"))
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

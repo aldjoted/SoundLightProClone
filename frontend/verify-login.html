@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Verify your login to SoundLightPro.">
+    <title>Verify Login - SoundLightPro</title>
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://soundlightpro.com/verify-login.html">
+    <meta property="og:title" content="Verify Login - SoundLightPro">
+    <meta property="og:description" content="Verify your login to SoundLightPro account.">
+    <meta property="og:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
+    <meta property="og:site_name" content="SoundLightPro">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Verify Login - SoundLightPro">
+    <meta name="twitter:description" content="Verify your login to SoundLightPro.">
+    <meta name="twitter:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
+    
+    <!-- Preconnect to external resources -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="css/main.css" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="css/main.css">
+    
+    <style>
+        .verification-container {
+            max-width: 500px;
+            margin: 4rem auto;
+            padding: 2rem;
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .verification-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .verification-header i {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .verification-header h2 {
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+        
+        .verification-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+        
+        .verification-code-input {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 2rem 0;
+        }
+        
+        .verification-code-input input {
+            width: 3rem;
+            height: 3.5rem;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            transition: border-color 0.3s;
+        }
+        
+        .verification-code-input input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+        
+        .verification-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .resend-link {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        .resend-link button {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+        
+        .resend-link button:disabled {
+            color: var(--text-muted);
+            cursor: not-allowed;
+            text-decoration: none;
+        }
+        
+        .timer {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Structured Data for Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "SoundLightPro",
+      "url": "https://soundlightpro.com",
+      "logo": "https://soundlightpro.com/images/logo/logoslp.jpg"
+    }
+    </script>
+    
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Header -->
+    <header class="main-header" role="banner">
+        <div class="container">
+            <div class="header-wrapper">
+                <a href="index.html" class="logo" aria-label="SoundLightPro Home">
+                    <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="logo-image">
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main id="main-content" class="form-page-wrapper" tabindex="-1">
+        <div class="verification-container">
+            <div class="verification-header">
+                <i class="fas fa-envelope-open-text"></i>
+                <h2>Verify Your Login</h2>
+                <p>We've sent a 6-digit verification code to your email address.</p>
+                <p id="email-display" style="font-weight: 600; color: var(--text-color);"></p>
+            </div>
+            
+            <form id="verification-form">
+                <div id="form-message" class="hidden" role="alert" aria-live="assertive" aria-atomic="true"></div>
+                
+                <div class="verification-code-input">
+                    <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" id="code-1" required aria-label="Digit 1">
+                    <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" id="code-2" required aria-label="Digit 2">
+                    <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" id="code-3" required aria-label="Digit 3">
+                    <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" id="code-4" required aria-label="Digit 4">
+                    <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" id="code-5" required aria-label="Digit 5">
+                    <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" id="code-6" required aria-label="Digit 6">
+                </div>
+                
+                <div class="verification-actions">
+                    <button type="submit" class="btn btn-primary" aria-label="Verify code">Verify Code</button>
+                    
+                    <div class="resend-link">
+                        <span>Didn't receive the code? </span>
+                        <button type="button" id="resend-btn" disabled>
+                            Resend (<span class="timer" id="timer">60</span>s)
+                        </button>
+                    </div>
+                    
+                    <a href="login.html" class="btn btn-secondary" style="text-align: center;">Back to Login</a>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script type="module">
+        import * as apiService from './js/apiService.js';
+        import { showToast } from './js/ui.js';
+        
+        // Get email from session storage
+        const email = sessionStorage.getItem('verification_email');
+        
+        if (!email) {
+            // Redirect to login if no email found
+            showToast('Please login first', 'error');
+            window.location.href = 'login.html';
+        }
+        
+        // Display email
+        document.getElementById('email-display').textContent = email;
+        
+        // Get all code inputs
+        const codeInputs = [
+            document.getElementById('code-1'),
+            document.getElementById('code-2'),
+            document.getElementById('code-3'),
+            document.getElementById('code-4'),
+            document.getElementById('code-5'),
+            document.getElementById('code-6')
+        ];
+        
+        // Focus first input on load
+        codeInputs[0].focus();
+        
+        // Handle input navigation
+        codeInputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                // Only allow numbers
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                
+                // Move to next input if current is filled
+                if (e.target.value && index < codeInputs.length - 1) {
+                    codeInputs[index + 1].focus();
+                }
+            });
+            
+            input.addEventListener('keydown', (e) => {
+                // Move to previous input on backspace if current is empty
+                if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                    codeInputs[index - 1].focus();
+                }
+            });
+            
+            // Handle paste event
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
+                
+                // Fill inputs with pasted data
+                for (let i = 0; i < Math.min(pastedData.length, 6); i++) {
+                    if (codeInputs[i]) {
+                        codeInputs[i].value = pastedData[i];
+                    }
+                }
+                
+                // Focus last filled input or last input
+                const lastIndex = Math.min(pastedData.length, 6) - 1;
+                codeInputs[lastIndex].focus();
+            });
+        });
+        
+        // Form submission
+        const form = document.getElementById('verification-form');
+        const formMessage = document.getElementById('form-message');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Get verification code
+            const code = codeInputs.map(input => input.value).join('');
+            
+            if (code.length !== 6) {
+                formMessage.textContent = 'Please enter all 6 digits';
+                formMessage.className = 'alert alert-error';
+                return;
+            }
+            
+            // Get submit button
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            // Clear previous messages
+            formMessage.className = 'hidden';
+            formMessage.textContent = '';
+            
+            // Set loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+            
+            try {
+                const response = await apiService.verifyLoginCode(email, code);
+                
+                // Success!
+                showToast('Login successful!', 'success');
+                submitBtn.innerHTML = '<i class="fas fa-check"></i> Success! Redirecting...';
+                
+                // Clear session storage
+                sessionStorage.removeItem('verification_email');
+                
+                // Redirect to dashboard or home
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+                
+            } catch (err) {
+                // Display error
+                formMessage.textContent = err.message || 'Verification failed. Please try again.';
+                formMessage.className = 'alert alert-error';
+                showToast('Verification failed', 'error');
+                
+                // Clear inputs
+                codeInputs.forEach(input => input.value = '');
+                codeInputs[0].focus();
+                
+                // Restore button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        });
+        
+        // Resend timer
+        let timeLeft = 60;
+        const timerElement = document.getElementById('timer');
+        const resendBtn = document.getElementById('resend-btn');
+        
+        const countdown = setInterval(() => {
+            timeLeft--;
+            timerElement.textContent = timeLeft;
+            
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                resendBtn.disabled = false;
+                resendBtn.innerHTML = 'Resend Code';
+            }
+        }, 1000);
+        
+        // Resend functionality (would need backend endpoint)
+        resendBtn.addEventListener('click', () => {
+            showToast('Resend functionality coming soon', 'info');
+            // TODO: Implement resend endpoint
+            // Reset timer
+            timeLeft = 60;
+            resendBtn.disabled = true;
+            resendBtn.innerHTML = 'Resend (<span class="timer" id="timer">60</span>s)';
+        });
+    </script>
+</body>
+</html>

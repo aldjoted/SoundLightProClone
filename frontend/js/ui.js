@@ -1351,6 +1351,7 @@ export function updateUserAuthUI(user) {
     const userInfo = document.getElementById('user-info');
 
     const usernameDisplay = document.getElementById('username-display');
+    const userDropdownMenu = document.getElementById('user-dropdown-menu');
 
 
 
@@ -1365,10 +1366,36 @@ export function updateUserAuthUI(user) {
 
             }
 
+            if (userDropdownMenu) {
+                userDropdownMenu.innerHTML = `
+                    <a href="dashboard.html" class="user-dropdown-link">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <button id="logout-button" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span data-i18n="nav_logout">Logout</span>
+                    </button>
+                `;
+            }
+
         } else {
 
             authMenuContainer.classList.remove('hidden');
             userInfo.classList.add('hidden');
+
+            if (userDropdownMenu) {
+                userDropdownMenu.innerHTML = `
+                    <a href="login.html" class="user-dropdown-link">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span data-i18n="nav_login">Login</span>
+                    </a>
+                    <a href="register.html" class="user-dropdown-link">
+                        <i class="fas fa-user-plus"></i>
+                        <span data-i18n="nav_register">Register</span>
+                    </a>
+                `;
+            }
 
         }
 

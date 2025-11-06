@@ -830,6 +830,21 @@
     color: var(--primary-color);
 }
 
+.footer-contact a {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-contact a:hover {
+    color: var(--primary-color);
+}
+
+.footer-address-link {
+    display: inline-block;
+    line-height: 1.6;
+}
+
 .footer-bottom { 
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     padding: var(--spacing-lg) 0;

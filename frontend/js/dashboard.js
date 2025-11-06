@@ -18,6 +18,8 @@ import { showToast } from './ui.js';
 import { initRegisterPageValidation } from './auth.js';
 import i18n from './i18n.js';
 
+const ACCESS_TOKEN_STORAGE_KEY = 'slp_access_token';
+
 // Dashboard state
 const dashboardState = {
     currentSection: 'overview',
@@ -41,9 +43,9 @@ export async function initDashboard() {
     // Initialize i18n first
     i18n.translatePage();
     
-    // Check if user is authenticated
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (!refreshToken) {
+    // Ensure there is a valid session (will attempt cookie-based refresh)
+    const accessToken = await apiService.ensureAccessToken();
+    if (!accessToken) {
         window.location.href = 'login.html?redirect=dashboard.html';
         return;
     }
@@ -75,6 +77,11 @@ export async function initDashboard() {
     } catch (error) {
         console.error('Failed to initialize dashboard:', error);
         if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+            try {
+                sessionStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+            } catch (storageError) {
+                console.warn('Failed to clear session token during dashboard auth failure:', storageError);
+            }
             localStorage.removeItem('refreshToken');
             window.location.href = 'login.html?redirect=dashboard.html';
         } else {

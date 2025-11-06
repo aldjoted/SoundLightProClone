@@ -210,19 +210,17 @@ class MobileNavigation {
         if (desktopAuth && !desktopAuth.classList.contains('hidden')) {
             container.appendChild(desktopAuth.cloneNode(true));
         } else if (desktopUser && !desktopUser.classList.contains('hidden')) {
-            // Re-create user info for mobile context
-            const userInfoClone = desktopUser.querySelector('.user-menu-toggle').cloneNode(true);
-            const userLink = document.createElement('a');
-            userLink.href = "#"; // Placeholder for profile page
-            userLink.className = "mobile-nav-link";
-            userLink.innerHTML = userInfoClone.innerHTML;
-            container.appendChild(userLink);
+            const dashboardLink = document.createElement('a');
+            dashboardLink.href = 'dashboard.html';
+            dashboardLink.className = 'mobile-nav-link';
+            dashboardLink.innerHTML = `<i class="fas fa-tachometer-alt"></i><span>Dashboard</span>`;
+            container.appendChild(dashboardLink);
 
             const logoutButton = document.createElement('button');
-            logoutButton.id = "mobile-logout-button"; // Unique ID
-            logoutButton.className = "mobile-nav-link";
-            logoutButton.innerHTML = `<i class="fas fa-sign-out-alt"></i><span>Logout</span>`;
-            logoutButton.onclick = () => document.getElementById('logout-button')?.click(); // Trigger main logout logic
+            logoutButton.id = 'mobile-logout-button';
+            logoutButton.className = 'mobile-nav-link';
+            logoutButton.innerHTML = `<i class="fas fa-sign-out-alt"></i><span data-i18n="nav_logout">Logout</span>`;
+            logoutButton.onclick = () => document.getElementById('logout-button')?.click();
             container.appendChild(logoutButton);
         }
     }

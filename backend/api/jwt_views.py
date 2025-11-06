@@ -1,17 +1,28 @@
 """
 Custom JWT Token Views with httpOnly Cookie Support and Rate Limiting
 Implements secure refresh token handling via httpOnly cookies.
+Includes 2FA email verification for login.
 """
 
+import random
+import logging
+from datetime import timedelta
+from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
 from django_ratelimit.decorators import ratelimit
 from django_ratelimit.exceptions import Ratelimited
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 
 def get_cookie_settings():
@@ -44,37 +55,93 @@ class RateLimitedTokenObtainPairView(TokenObtainPairView):
     Token obtain view with httpOnly cookie support and rate limiting.
     
     ✅ SECURITY IMPROVEMENT:
-    - Returns access token in response body
-    - Sets refresh token as httpOnly cookie (secure, XSS-protected)
+    - Implements 2FA via email verification
+    - Generates a 6-digit code on successful password validation
+    - Sends code to user's email
+    - Does NOT return tokens until code is verified
     - Rate limited to 5 attempts per minute per IP
     """
     
     def post(self, request, *args, **kwargs):
         try:
-            # Get tokens from parent class
-            response = super().post(request, *args, **kwargs)
+            from django.contrib.auth import authenticate
             
-            if response.status_code == 200:
-                # Extract refresh token from response
-                refresh_token = response.data.get('refresh')
-                
-                if refresh_token:
-                    # Remove refresh token from response body (security)
-                    response.data.pop('refresh', None)
-                    
-                    # Set refresh token as httpOnly cookie
-                    cookie_settings = get_cookie_settings()
-                    response.set_cookie(
-                        cookie_settings['key'],
-                        refresh_token,
-                        max_age=cookie_settings['max_age'],
-                        httponly=cookie_settings['httponly'],
-                        secure=cookie_settings['secure'],
-                        samesite=cookie_settings['samesite'],
-                        path=cookie_settings['path'],
-                    )
+            identifier = (request.data.get('username')
+                           or request.data.get('email')
+                           or request.data.get('identifier')
+                           or '').strip()
+            password = request.data.get('password')
             
-            return response
+            if not identifier or not password:
+                return Response(
+                    {'detail': 'Username or email and password are required.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Authenticate user (supports username or email)
+            user = authenticate(username=identifier, password=password)
+
+            if user is None:
+                # Try case-insensitive username match
+                normalized_username = (
+                    User.objects
+                    .filter(username__iexact=identifier)
+                    .values_list('username', flat=True)
+                    .first()
+                )
+                if normalized_username:
+                    user = authenticate(username=normalized_username, password=password)
+
+            if user is None:
+                # Try email match
+                email_match = (
+                    User.objects
+                    .filter(email__iexact=identifier)
+                    .values_list('username', 'email')
+                    .first()
+                )
+                if email_match:
+                    matched_username, _ = email_match
+                    user = authenticate(username=matched_username, password=password)
+
+            if user is None:
+                return Response(
+                    {'detail': 'Invalid credentials.'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
+            # Generate 6-digit verification code
+            verification_code = str(random.randint(100000, 999999))
+            
+            # Store code in user profile with 10-minute expiration
+            profile = user.profile
+            profile.login_verification_code = verification_code
+            profile.login_verification_code_expires = timezone.now() + timedelta(minutes=10)
+            profile.save()
+            
+            # Send verification code via email
+            try:
+                send_mail(
+                    subject='Your Login Verification Code',
+                    message=f'Your verification code is: {verification_code}\n\nThis code will expire in 10 minutes.',
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+                logger.info(f"Verification code sent to {user.email}")
+            except Exception as e:
+                logger.error(f"Failed to send verification email: {e}")
+                return Response(
+                    {'detail': 'Failed to send verification code. Please try again.'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            # Return success response without tokens
+            return Response({
+                'detail': 'Verification code sent to your email.',
+                'email': user.email,
+                'requires_verification': True
+            }, status=status.HTTP_200_OK)
             
         except Ratelimited:
             return ratelimit_error_response()
@@ -134,3 +201,99 @@ class RateLimitedTokenRefreshView(TokenRefreshView):
             
         except Ratelimited:
             return ratelimit_error_response()
+
+
+@method_decorator(ratelimit(key='ip', rate='5/m', method='POST', block=True), name='dispatch')
+class VerifyLoginCodeView(APIView):
+    """
+    API view to verify the 6-digit login verification code.
+    
+    ✅ SECURITY IMPROVEMENT:
+    - Verifies the code matches and hasn't expired
+    - Returns JWT tokens only after successful verification
+    - Rate limited to 5 attempts per minute per IP
+    """
+    permission_classes = [AllowAny]
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            email = request.data.get('email')
+            code = request.data.get('code')
+            
+            if not email or not code:
+                return Response(
+                    {'detail': 'Email and verification code are required.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Find user by email
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                return Response(
+                    {'detail': 'Invalid verification code.'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
+            profile = user.profile
+            
+            # Check if code matches
+            if profile.login_verification_code != code:
+                return Response(
+                    {'detail': 'Invalid verification code.'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
+            # Check if code has expired
+            if not profile.login_verification_code_expires or \
+               timezone.now() > profile.login_verification_code_expires:
+                # Clear expired code
+                profile.login_verification_code = ''
+                profile.login_verification_code_expires = None
+                profile.save()
+                return Response(
+                    {'detail': 'Verification code has expired. Please login again.'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
+            # Code is valid - generate tokens
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+            
+            # Clear verification code
+            profile.login_verification_code = ''
+            profile.login_verification_code_expires = None
+            profile.save()
+            
+            logger.info(f"User {user.username} successfully verified login")
+            
+            # Create response with tokens
+            response = Response({
+                'access': access_token,
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                }
+            }, status=status.HTTP_200_OK)
+            
+            # Set refresh token as httpOnly cookie
+            cookie_settings = get_cookie_settings()
+            response.set_cookie(
+                cookie_settings['key'],
+                refresh_token,
+                max_age=cookie_settings['max_age'],
+                httponly=cookie_settings['httponly'],
+                secure=cookie_settings['secure'],
+                samesite=cookie_settings['samesite'],
+                path=cookie_settings['path'],
+            )
+            
+            return response
+            
+        except Ratelimited:
+            return ratelimit_error_response()
+

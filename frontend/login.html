@@ -145,8 +145,8 @@
             <form id="login-form" class="auth-form">
                 <div id="form-message" class="hidden" role="alert" aria-live="assertive" aria-atomic="true"></div>
                 <div>
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required autocomplete="username">
+                    <label for="username">Username or Email</label>
+                    <input type="text" id="username" name="username" required autocomplete="username" placeholder="Enter username or email">
                 </div>
                 <div>
                     <label for="password">Password</label>
@@ -172,3 +172,26 @@
                 <i class="fas fa-times"></i>
             </button>
         </header>
+        <ul class="chatbox">
+            <li class="chat incoming">
+                <span class="chat-icon"><i class="fas fa-robot"></i></span>
+                <p>Hi there! 👋<br>How can I help you today?</p>
+            </li>
+        </ul>
+        <div class="chat-input">
+            <textarea placeholder="Ask a question..." required></textarea>
+            <button id="send-btn" class="fas fa-paper-plane" aria-label="Send message"></button>
+        </div>
+    </dialog>
+
+    <div id="toast-container" class="toast-container" aria-live="assertive" aria-atomic="true"></div>
+    
+    <!-- Scripts -->
+    <script src="js/apiService.js" type="module"></script>
+    <script src="js/cart.js" type="module"></script>
+    <script src="js/ui.js" type="module"></script>
+    <script src="js/auth.js" type="module"></script>
+    <script src="js/main.js" type="module"></script>
+    <script src="js/chatbot.js" type="module"></script>
+</body>
+</html>

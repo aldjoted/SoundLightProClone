@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .jwt_views import RateLimitedTokenObtainPairView, RateLimitedTokenRefreshView
+from .jwt_views import RateLimitedTokenObtainPairView, RateLimitedTokenRefreshView, VerifyLoginCodeView
 
 # This file defines the URL endpoints for the 'api' app.
 
@@ -8,6 +8,8 @@ urlpatterns = [
     # --- Authentication Endpoints ---
     # For user login, returns access and refresh tokens (Rate Limited: 5/minute)
     path('token/', RateLimitedTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # To verify 6-digit login code and get tokens (Rate Limited: 5/minute)
+    path('verify-login/', VerifyLoginCodeView.as_view(), name='verify_login'),
     # To get a new access token using a refresh token (Rate Limited: 10/minute)
     path('token/refresh/', RateLimitedTokenRefreshView.as_view(), name='token_refresh'),
     # For user logout
