@@ -125,15 +125,15 @@ class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
     name = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
-    average_rating = serializers.SerializerMethodField()
-    review_count = serializers.SerializerMethodField()
+    avg_rating = serializers.FloatField(read_only=True)
+    review_count = serializers.IntegerField(read_only=True, source='review_count_cached')
 
     class Meta:
         model = Product
         fields = [
             'id', 'category', 'brand', 'name', 'description', 
             'price', 'images', 'stock', 'available',
-            'average_rating', 'review_count'
+            'avg_rating', 'review_count'
         ]
     
     def get_name(self, obj):
@@ -154,15 +154,7 @@ class ProductSerializer(serializers.ModelSerializer):
                 return obj.get_description('fr')
         return obj.get_description('en')
     
-    def get_average_rating(self, obj):
-        """Return average rating from approved reviews"""
-        # ✅ IMPROVEMENT: Use prefetched data if available, fallback to query
-        return getattr(obj, 'avg_rating', None) or obj.get_average_rating()
-    
-    def get_review_count(self, obj):
-        """Return count of approved reviews"""
-        # ✅ IMPROVEMENT: Use prefetched data if available, fallback to query
-        return getattr(obj, 'review_count_cached', None) or obj.get_review_count()
+    # avg_rating and review_count now rely on queryset annotations to avoid N+1 queries
 
 # --- User Authentication Serializers ---
 
@@ -697,7 +689,7 @@ class DashboardOrderSerializer(serializers.ModelSerializer):
 
     def get_can_cancel(self, obj):
         """Check if order can be cancelled"""
-        return obj.status in ['pending', 'processing']
+        return obj.status in ['pending', 'pending_payment', 'processing']
 
 
 class OrderFilterSerializer(serializers.Serializer):
@@ -705,7 +697,7 @@ class OrderFilterSerializer(serializers.Serializer):
     Serializer for order filtering parameters.
     """
     status = serializers.ChoiceField(
-        choices=['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'],
+        choices=['all', 'pending', 'pending_payment', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'],
         default='all',
         required=False
     )

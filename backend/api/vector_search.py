@@ -1,7 +1,11 @@
 import os
-import numpy as np
+from functools import lru_cache
+from typing import List, Optional, Tuple
+
 import faiss
+import numpy as np
 from django.conf import settings
+
 from .models import Product
 from .embeddings import generate_product_embeddings
 
@@ -18,7 +22,11 @@ def build_and_save_faiss_index():
     Generate embeddings for all products and build a Faiss index.
     Save both the embeddings and the index to disk.
     """
-    products = list(Product.objects.filter(available=True).select_related('brand', 'category'))
+    products = list(
+        Product.objects.filter(available=True)
+        .select_related('brand', 'category')
+        .order_by('id')
+    )
     if not products:
         return None
     embeddings = generate_product_embeddings(products)
@@ -63,3 +71,18 @@ def load_faiss_index_and_embeddings(force_reload=False):
         _cached_index = faiss.read_index(INDEX_PATH)
     
     return _cached_index, _cached_embeddings
+
+
+@lru_cache(maxsize=None)
+def get_search_index_data() -> Tuple[Optional[faiss.Index], Optional[List[int]]]:
+    """Load FAISS index and product ID mapping once per process."""
+    if not os.path.exists(INDEX_PATH) or not os.path.exists(EMBEDDINGS_PATH):
+        return None, None
+
+    index = faiss.read_index(INDEX_PATH)
+    product_ids = list(
+        Product.objects.filter(available=True)
+        .order_by('id')
+        .values_list('id', flat=True)
+    )
+    return index, product_ids

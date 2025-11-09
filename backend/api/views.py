@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from typing import Optional
 
 from django.db import transaction
-from django.db.models import Q, Prefetch
+from django.db.models import Q, Prefetch, Case, When
 from django.db.models.query import QuerySet
 from django.contrib.auth.models import User
 from django.views.decorators.cache import cache_page
@@ -29,7 +29,7 @@ from .models import (
     UserProfile, ShippingAddress, PaymentMethod
 )
 from .embeddings import model as embedding_model, get_product_text
-from .vector_search import load_faiss_index_and_embeddings
+from .vector_search import get_search_index_data
 from .serializers import (
     CategorySerializer, ProductSerializer, BrandListSerializer, RegisterSerializer, 
     UserSerializer, OrderSerializer, CreateOrderRequestSerializer,
@@ -208,9 +208,20 @@ class ProductDetail(generics.RetrieveAPIView):
     API view to retrieve a single product by its primary key (id).
     Optimized to pre-fetch related brand and category.
     """
-    queryset = Product.objects.filter(available=True).select_related('brand', 'category')
     serializer_class = ProductSerializer
     permission_classes = (permissions.AllowAny,)
+
+    def get_queryset(self) -> QuerySet[Product]:  # type: ignore
+        from django.db.models import Avg, Count, Q
+
+        return (
+            Product.objects.filter(available=True)
+            .select_related('brand', 'category')
+            .annotate(
+                avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
+                review_count_cached=Count('reviews', filter=Q(reviews__is_approved=True))
+            )
+        )
 
 class CategoryList(generics.ListAPIView):
     """
@@ -374,21 +385,21 @@ class ChatbotView(APIView):
             )
 
         # --- Vector Search RAG: Find relevant products ---
-        index, embeddings = load_faiss_index_and_embeddings()
+        index, product_ids = get_search_index_data()
         relevant_products = []
-        if index is not None and embeddings is not None:
-            # Generate embedding for the user query
+        if index and product_ids:
             query_embedding = embedding_model.encode([user_message], normalize_embeddings=True)
-            # Search for top 5 most similar products
             D, I = index.search(query_embedding, 5)
-            # Get all available products in the same order as embeddings
-            all_products = list(Product.objects.filter(available=True).select_related('brand', 'category'))
-            for idx in I[0]:
-                if 0 <= idx < len(all_products):
-                    relevant_products.append(all_products[idx])
-        else:
-            # Fallback: no index, return empty list
-            relevant_products = []
+            found_indices = [idx for idx in I[0] if 0 <= idx < len(product_ids)]
+            found_ids = [product_ids[idx] for idx in found_indices]
+
+            if found_ids:
+                order_preserved = Case(*[When(pk=pid, then=pos) for pos, pid in enumerate(found_ids)])
+                relevant_products = list(
+                    Product.objects.filter(id__in=found_ids, available=True)
+                    .select_related('brand', 'category')
+                    .order_by(order_preserved)
+                )
 
         # --- Format product data for the prompt ---
         product_context = "No specific products found."

@@ -350,6 +350,7 @@ class Order(models.Model):
     """
     STATUS_CHOICES = [
         ('pending', 'Pending'),
+        ('pending_payment', 'Pending Payment'),
         ('processing', 'Processing'),
         ('shipped', 'Shipped'),
         ('delivered', 'Delivered'),
@@ -398,6 +399,7 @@ class Order(models.Model):
         """Return CSS class for status display"""
         status_classes = {
             'pending': 'status-pending',
+            'pending_payment': 'status-pending',
             'processing': 'status-processing',
             'shipped': 'status-shipped',
             'delivered': 'status-delivered',
@@ -405,6 +407,11 @@ class Order(models.Model):
             'refunded': 'status-refunded',
         }
         return status_classes.get(self.status, 'status-default')
+
+    def get_total_cost_stripe(self) -> int:
+        """Return total amount in cents for Stripe API."""
+        amount = (self.total_paid or Decimal('0.00')).quantize(Decimal('0.01'))
+        return int(amount * 100)
 
 
 class OrderItem(models.Model):

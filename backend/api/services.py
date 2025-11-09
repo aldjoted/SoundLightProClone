@@ -7,7 +7,7 @@ making it easier to test, reuse, and maintain.
 import os
 import stripe
 from decimal import Decimal
-from typing import Dict, List, Any, TYPE_CHECKING, cast
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 from dotenv import load_dotenv
 import logging
 
@@ -56,12 +56,12 @@ def create_order_from_cart(
     """
     Service function to handle the entire order creation process.
     
-    This function encapsulates all the business logic for creating an order:
+    This function encapsulates all the business logic for creating an order using a
+    two-phase commit strategy:
     - Validates product availability and stock
-    - Creates order and order items
-    - Processes payment through Stripe
-    - Updates product stock
-    - All operations are wrapped in a database transaction for consistency
+    - Reserves inventory and creates the order in a short atomic section
+    - Processes payment through Stripe outside the database transaction
+    - Confirms the order in a second, fast transaction once payment succeeds
     
     Args:
         user: The authenticated user placing the order
@@ -82,14 +82,25 @@ def create_order_from_cart(
     if not stripe_token:
         raise OrderCreationError("Payment token is required.")
     
-    # N+1 Fix: Get all product IDs from the cart
     product_ids = [item['id'] for item in cart_items]
-    # Fetch all products in a single query
-    products = Product.objects.in_bulk(product_ids)
+
+    order: Optional[Order] = None
+    total_cost = Decimal('0')
 
     try:
+        # --- Phase 1: Reserve inventory and create order record ---
         with transaction.atomic():
-            # 1. Create the Order object
+            locked_products = (
+                Product.objects.select_for_update()
+                .filter(id__in=product_ids)
+            )
+            products = {product.id: product for product in locked_products}
+            missing_ids = set(product_ids) - set(products.keys())
+            if missing_ids:
+                raise OrderCreationError(
+                    f"Product with ID {next(iter(missing_ids))} not found."
+                )
+
             order = Order.objects.create(
                 user=user,
                 first_name=shipping_info['first_name'],
@@ -98,121 +109,108 @@ def create_order_from_cart(
                 address=shipping_info['address'],
                 postal_code=shipping_info['postal_code'],
                 city=shipping_info['city'],
+                status='pending_payment',
             )
-            
-            total_cost = Decimal('0')
-            products_to_update = []
 
-            # 2. Create OrderItem objects and prepare stock updates
+            changed_product_ids = set()
+
             for item_data in cart_items:
                 product = products.get(item_data['id'])
                 if not product:
                     raise OrderCreationError(f"Product with ID {item_data['id']} not found.")
-                
+
                 if not product.available:
                     raise OrderCreationError(f"Product '{product.name}' is no longer available.")
-                
+
                 quantity = item_data['quantity']
                 if quantity <= 0:
                     raise OrderCreationError(f"Invalid quantity ({quantity}) for product '{product.name}'.")
-                
+
                 if product.stock < quantity:
                     raise OrderCreationError(
                         f"Not enough stock for '{product.name}'. "
                         f"Only {product.stock} available, but {quantity} requested."
                     )
 
-                # Create order item
                 OrderItem.objects.create(
                     order=order,
                     product=product,
                     price=product.price,
-                    quantity=quantity
+                    quantity=quantity,
                 )
-                
-                # Calculate total cost
+
                 total_cost += product.price * quantity
-                
-                # Prepare stock update
                 product.stock -= quantity
-                products_to_update.append(product)
-            
-            # Validate total cost
+                changed_product_ids.add(product.id)
+
             if total_cost <= 0:
                 raise OrderCreationError("Order total must be greater than zero.")
-            
-            # Bulk update product stock in one query for performance
-            Product.objects.bulk_update(products_to_update, ['stock'])
-            
-            # Update order total
-            order.total_paid = total_cost
-            
-            # 3. Process payment with Stripe
-            try:
-                # ✅ IMPROVEMENT: Ensure Stripe is configured
-                get_stripe_key()
-                
-                charge = stripe.Charge.create(
-                    amount=int(total_cost * 100),  # Stripe expects amount in cents
-                    currency='usd',
-                    description=f'Order {order.pk} for {order.email}',
-                    source=stripe_token,
-                    metadata={
-                        'order_id': order.pk,
-                        'user_id': user.pk,
-                        'user_email': user.email,
-                    }
-                )
-                
-                # 4. Finalize the order if payment is successful
-                order.paid = True
-                order.stripe_id = charge.id
-                order.status = 'processing'
-                order.save()
-                
-                logger.info(f"Order {order.pk} created successfully for user {user.pk}")
-                
-            except stripe.error.CardError as e:
-                # ✅ IMPROVEMENT: Specific card error messages
-                err = e.error
-                error_msg = f"Payment declined: {err.get('message', 'Card was declined')}"
-                logger.warning(f"Card error for order {order.pk}: {error_msg}")
-                raise OrderCreationError(error_msg) from e
-                
-            except stripe.error.RateLimitError as e:
-                error_msg = "Too many payment requests. Please try again in a moment."
-                logger.warning(f"Stripe rate limit hit for order {order.pk}")
-                raise OrderCreationError(error_msg) from e
-                
-            except stripe.error.InvalidRequestError as e:
-                error_msg = f"Invalid payment request: {str(e)}"
-                logger.error(f"Invalid Stripe request for order {order.pk}: {e}")
-                raise OrderCreationError(error_msg) from e
-                
-            except stripe.error.AuthenticationError as e:
-                # Don't expose internal errors to users
-                logger.error(f"Stripe authentication error: {e}", exc_info=True)
-                raise OrderCreationError(
-                    "Payment system configuration error. Please contact support."
-                ) from e
-                
-            except stripe.error.APIConnectionError as e:
-                error_msg = "Payment service is temporarily unavailable. Please try again."
-                logger.error(f"Stripe API connection error for order {order.pk}: {e}")
-                raise OrderCreationError(error_msg) from e
-                
-            except StripeError as e:
-                error_msg = f"Payment processing error: {str(e)}"
-                logger.error(f"Stripe error for order {order.pk}: {e}", exc_info=True)
-                raise OrderCreationError(error_msg) from e
 
-            return order
-            
+            if changed_product_ids:
+                Product.objects.bulk_update(
+                    [products[pid] for pid in changed_product_ids],
+                    ['stock']
+                )
+
+            order.total_paid = total_cost
+            order.save(update_fields=['total_paid', 'status', 'updated_at'])
+
+        # --- Phase 2: Process payment outside of DB transaction ---
+        try:
+            get_stripe_key()
+            charge = stripe.Charge.create(
+                amount=order.get_total_cost_stripe(),
+                currency='usd',
+                description=f'Order {order.pk} for {order.email}',
+                source=stripe_token,
+                metadata={
+                    'order_id': order.pk,
+                    'user_id': user.pk,
+                    'user_email': user.email,
+                }
+            )
+        except stripe.error.CardError as e:
+            err = e.error
+            error_msg = f"Payment declined: {err.get('message', 'Card was declined')}"
+            logger.warning(f"Card error for order {order.pk}: {error_msg}")
+            raise OrderCreationError(error_msg) from e
+        except stripe.error.RateLimitError as e:
+            error_msg = "Too many payment requests. Please try again in a moment."
+            logger.warning(f"Stripe rate limit hit for order {order.pk}")
+            raise OrderCreationError(error_msg) from e
+        except stripe.error.InvalidRequestError as e:
+            error_msg = f"Invalid payment request: {str(e)}"
+            logger.error(f"Invalid Stripe request for order {order.pk}: {e}")
+            raise OrderCreationError(error_msg) from e
+        except stripe.error.AuthenticationError as e:
+            logger.error(f"Stripe authentication error: {e}", exc_info=True)
+            raise OrderCreationError(
+                "Payment system configuration error. Please contact support."
+            ) from e
+        except stripe.error.APIConnectionError as e:
+            error_msg = "Payment service is temporarily unavailable. Please try again."
+            logger.error(f"Stripe API connection error for order {order.pk}: {e}")
+            raise OrderCreationError(error_msg) from e
+        except StripeError as e:
+            error_msg = f"Payment processing error: {str(e)}"
+            logger.error(f"Stripe error for order {order.pk}: {e}", exc_info=True)
+            raise OrderCreationError(error_msg) from e
+
+        # --- Phase 3: Confirm payment in a short transaction ---
+        with transaction.atomic():
+            order_to_update = Order.objects.select_for_update().get(id=order.id)
+            if order_to_update.status == 'pending_payment':
+                order_to_update.paid = True
+                order_to_update.stripe_id = charge.id
+                order_to_update.status = 'processing'
+                order_to_update.save(update_fields=['paid', 'stripe_id', 'status', 'updated_at'])
+
+            logger.info(f"Order {order_to_update.pk} created successfully for user {user.pk}")
+            return order_to_update
+
     except OrderCreationError:
-        # Re-raise our custom exceptions as-is
         raise
     except Exception as e:
-        # Wrap any unexpected exceptions
         raise OrderCreationError(f"An unexpected error occurred during order creation: {str(e)}") from e
 
 
