@@ -66,6 +66,7 @@ class Product(models.Model):
     """
     category = models.ForeignKey(Category, related_name='products', on_delete=models.CASCADE)
     brand = models.ForeignKey(Brand, related_name='products', on_delete=models.SET_NULL, null=True, blank=True)
+    related_products = models.ManyToManyField('self', blank=True, symmetrical=False, related_name='related_to')
     name = models.CharField(max_length=255, verbose_name=_("Product name"))
     name_fr = models.CharField(max_length=255, blank=True, verbose_name=_("Product name (French)"))
     description = models.TextField(blank=True, verbose_name=_("Product description"))
@@ -114,42 +115,51 @@ class Product(models.Model):
         return self.reviews.filter(is_approved=True).count()
     
     def get_related_products(self, limit=6):
-        """
-        Get related products based on:
-        1. Same category
-        2. Similar price range (±30%)
-        3. Exclude the current product
-        """
-        if not self.price:
-            return Product.objects.none()
-        
-        price_min = self.price * Decimal('0.7')
-        price_max = self.price * Decimal('1.3')
-        
-        # Get products in the same category with similar price
-        related = Product.objects.filter(
-            category=self.category,
-            available=True,
-            price__gte=price_min,
-            price__lte=price_max
-        ).exclude(
-            id=self.id
-        ).select_related('brand', 'category')[:limit]
-        
-        # If we don't have enough products, add more from the same category
-        if related.count() < limit:
-            additional = Product.objects.filter(
+        """Return manually curated related products first, then fall back to smart suggestions."""
+        manual_qs = self.related_products.filter(available=True).select_related('brand', 'category')
+        manual = list(manual_qs[:limit]) if limit else list(manual_qs)
+
+        remaining = max(limit - len(manual), 0) if limit else 0
+
+        if remaining == 0 and limit is not None:
+            return manual[:limit]
+
+        suggestions = []
+        if self.price and (remaining or limit is None):
+            price_min = self.price * Decimal('0.7')
+            price_max = self.price * Decimal('1.3')
+
+            base_qs = Product.objects.filter(
                 category=self.category,
-                available=True
-            ).exclude(
-                id=self.id
-            ).exclude(
-                id__in=[p.id for p in related]
-            ).select_related('brand', 'category')[:limit - related.count()]
-            
-            related = list(related) + list(additional)
-        
-        return related
+                available=True,
+                price__gte=price_min,
+                price__lte=price_max
+            ).exclude(id=self.id)
+
+            if manual:
+                base_qs = base_qs.exclude(id__in=[p.id for p in manual])
+
+            base_qs = base_qs.select_related('brand', 'category')
+
+            if remaining:
+                base_qs = base_qs[:remaining]
+
+            suggestions = list(base_qs)
+
+            if remaining and len(suggestions) < remaining:
+                extra_needed = remaining - len(suggestions)
+                fallback_qs = Product.objects.filter(
+                    category=self.category,
+                    available=True
+                ).exclude(id=self.id)
+                if manual:
+                    fallback_qs = fallback_qs.exclude(id__in=[p.id for p in manual])
+                if suggestions:
+                    fallback_qs = fallback_qs.exclude(id__in=[p.id for p in suggestions])
+                fallback_qs = fallback_qs.select_related('brand', 'category')[:extra_needed]
+                suggestions.extend(list(fallback_qs))
+
+        return manual + suggestions
 
 class ProductImage(models.Model):
     """
@@ -164,6 +174,21 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.product.name}"
+
+
+class ProductAttachment(models.Model):
+    """Optional rich-media assets such as PDF manuals or spec sheets."""
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='attachments')
+    file = models.FileField(upload_to='products/attachments/')
+    label = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        name = self.label or self.file.name
+        return f"Attachment for {self.product.name}: {name}"
 
 
 class UserProfile(models.Model):

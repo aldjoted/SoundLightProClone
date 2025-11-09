@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
@@ -7,7 +8,7 @@ from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 
 from .models import (
-    Category, Brand, Product, ProductImage, Order, OrderItem, 
+    Category, Brand, Product, ProductImage, ProductAttachment, Order, OrderItem, 
     Wishlist, WishlistItem, ProductReview, UserProfile, ShippingAddress, PaymentMethod
 )
 
@@ -30,6 +31,38 @@ class ProductResource(resources.ModelResource):
         )
         export_order = fields
         import_id_fields = ('id',)
+
+
+class MultiFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+    def __init__(self, attrs=None):
+        attrs = attrs.copy() if attrs else {}
+        attrs.setdefault('multiple', True)
+        super().__init__(attrs)
+
+
+class ProductAdminForm(forms.ModelForm):
+    new_images = forms.FileField(
+        widget=MultiFileInput(),
+        required=False,
+        help_text="Select one or more images to upload in a single action.",
+    )
+    product_media = forms.FileField(
+        widget=MultiFileInput(attrs={'accept': '.pdf,.doc,.docx,.xls,.xlsx'}),
+        required=False,
+        help_text="Optional attachments (e.g., PDFs, manuals).",
+    )
+
+    class Meta:
+        model = Product
+        fields = '__all__'
+
+    def clean_new_images(self):
+        return self.files.getlist('new_images') if hasattr(self, 'files') else []
+
+    def clean_product_media(self):
+        return self.files.getlist('product_media') if hasattr(self, 'files') else []
 
 
 @admin.register(Category)
@@ -56,20 +89,34 @@ class ProductImageInline(admin.TabularInline):
     Allows adding and editing ProductImages directly within the Product admin page.
     """
     model = ProductImage
-    extra = 1 # Show one extra blank form for a new image by default
+    extra = 1  # Show one extra blank form for a new image by default
     fields = ['image', 'alt_text']
+    verbose_name = 'Existing product image'
+    verbose_name_plural = 'Existing product images'
+
+
+@admin.register(ProductAttachment)
+class ProductAttachmentAdmin(admin.ModelAdmin):
+    """Standalone admin for managing uploaded product documents."""
+    list_display = ['product', 'label', 'file', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['product__name', 'label', 'file']
+    raw_id_fields = ['product']
+
 
 @admin.register(Product)
 class ProductAdmin(ImportExportModelAdmin):
     """
     Admin configuration for the Product model.
     """
+    form = ProductAdminForm
     resource_class = ProductResource
     list_display = ['image_preview', 'name', 'link_to_brand', 'link_to_category', 'price', 'stock', 'available', 'created_at']
     list_filter = ['available', 'created_at', 'updated_at', 'category', 'brand']
     list_editable = ['price', 'stock', 'available']
     search_fields = ['name', 'description']
     readonly_fields = ['created_at', 'updated_at', 'image_preview']
+    filter_horizontal = ['related_products']
     inlines = [ProductImageInline]
     fieldsets = (
         (None, {
@@ -83,6 +130,12 @@ class ProductAdmin(ImportExportModelAdmin):
                 'description_fr',
             )
         }),
+        ('Bulk Image Upload', {
+            'fields': ('new_images',)
+        }),
+        ('Relationships', {
+            'fields': ('related_products',)
+        }),
         ('Inventory', {
             'fields': ('price', 'stock', 'available')
         }),
@@ -90,11 +143,14 @@ class ProductAdmin(ImportExportModelAdmin):
             'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
+        ('Media', {
+            'fields': ('product_media',)
+        }),
     )
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
-        return queryset.select_related('brand', 'category').prefetch_related('images')
+        return queryset.select_related('brand', 'category').prefetch_related('images', 'attachments', 'related_products')
 
     @admin.display(description='Image')
     def image_preview(self, obj):
@@ -119,6 +175,19 @@ class ProductAdmin(ImportExportModelAdmin):
             link = reverse('admin:api_category_change', args=[obj.category.id])
             return format_html('<a href="{}">{}</a>', link, obj.category.name)
         return 'N/A'
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        for upload in form.cleaned_data.get('new_images', []):
+            if upload:
+                ProductImage.objects.create(product=form.instance, image=upload)
+        for media_file in form.cleaned_data.get('product_media', []):
+            if media_file:
+                ProductAttachment.objects.create(
+                    product=form.instance,
+                    file=media_file,
+                    label=getattr(media_file, 'name', ''),
+                )
 
 
 class OrderItemInline(admin.TabularInline):
