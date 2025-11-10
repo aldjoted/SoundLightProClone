@@ -500,23 +500,23 @@ export const getBrands = async (options = {}, useRetry = true) => {
 };
 
 /**
- * Logs in a user and stores authentication tokens.
- * 
- * ✅ SECURITY IMPROVEMENT: Now includes 2FA email verification
- * - First step: Validates credentials and sends verification code to email
- * - Returns requires_verification flag instead of tokens
- * - Actual tokens are obtained after verification via verifyLoginCode()
- * 
+ * Initiates the login flow by submitting credentials to trigger the 2FA challenge.
+ *
+ * ✅ SECURITY IMPROVEMENT: Only performs the first leg of authentication
+ * - Validates credentials and requests that the backend send the verification code
+ * - Does not return or persist access tokens; those are issued after verifyLoginCode()
+ * - Clears any residual in-memory/session tokens to avoid mixing sessions
+ *
  * @param {string} identifier - The user's username or email address.
  * @param {string} password - The user's password.
- * @param {boolean} [useCookie=false] - Reserved for future httpOnly cookie support (not implemented).
- * @returns {Promise<Object>} A promise that resolves to the response (may require verification).
+ * @param {boolean} [_useCookie=false] - Maintained for compatibility; not used.
+ * @returns {Promise<Object>} A promise that resolves with the verification challenge payload.
  */
-export const loginUser = async (identifier, password, useCookie = false) => {
+export const initiateLogin = async (identifier, password, _useCookie = false) => {
     if (!identifier || !password) {
         throw new APIError('Username or email and password are required', 400, 'MISSING_CREDENTIALS');
     }
-    
+
     try {
         const trimmedIdentifier = identifier.trim();
         const payload = {
@@ -535,29 +535,21 @@ export const loginUser = async (identifier, password, useCookie = false) => {
                 password,
             }),
         });
-        
-        // Check if 2FA verification is required
-        if (response.requires_verification) {
+
+        if (response?.requires_verification) {
             tokenManager.clearTokens();
-            // Don't store tokens yet - they'll be provided after verification
             return response;
         }
-        
-        // Legacy path (if backend doesn't require verification yet)
-        if (!response.access) {
-            throw new APIError('Invalid response format from login', 500, 'INVALID_LOGIN_RESPONSE');
-        }
-        
-        // Store access token in memory
-        tokenManager.setAccessToken(response.access);
-        
-        if (response.user) {
-            setStoredUserProfile(response.user);
-        }
-        
-        return response;
+
+        console.error('Unexpected login response (requires_verification missing):', response);
+        throw new APIError(
+            'Login failed due to an unexpected server response. Please retry or contact support.',
+            500,
+            'UNEXPECTED_LOGIN_RESPONSE',
+            response,
+        );
     } catch (error) {
-        console.error('Login failed:', error);
+        console.error('Login initiation failed:', error);
         if (error instanceof APIError) {
             let message = error.getUserMessage();
             if (error.status === 401) {
@@ -626,7 +618,7 @@ export const verifyLoginCode = async (email, code) => {
  * NOTE: Registration typically returns user data without tokens.
  * Users must login separately after registration.
  * If backend changes to return tokens upon registration, apply same
- * httpOnly cookie pattern as loginUser().
+ * httpOnly cookie pattern as initiateLogin().
  * 
  * @param {Object} userData - The user's registration data.
  * @returns {Promise<Object>} A promise that resolves to the new user's data.

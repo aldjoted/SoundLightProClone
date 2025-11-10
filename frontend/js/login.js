@@ -1,59 +1,85 @@
 // login.js
-import * as apiService from './apiService.js';
+import { initiateLogin } from './apiService.js';
 import * as ui from './ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('#login-form');
-    if (!form) return;
+    if (!form) {
+        return;
+    }
 
     const formMessage = document.getElementById('form-message');
-    
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-        
-        // Clear previous messages
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalButtonContent = submitButton ? submitButton.innerHTML : '';
+        let redirectScheduled = false;
+
         if (formMessage) {
-            formMessage.className = 'hidden';
             formMessage.textContent = '';
+            formMessage.className = 'hidden';
         }
-        
-        // Set loading state
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
-        
-        try {
-            const identifier = form.username.value.trim();
-            const password = form.password.value;
-            
-            // Login (backend always returns both tokens)
-            const response = await apiService.loginUser(identifier, password, false);
-            
-            submitBtn.innerHTML = '<i class="fas fa-check"></i> Success!';
-            ui.showToast('Login successful!', 'success');
-            
-            // Small delay to show success message before redirect
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 500);
-            
-        } catch (error) {
-            console.error('Login error:', error);
-            
-            // Display error message
+
+        const formData = new FormData(form);
+        const identifier = (formData.get('identifier') || formData.get('username') || '').toString().trim();
+        const password = (formData.get('password') || '').toString();
+
+        if (!identifier || !password) {
             if (formMessage) {
-                formMessage.textContent = error.message || 'Login failed. Please check your credentials.';
+                formMessage.textContent = 'Please enter both username/email and password.';
                 formMessage.className = 'alert alert-error';
             }
-            
-            // Show error toast
+            ui.showToast('Please enter both username/email and password.', 'error');
+            return;
+        }
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+        }
+
+        try {
+            const response = await initiateLogin(identifier, password);
+
+            if (response?.requires_verification) {
+                const emailForVerification = response.email || identifier;
+                sessionStorage.setItem('slp_verification_email', emailForVerification);
+
+                ui.showToast('Verification code sent to your email.', 'success');
+
+                if (submitButton) {
+                    submitButton.innerHTML = '<i class="fas fa-check"></i> Redirecting...';
+                }
+
+                redirectScheduled = true;
+                setTimeout(() => {
+                    window.location.href = 'verify-login.html';
+                }, 600);
+                return;
+            }
+
+            throw new Error('Login failed: Unexpected response from server.');
+        } catch (error) {
+            console.error('Login error:', error);
+            const message = error instanceof Error && error.message
+                ? error.message
+                : 'An unknown error occurred. Please try again.';
+
+            if (formMessage) {
+                formMessage.textContent = message;
+                formMessage.className = 'alert alert-error';
+            }
+
             ui.showToast('Login failed. Please check your credentials.', 'error');
-            
-            // Reset button
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
+        } finally {
+            if (submitButton && !redirectScheduled) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonContent;
+            }
         }
     });
 });
+
+

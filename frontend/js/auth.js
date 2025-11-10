@@ -117,7 +117,7 @@ export async function authenticateUser() {
         } catch (storageError) {
             console.warn('Failed to clear session access token during auth failure:', storageError);
         }
-        localStorage.removeItem('refreshToken');
+        // Refresh cookies are managed by the backend; no client-side storage to clear anymore.
         clearStoredUserProfile();
         
         return null;

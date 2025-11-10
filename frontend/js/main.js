@@ -633,6 +633,7 @@ function initLoginPage() {
         // Get submit button and store original text
         const submitBtn = form.querySelector('button[type="submit"]');
         const originalText = submitBtn.innerHTML;
+        let redirectScheduled = false;
         
         // Clear any previous error messages
         if (formMessage) {
@@ -646,26 +647,23 @@ function initLoginPage() {
         
         try {
             const identifier = form.username.value.trim();
-            const response = await apiService.loginUser(identifier, form.password.value, true);
+            const response = await apiService.initiateLogin(identifier, form.password.value);
             
-            // Check if 2FA verification is required
-            if (response.requires_verification) {
-                // Store email in sessionStorage for verification page
-                sessionStorage.setItem('verification_email', response.email);
+            if (response?.requires_verification) {
+                const emailForVerification = response.email || identifier;
+                sessionStorage.setItem('slp_verification_email', emailForVerification);
                 
                 ui.showToast('Verification code sent to your email!', 'success');
                 submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>Redirecting to verification...</span>';
-                
-                // Redirect to verification page
+
+                redirectScheduled = true;
                 setTimeout(() => {
                     window.location.href = 'verify-login.html';
                 }, 1000);
-            } else {
-                // Legacy path - direct login (if backend doesn't require verification)
-                ui.showToast('Login successful!', 'success');
-                submitBtn.innerHTML = '<i class="fas fa-check"></i> <span data-i18n="login_success">Success! Redirecting...</span>';
-                window.location.href = 'index.html';
+                return;
             }
+
+            throw new Error('Login failed: unexpected response from server.');
         } catch (err) {
             // Display error in form
             if (formMessage) {
@@ -675,7 +673,7 @@ function initLoginPage() {
             ui.showToast('Login failed. Please check your credentials.', 'error');
         } finally {
             // Restore button state if still on page
-            if (!window.location.href.includes('verify-login.html') && !window.location.href.includes('index.html')) {
+            if (!redirectScheduled && !window.location.href.includes('verify-login.html') && !window.location.href.includes('index.html')) {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
             }

@@ -198,7 +198,7 @@
         import { showToast } from './js/ui.js';
         
         // Get email from session storage
-        const email = sessionStorage.getItem('verification_email');
+        const email = sessionStorage.getItem('slp_verification_email') || sessionStorage.getItem('verification_email');
         
         if (!email) {
             // Redirect to login if no email found
@@ -295,6 +295,7 @@
                 submitBtn.innerHTML = '<i class="fas fa-check"></i> Success! Redirecting...';
                 
                 // Clear session storage
+                sessionStorage.removeItem('slp_verification_email');
                 sessionStorage.removeItem('verification_email');
                 
                 // Redirect to dashboard or home
