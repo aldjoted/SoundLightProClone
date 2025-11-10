@@ -564,15 +564,39 @@ class ShippingAddressSerializer(serializers.ModelSerializer):
         return value.lower()
 
     def validate(self, data):
-        """Ensure user always has at least one address, and validate phone"""
-        user = self.context['request'].user
-        
-        # If this is the first address, it must be default
-        if not self.instance:  # Creating new address
-            existing_count = ShippingAddress.objects.filter(user=user).count()
-            if existing_count == 0:
+        """Ensure the user never ends up without a default shipping address."""
+        request = self.context.get('request')
+        if request is None or not hasattr(request, 'user'):
+            return data
+
+        user = request.user
+        user_addresses = ShippingAddress.objects.filter(user=user)
+
+        # --- Handle Create ---
+        if not self.instance:
+            if not user_addresses.exists():
                 data['is_default'] = True
-        
+            else:
+                desired_default = data.get('is_default', False)
+                if not desired_default and not user_addresses.filter(is_default=True).exists():
+                    data['is_default'] = True
+            return data
+
+        # --- Handle Update ---
+        desired_default = data.get('is_default')
+
+        if desired_default is False and self.instance.is_default:
+            has_other_default = user_addresses.filter(is_default=True).exclude(pk=self.instance.pk).exists()
+            if not has_other_default:
+                raise serializers.ValidationError({
+                    'is_default': 'You must keep at least one default shipping address.'
+                })
+
+        elif desired_default is None and not (
+            self.instance.is_default or user_addresses.filter(is_default=True).exclude(pk=self.instance.pk).exists()
+        ):
+            data['is_default'] = True
+
         return data
 
     def create(self, validated_data):

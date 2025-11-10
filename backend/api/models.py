@@ -317,8 +317,16 @@ class ShippingAddress(models.Model):
         """Ensure only one default address per user"""
         if self.is_default:
             # Set all other addresses for this user to non-default
-            ShippingAddress.objects.filter(user=self.user, is_default=True).update(is_default=False)
+            ShippingAddress.objects.filter(user=self.user, is_default=True).exclude(pk=self.pk).update(is_default=False)
+
         super().save(*args, **kwargs)
+
+        # Failsafe: make sure at least one default address exists.
+        user_addresses = ShippingAddress.objects.filter(user=self.user)
+        if user_addresses.exists() and not user_addresses.filter(is_default=True).exists():
+            fallback = user_addresses.order_by('-updated_at').first()
+            if fallback:
+                ShippingAddress.objects.filter(pk=fallback.pk).update(is_default=True)
 
 
 class PaymentMethod(models.Model):
