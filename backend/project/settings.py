@@ -39,7 +39,8 @@ if not SECRET_KEY:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.0.198', '0.0.0.0']
+ALLOWED_HOSTS_STRING = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost')
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_STRING.split(',') if host.strip()]
 
 
 # Application definition
@@ -216,18 +217,12 @@ SIMPLE_JWT = {
 
 # --- CORS Headers Configuration ---
 # This allows our frontend (running on a different port) to access the API.
-# You will need to change this for production.
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5500",  # Default for VS Code Live Server
-    "http://127.0.0.1:5500", # Alternative for VS Code Live Server
-    "http://localhost:8080",  # Vite preview server
-    "http://127.0.0.1:8080", # Alternative for Vite preview server
-    "http://localhost:3000",  # Vite dev server
-    "http://127.0.0.1:3000", # Alternative for Vite dev server
-    "http://192.168.0.198:8080", # Local network access for Vite preview
-    "http://192.168.0.198:3000", # Local network access for Vite dev
-    "http://192.168.0.198:5500", # Local network access for Live Server
-]
+# Provide comma-separated origins via environment variable for deployment flexibility.
+CORS_ALLOWED_ORIGINS_STRING = os.getenv(
+    'CORS_ALLOWED_ORIGINS',
+    'http://localhost:5500,http://127.0.0.1:5500,http://localhost:3000'
+)
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS_STRING.split(',') if origin.strip()]
 
 # ✅ SECURITY: Enable credentials for httpOnly cookies
 CORS_ALLOW_CREDENTIALS = True

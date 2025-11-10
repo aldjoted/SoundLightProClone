@@ -161,6 +161,46 @@ class Product(models.Model):
 
         return manual + suggestions
 
+    def get_semantic_related_products(self, limit=5):
+        """Find related products using the semantic FAISS index with graceful fallbacks."""
+        from .vector_search import get_search_index_data  # Local import to avoid circular dependency
+        from .embeddings import model as embedding_model, get_product_text
+        import numpy as np
+        from django.db.models import Case, When
+
+        index, product_ids = get_search_index_data()
+        if not index or not product_ids:
+            return self.get_related_products(limit=limit)
+
+        try:
+            current_product_index = product_ids.index(self.id)
+        except ValueError:
+            return self.get_related_products(limit=limit)
+
+        try:
+            vector = index.reconstruct(current_product_index)
+        except Exception:
+            product_vector = embedding_model.encode([get_product_text(self)], normalize_embeddings=True)
+            vector = product_vector[0]
+
+        vector = np.asarray(vector, dtype='float32').reshape(1, -1)
+        D, I = index.search(vector, (limit or 0) + 1)
+
+        found_ids = []
+        for idx in I[0]:
+            if 0 <= idx < len(product_ids):
+                candidate_id = product_ids[idx]
+                if candidate_id != self.id and candidate_id not in found_ids:
+                    found_ids.append(candidate_id)
+                    if limit and len(found_ids) >= limit:
+                        break
+
+        if not found_ids:
+            return self.get_related_products(limit=limit)
+
+        ordering = Case(*[When(pk=pid, then=pos) for pos, pid in enumerate(found_ids)])
+        return Product.objects.filter(id__in=found_ids).order_by(ordering)
+
 class ProductImage(models.Model):
     """
     Model for storing multiple images for a single product.

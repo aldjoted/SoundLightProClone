@@ -13,234 +13,30 @@ import * as ui from './ui.js';
 import * as auth from './auth.js';
 import AdvancedSearch from './advanced-search.js';
 import MobileNavigation from './mobile-nav.js';
-import { ListenerManager, RequestManager } from './utils.js';
+import { ListenerManager } from './utils.js';
 import { initPerformanceOptimizations } from './performance.js';
 import { initSecurity } from './security.js';
 import { initAnalytics } from './analytics.js';
 import i18n from './i18n.js';
 import './language-switcher.js';
 import { initBrandGallery } from './brand-gallery.js';
+import {
+    ErrorBoundary,
+    globalListenerManager,
+    globalRequestManager,
+    getCached,
+    appState,
+    requestCache,
+} from './app-core.js';
+import { initHomePage } from './pages/home.js';
+import { initProductPage } from './pages/product.js';
+import { initCartPage } from './pages/cart.js';
 // PWA imports
 import { initOfflineIndicator } from './offline-indicator.js';
 import { initSyncManager } from './sync-manager.js';
 import { initInstallPrompt } from './install-prompt.js';
 
-// ============= Error Boundary =============
-
-/**
- * ✅ IMPROVEMENT: Global error boundary for better error handling and recovery
- * Provides centralized error logging, user-friendly messages, and error recovery
- */
-class ErrorBoundary {
-    static errorLog = [];
-    
-    /**
-     * Handles errors with context and user-friendly messaging
-     * @param {Error} error - The error object
-     * @param {string} context - Context where the error occurred
-     */
-    static handleError(error, context = 'Unknown') {
-        console.error(`[${context}] Error:`, error);
-        
-        // Log error details
-        this.logError(error, context);
-        
-        // Send to error tracking service if available
-        if (window.Sentry) {
-            window.Sentry.captureException(error, {
-                tags: { context },
-                extra: {
-                    timestamp: new Date().toISOString(),
-                    userAgent: navigator.userAgent
-                }
-            });
-        }
-        
-        // Show user-friendly message
-        const userMessage = this.getUserFriendlyMessage(error, context);
-        if (typeof ui !== 'undefined' && ui.showToast) {
-            ui.showToast(userMessage, 'error');
-        }
-    }
-    
-    /**
-     * Logs error to localStorage for debugging
-     * @param {Error} error - The error object
-     * @param {string} context - Context where error occurred
-     */
-    static logError(error, context) {
-        const errorEntry = {
-            timestamp: new Date().toISOString(),
-            context,
-            message: error.message,
-            stack: error.stack,
-            userAgent: navigator.userAgent,
-            url: window.location.href
-        };
-        
-        try {
-            const logs = JSON.parse(localStorage.getItem('errorLogs') || '[]');
-            logs.push(errorEntry);
-            // Keep only last 20 errors
-            const recentLogs = logs.slice(-20);
-            localStorage.setItem('errorLogs', JSON.stringify(recentLogs));
-            this.errorLog = recentLogs;
-        } catch (e) {
-            console.error('Failed to log error to localStorage:', e);
-        }
-    }
-    
-    /**
-     * Gets user-friendly error message
-     * @param {Error} error - The error object
-     * @param {string} context - Context where error occurred
-     * @returns {string} User-friendly error message
-     */
-    static getUserFriendlyMessage(error, context) {
-        // Network errors
-        if (error.name === 'TypeError' && error.message.includes('fetch')) {
-            return 'Network error. Please check your connection and try again.';
-        }
-        
-        // Abort errors (not really errors, just cancelled requests)
-        if (error.name === 'AbortError') {
-            return null; // Don't show message for aborted requests
-        }
-        
-        // API errors
-        if (error.name === 'APIError') {
-            return error.getUserMessage ? error.getUserMessage() : error.message;
-        }
-        
-        // Context-specific messages
-        const contextMessages = {
-            'Initializing home page': 'Failed to load page content. Please refresh.',
-            'Loading product': 'Failed to load product details. Please try again.',
-            'Submitting form': 'Failed to submit form. Please check your input and try again.',
-            'Loading cart': 'Failed to load cart. Your items are safe, please refresh.',
-        };
-        
-        return contextMessages[context] || 'An unexpected error occurred. Please try again.';
-    }
-    
-    /**
-     * Wraps an async function with error handling
-     * @param {Function} fn - The function to wrap
-     * @param {string} context - Context description
-     * @returns {Function} Wrapped function
-     */
-    static wrap(fn, context) {
-        return async function(...args) {
-            try {
-                return await fn.apply(this, args);
-            } catch (error) {
-                ErrorBoundary.handleError(error, context);
-                throw error; // Re-throw for specific handling if needed
-            }
-        };
-    }
-    
-    /**
-     * Gets recent error logs
-     * @returns {Array} Recent error log entries
-     */
-    static getErrorLogs() {
-        return [...this.errorLog];
-    }
-    
-    /**
-     * Clears error logs
-     */
-    static clearErrorLogs() {
-        this.errorLog = [];
-        try {
-            localStorage.removeItem('errorLogs');
-        } catch (e) {
-            console.error('Failed to clear error logs:', e);
-        }
-    }
-}
-
-// Set up global error handlers
-window.addEventListener('error', (event) => {
-    ErrorBoundary.handleError(event.error, 'Global error');
-});
-
-window.addEventListener('unhandledrejection', (event) => {
-    ErrorBoundary.handleError(event.reason, 'Unhandled promise rejection');
-    event.preventDefault(); // Prevent default console error
-});
-
-// Export for use in other modules
-window.ErrorBoundary = ErrorBoundary;
-
 // ============= Lazy Loading Utilities =============
-
-/**
- * ✅ IMPROVEMENT: Lazy load Swiper library only when needed
- * Reduces initial bundle size by ~50KB
- */
-async function initSwiper() {
-    const heroSlider = document.querySelector('.hero-slider');
-    if (!heroSlider) return;
-    
-    // Check if Swiper is already loaded
-    if (window.Swiper) {
-        // ✅ OPTIMIZED: Enhanced lazy loading configuration for better performance
-        new window.Swiper('.hero-slider', {
-            loop: true,
-            effect: 'fade',
-            autoplay: { delay: 7000, disableOnInteraction: false },
-            pagination: { el: '.swiper-pagination', clickable: true },
-            navigation: { 
-                nextEl: '.swiper-button-next', 
-                prevEl: '.swiper-button-prev' 
-            },
-            // ✅ Enhanced lazy loading
-            lazy: {
-                loadPrevNext: true,        // Preload adjacent slides
-                loadPrevNextAmount: 1,     // Only 1 slide ahead to save bandwidth
-                loadOnTransitionStart: true // Start loading during transition
-            },
-            preloadImages: false,          // Disable automatic preloading
-            watchSlidesProgress: true,     // Enable progress tracking for lazy loading
-        });
-        return;
-    }
-    
-    // Swiper is loaded via CDN in index.html, wait for it
-    return new Promise((resolve) => {
-        const checkSwiper = setInterval(() => {
-            if (window.Swiper) {
-                clearInterval(checkSwiper);
-                new window.Swiper('.hero-slider', {
-                    loop: true,
-                    effect: 'fade',
-                    autoplay: { delay: 7000, disableOnInteraction: false },
-                    pagination: { el: '.swiper-pagination', clickable: true },
-                    navigation: { 
-                        nextEl: '.swiper-button-next', 
-                        prevEl: '.swiper-button-prev' 
-                    },
-                    lazy: {
-                        loadPrevNext: true,
-                        loadPrevNextAmount: 1,
-                        loadOnTransitionStart: true
-                    },
-                    preloadImages: false,
-                    watchSlidesProgress: true,
-                });
-                resolve();
-            }
-        }, 50);
-        
-        // Timeout after 5 seconds
-        setTimeout(() => {
-            clearInterval(checkSwiper);
-            resolve();
-        }, 5000);
-    });
-}
 
 /**
  * ✅ IMPROVEMENT: Lazy load AOS library only when needed
@@ -269,171 +65,14 @@ function initAOS() {
 
 // --- State Management & Cache ---
 
-/**
- * Global state for data shared across the application.
- * @type {{products: Array<Object>, categories: Array<Object>}}
- */
-const appState = {
-    products: [],
-    categories: [],
-};
-
-/**
- * Smart cache with strategy-based TTL and stale-while-revalidate support
- * ✅ Improved: Different strategies for different data types
- */
-class SmartCache {
-    constructor() {
-        this.cache = new Map();
-        // Define cache strategies for different data types
-        this.strategies = {
-            products: { ttl: 5 * 60 * 1000, staleWhileRevalidate: true }, // 5 min, SWR enabled
-            categories: { ttl: 30 * 60 * 1000, staleWhileRevalidate: false }, // 30 min, no SWR (changes rarely)
-            userProfile: { ttl: 2 * 60 * 1000, staleWhileRevalidate: false } // 2 min, no SWR (sensitive data)
-        };
-    }
-    
-    /**
-     * Gets data from cache or fetches it
-     * @param {string} key - Cache key
-     * @param {Function} fetcher - Async function to fetch data
-     * @param {string} strategyName - Name of the cache strategy to use
-     * @returns {Promise<any>} The cached or fetched data
-     */
-    async get(key, fetcher, strategyName = 'products') {
-        const strategy = this.strategies[strategyName] || this.strategies.products;
-        const cached = this.cache.get(key);
-        const now = Date.now();
-        
-        if (cached) {
-            const age = now - cached.timestamp;
-            
-            // Return immediately if fresh
-            if (age < strategy.ttl) {
-                return cached.data;
-            }
-            
-            // Stale-while-revalidate: return stale data
-            // while refreshing in background
-            if (strategy.staleWhileRevalidate) {
-                this.refreshInBackground(key, fetcher, strategyName);
-                return cached.data;
-            }
-        }
-        
-        // No cache or expired without SWR - fetch fresh data
-        const data = await fetcher();
-        this.cache.set(key, { data, timestamp: now });
-        return data;
-    }
-    
-    /**
-     * Refreshes cache in background (for stale-while-revalidate)
-     * @param {string} key - Cache key
-     * @param {Function} fetcher - Async function to fetch data
-     * @param {string} strategyName - Name of the cache strategy
-     */
-    async refreshInBackground(key, fetcher, strategyName) {
-        try {
-            const data = await fetcher();
-            this.cache.set(key, { data, timestamp: Date.now() });
-        } catch (error) {
-            console.warn(`Background refresh failed for ${key}:`, error);
-            // Keep stale data on error
-        }
-    }
-    
-    /**
-     * Manually invalidates a cache entry
-     * @param {string} key - Cache key to invalidate
-     */
-    invalidate(key) {
-        this.cache.delete(key);
-    }
-    
-    /**
-     * Clears all cache entries
-     */
-    clear() {
-        this.cache.clear();
-    }
-}
-
-const cache = new SmartCache();
-
-// ✅ IMPROVEMENT: Request deduplication to prevent duplicate API calls
-class RequestCache {
-    constructor() {
-        this.pending = new Map();
-    }
-    
-    /**
-     * Gets data from cache or fetches it, preventing duplicate requests
-     * @param {string} key - Cache key
-     * @param {Function} fetcher - Async function to fetch data
-     * @returns {Promise<any>} The cached or fetched data
-     */
-    async get(key, fetcher) {
-        // Return existing promise if request is in flight
-        if (this.pending.has(key)) {
-            console.log(`[RequestCache] Reusing in-flight request for: ${key}`);
-            return this.pending.get(key);
-        }
-        
-        // Create new request and track it
-        const promise = fetcher()
-            .finally(() => {
-                // Remove from pending after completion
-                this.pending.delete(key);
-            });
-        
-        this.pending.set(key, promise);
-        return promise;
-    }
-    
-    /**
-     * Invalidates a pending request
-     * @param {string} key - Cache key to invalidate
-     */
-    invalidate(key) {
-        this.pending.delete(key);
-    }
-    
-    /**
-     * Clears all pending requests
-     */
-    clear() {
-        this.pending.clear();
-    }
-}
-
-const requestCache = new RequestCache();
-
-// Global resource managers
-const globalListenerManager = new ListenerManager();
-const globalRequestManager = new RequestManager();
-
-/**
- * Retrieves data from cache or fetches it if stale or absent.
- * @param {string} key - The cache key.
- * @param {Function} fetcher - An async function that fetches the data.
- * @param {string} strategy - The cache strategy to use ('products', 'categories', 'userProfile').
- * @returns {Promise<any>}
- */
-async function getCached(key, fetcher, strategy = 'products') {
-    return cache.get(key, fetcher, strategy);
-}
-
 // --- Initialization & Routing ---
 
-globalListenerManager.add(document, 'DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     try {
-        initApp().then(() => {
-            router();
-        });
+        await initApp();
+        runRoute();
     } catch (error) {
         console.error('App initialization failed:', error);
-        // Show error message to user
         document.body.innerHTML = `
             <div style="padding: 20px; text-align: center; font-family: Arial, sans-serif;">
                 <h2>Loading Error</h2>
@@ -445,47 +84,50 @@ globalListenerManager.add(document, 'DOMContentLoaded', () => {
     }
 });
 
-/**
- * Routes to the appropriate page initialization function based on the current URL.
- * ✅ IMPROVED: Enhanced cleanup of previous page resources to prevent memory leaks
- */
-function router() {
-    const path = window.location.pathname;
-    const page = path.split("/").pop() || 'index.html';
-    
-    // ✅ Cleanup mega menu listeners from previous page
+const routeHandlers = {
+    '/': (signal) => initHomePage(signal),
+    '/index.html': (signal) => initHomePage(signal),
+    'index.html': (signal) => initHomePage(signal),
+    '/product.html': (signal) => initProductPage(signal),
+    'product.html': (signal) => initProductPage(signal),
+    '/cart.html': (signal) => initCartPage(signal),
+    'cart.html': (signal) => initCartPage(signal),
+    '/wishlist.html': (signal) => initWishlistPage(signal),
+    'wishlist.html': (signal) => initWishlistPage(signal),
+    '/login.html': (signal) => initLoginPage(signal),
+    'login.html': (signal) => initLoginPage(signal),
+    '/register.html': (signal) => initRegisterPage(signal),
+    'register.html': (signal) => initRegisterPage(signal),
+    '/search-results.html': (signal) => initSearchResultsPage(signal),
+    'search-results.html': (signal) => initSearchResultsPage(signal),
+};
+
+function runRoute() {
+    const path = window.location.pathname || '/';
+    const fallbackKey = path.split('/').pop() || '/';
+    const initFunction = routeHandlers[path] || routeHandlers[fallbackKey];
+
     const megaMenu = document.getElementById('products-mega-menu');
     if (megaMenu?._listenerManager) {
         megaMenu._listenerManager.removeAll();
         delete megaMenu._tabSwitchingInitialized;
         delete megaMenu._listenerManager;
     }
-    
-    const routes = {
-        'index.html': initHomePage,
-        'product.html': initProductDetailPage,
-        'cart.html': initCartPage,
-        'wishlist.html': initWishlistPage,
-        'login.html': initLoginPage,
-        'register.html': initRegisterPage,
-        'search-results.html': initSearchResultsPage,
-    };
 
-    const initFunction = routes[page];
-    if (initFunction) {
-        // Cancel previous page requests
-        globalRequestManager.abort('currentRoute');
-        const controller = globalRequestManager.create('currentRoute');
-        const { signal } = controller;
-        
-        const maybePromise = initFunction(signal);
-        Promise.resolve(maybePromise).catch(error => {
-            if (error.name !== 'AbortError') {
-                console.error(`Error initializing page ${page}:`, error);
-                ui.showToast('Failed to load page content.', 'error');
-            }
-        });
+    if (!initFunction) {
+        return;
     }
+
+    globalRequestManager.abort('currentRoute');
+    const controller = globalRequestManager.create('currentRoute');
+    const maybePromise = initFunction(controller.signal);
+
+    Promise.resolve(maybePromise).catch((error) => {
+        if (error?.name !== 'AbortError') {
+            console.error(`Error initializing page for path ${path}:`, error);
+            ui.showToast('Failed to load page content.', 'error');
+        }
+    });
 }
 
 /**
@@ -819,263 +461,6 @@ function updateDynamicTranslations() {
 
 // --- Page Initializers ---
 
-/**
- * Initializes the Home Page.
- * ✅ IMPROVED: Wrapped with error boundary for better error handling
- */
-async function initHomePage(signal) {
-    const wrappedInit = ErrorBoundary.wrap(async () => {
-        const productGrid = document.getElementById('product-grid');
-        const featuredGrid = document.getElementById('featured-grid');
-        if (!productGrid || !featuredGrid) {
-            console.warn('Product grid or featured grid not found');
-            return;
-        }
-
-        // Page-specific listener manager
-        const pageListenerManager = new ListenerManager();
-
-        initBrandGallery({ signal });
-
-        ui.showSkeletonLoader(productGrid, 8);
-        ui.showSkeletonLoader(featuredGrid, 3);
-
-        try {
-            // Categories are already loaded in appState from initApp
-            // Only fetch products here
-            const products = await getCached('products', () => apiService.getProducts('', { signal }, ''), 'products');
-            
-            appState.products = products;
-
-            ui.renderHeroSlider();
-            
-            // ✅ OPTIMIZED: Lazy initialize Swiper only when hero slider exists
-            await initSwiper();
-            
-            ui.renderFeaturedGrid(products.slice(0, 3));
-            ui.renderCategoryFilters(appState.categories);
-            ui.renderProductGrid(products, productGrid);
-            
-            const filterControls = document.querySelector('.filter-controls');
-            if (filterControls) {
-                pageListenerManager.add(filterControls, 'click', (e) => {
-                    const filterBtn = e.target.closest('.filter-btn');
-                    if (!filterBtn) return;
-                    document.querySelector('.filter-controls .active')?.classList.remove('active');
-                    filterBtn.classList.add('active');
-                    filterProducts(filterBtn.dataset.category);
-                });
-            }
-
-            // Cleanup function for when leaving the page
-            window.addEventListener('beforeunload', () => {
-                pageListenerManager.removeAll();
-            });
-
-        } catch (error) {
-            if (error.name !== 'AbortError') {
-                console.error("Error initializing homepage:", error);
-                productGrid.innerHTML = `<p class="error-message">Failed to load products. <button onclick="location.reload()" class="btn btn--primary">Retry</button></p>`;
-            }
-        }
-    }, 'Initializing home page');
-    
-    return wrappedInit();
-}
-
-/**
- * Initializes the Product Detail Page.
- */
-async function initProductDetailPage(signal) {
-    const container = document.getElementById('product-detail-container');
-    if (!container) return;
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const productId = urlParams.get('id');
-
-    if (!productId) {
-        container.innerHTML = `<p class="error-message">No product specified. <a href="index.html">Return to products</a>.</p>`;
-        return;
-    }
-
-    try {
-        const product = await apiService.getProductById(productId, { signal });
-        ui.renderProductDetail(product, container);
-        setupProductDetailPageEventListeners(product);
-        
-        // Load reviews and related products
-        await loadProductReviews(productId);
-        await loadRelatedProducts(productId);
-    } catch (error) {
-        console.error("Error fetching product details:", error);
-        container.innerHTML = `<p class="error-message">Could not load product. It may not exist. <a href="index.html">Return to products</a>.</p>`;
-    }
-}
-
-/**
- * Loads and renders product reviews
- * @param {string|number} productId - The product ID
- */
-async function loadProductReviews(productId) {
-    const statsContainer = document.getElementById('review-stats-container');
-    const listContainer = document.getElementById('reviews-list-container');
-    const formContainer = document.getElementById('review-form-container');
-    
-    if (!statsContainer || !listContainer) {
-        console.warn('Review containers not found on page');
-        return;
-    }
-
-    try {
-        // Dynamically import reviews module
-        const { ReviewManager } = await import('./reviews.js');
-        const reviewManager = new ReviewManager(productId);
-        
-        // Load and render stats
-        const stats = await reviewManager.loadStats();
-        if (stats) {
-            ui.renderReviewStats(stats, statsContainer);
-        }
-        
-        // Load and render reviews
-        const reviews = await reviewManager.loadReviews();
-        if (reviews && reviews.length > 0) {
-            reviews.forEach(review => {
-                const reviewCard = ui.renderReviewCard(review);
-                listContainer.appendChild(reviewCard);
-            });
-        } else {
-            listContainer.innerHTML = `
-                <div class="no-reviews">
-                    <i class="far fa-comment-alt"></i>
-                    <h3>${i18n.t('no_reviews')}</h3>
-                    <p>${i18n.t('be_first_review')}</p>
-                </div>
-            `;
-        }
-        
-        // Setup write review button
-        const writeReviewBtn = document.getElementById('write-review-btn');
-        if (writeReviewBtn && formContainer) {
-            writeReviewBtn.addEventListener('click', () => {
-                formContainer.classList.toggle('hidden');
-                if (!formContainer.classList.contains('hidden')) {
-                    // Render the review form
-                    const reviewForm = ui.renderReviewForm(productId);
-                    formContainer.innerHTML = '';
-                    formContainer.appendChild(reviewForm);
-                    
-                    // Setup form submission
-                    const form = formContainer.querySelector('form');
-                    if (form) {
-                        form.addEventListener('submit', async (e) => {
-                            e.preventDefault();
-                            try {
-                                await reviewManager.submitReview({
-                                    rating: form.rating.value,
-                                    title: form.title.value,
-                                    comment: form.comment.value
-                                });
-                                
-                                ui.showToast(i18n.t('review_submitted'), 'success');
-                                formContainer.classList.add('hidden');
-                                
-                                // Reload reviews
-                                listContainer.innerHTML = '<div class="reviews-loading"><div class="spinner"></div></div>';
-                                const updatedReviews = await reviewManager.loadReviews();
-                                listContainer.innerHTML = '';
-                                updatedReviews.forEach(review => {
-                                    const reviewCard = ui.renderReviewCard(review);
-                                    listContainer.appendChild(reviewCard);
-                                });
-                                
-                                // Reload stats
-                                const updatedStats = await reviewManager.loadStats();
-                                if (updatedStats) {
-                                    ui.renderReviewStats(updatedStats, statsContainer);
-                                }
-                            } catch (error) {
-                                ui.showToast(error.message || i18n.t('review_submit_error'), 'error');
-                            }
-                        });
-                        
-                        // Setup cancel button
-                        const cancelBtn = form.querySelector('.btn-secondary');
-                        if (cancelBtn) {
-                            cancelBtn.addEventListener('click', () => {
-                                formContainer.classList.add('hidden');
-                            });
-                        }
-                    }
-                }
-            });
-        }
-        
-        // Setup sort dropdown
-        const sortSelect = document.getElementById('review-sort-select');
-        if (sortSelect) {
-            sortSelect.addEventListener('change', async (e) => {
-                listContainer.innerHTML = '<div class="reviews-loading"><div class="spinner"></div></div>';
-                const sortedReviews = await reviewManager.loadReviews(e.target.value);
-                listContainer.innerHTML = '';
-                sortedReviews.forEach(review => {
-                    const reviewCard = ui.renderReviewCard(review);
-                    listContainer.appendChild(reviewCard);
-                });
-            });
-        }
-        
-    } catch (error) {
-        console.error('Error loading product reviews:', error);
-        if (listContainer) {
-            listContainer.innerHTML = `<p class="error-message">${i18n.t('error_loading_reviews')}</p>`;
-        }
-    }
-}
-
-/**
- * Loads and renders related products
- * @param {string|number} productId - The product ID
- */
-async function loadRelatedProducts(productId) {
-    const relatedSection = document.getElementById('related-products-section');
-    if (!relatedSection) {
-        console.warn('Related products section not found on page');
-        return;
-    }
-
-    try {
-        // Show loading state
-        relatedSection.innerHTML = `
-            <div class="related-products-loading">
-                <div class="spinner"></div>
-                <p>${i18n.t('loading_related_products')}</p>
-            </div>
-        `;
-        
-        // Fetch related products
-        const relatedProducts = await apiService.getRelatedProducts(productId);
-        
-        if (relatedProducts && relatedProducts.length > 0) {
-            ui.renderRelatedProducts(relatedProducts, relatedSection);
-        } else {
-            relatedSection.innerHTML = `
-                <div class="no-related-products">
-                    <i class="fas fa-boxes"></i>
-                    <h3>${i18n.t('no_related_products')}</h3>
-                    <p>${i18n.t('check_back_later')}</p>
-                </div>
-            `;
-        }
-    } catch (error) {
-        console.error('Error loading related products:', error);
-        relatedSection.innerHTML = `<p class="error-message">${i18n.t('error_loading_related')}</p>`;
-    }
-}
-
-/**
- * Initializes the Wishlist Page.
- */
 async function initWishlistPage(signal) {
     const container = document.getElementById('wishlist-container');
     if (!container) {
@@ -1221,81 +606,6 @@ async function initWishlistPage(signal) {
             </p>
         `;
     }
-
-    // Cleanup function for when leaving the page
-    window.addEventListener('beforeunload', () => {
-        pageListenerManager.removeAll();
-    });
-}
-
-/**
- * Initializes the Cart Page and its dynamic rendering.
- */
-function initCartPage() {
-    const container = document.getElementById('cart-container');
-    const checkoutSection = document.getElementById('checkout-section');
-    if (!container) return;
-
-    // Page-specific listener manager
-    const pageListenerManager = new ListenerManager();
-
-    const render = () => {
-        const items = cart.getCart();
-        container.innerHTML = ''; // Clear previous content
-
-        if (items.length === 0) {
-            container.innerHTML = ui.getEmptyCartHTML(); // Use a UI function for the template
-            checkoutSection.classList.add('hidden');
-            return;
-        }
-
-        const { cartLayout, summary } = ui.getCartLayoutHTML(items);
-        container.appendChild(cartLayout);
-        container.appendChild(summary);
-        
-        checkoutSection.classList.remove('hidden');
-    };
-
-    pageListenerManager.add(container, 'change', (e) => {
-        if (e.target.classList.contains('qty-input')) {
-            const id = parseInt(e.target.closest('.cart-item').dataset.id, 10);
-            const qty = Math.max(1, parseInt(e.target.value, 10) || 1);
-            cart.updateCartItemQuantity(id, qty);
-        }
-    });
-
-    pageListenerManager.add(container, 'click', (e) => {
-        const itemEl = e.target.closest('.cart-item');
-        if (itemEl) {
-            const id = parseInt(itemEl.dataset.id, 10);
-            if (e.target.closest('.qty-increment')) {
-                const input = itemEl.querySelector('.qty-input');
-                const current = Math.max(1, parseInt(input.value, 10) || 1);
-                const next = current + 1;
-                input.value = String(next);
-                cart.updateCartItemQuantity(id, next);
-                return;
-            }
-            if (e.target.closest('.qty-decrement')) {
-                const input = itemEl.querySelector('.qty-input');
-                const current = Math.max(1, parseInt(input.value, 10) || 1);
-                const next = Math.max(1, current - 1);
-                input.value = String(next);
-                cart.updateCartItemQuantity(id, next);
-                return;
-            }
-        }
-        if (e.target.closest('.remove-btn')) {
-            const id = parseInt(e.target.closest('.cart-item').dataset.id, 10);
-            cart.removeFromCart(id);
-        }
-        if (e.target.closest('#proceed-checkout')) {
-            checkoutSection.scrollIntoView({ behavior: 'smooth' });
-        }
-    });
-
-    pageListenerManager.add(document, 'cartUpdated', render);
-    render();
 
     // Cleanup function for when leaving the page
     window.addEventListener('beforeunload', () => {
@@ -1494,124 +804,6 @@ function initRegisterPage() {
     window.addEventListener('beforeunload', () => {
         pageListenerManager.removeAll();
     });
-}
-
-/**
- * Sets up event listeners for the product detail page.
- * @param {Object} product - The product data for the page.
- */
-function setupProductDetailPageEventListeners(product) {
-    const pageListenerManager = new ListenerManager();
-    
-    const gallery = document.querySelector('.product-gallery');
-    if (gallery) {
-        pageListenerManager.add(gallery, 'click', (e) => {
-            const thumb = e.target.closest('.thumbnail-img');
-            if (!thumb) return;
-            
-            const mainImage = document.getElementById('main-product-image');
-            mainImage.style.opacity = '0';
-            setTimeout(() => {
-                mainImage.src = thumb.src;
-                mainImage.style.opacity = '1';
-            }, 200);
-
-            gallery.querySelector('.thumbnail-img.active')?.classList.remove('active');
-            thumb.classList.add('active');
-        });
-    }
-
-    const addToCartForm = document.getElementById('add-to-cart-form');
-    if (addToCartForm) {
-        pageListenerManager.add(addToCartForm, 'submit', (e) => {
-            e.preventDefault();
-            const quantity = parseInt(document.getElementById('quantity').value, 10);
-            if (quantity > 0) {
-                cart.addToCart(product, quantity);
-                ui.showToast(`${product.name} (x${quantity}) added to cart!`, 'success');
-                ui.renderMiniCart(cart.getCart());
-            }
-        });
-    }
-
-    const stickyAdd = document.getElementById('sticky-add');
-    if (stickyAdd) {
-        pageListenerManager.add(stickyAdd, 'click', () => {
-            const qty = parseInt(document.getElementById('sticky-qty').value, 10) || 1;
-            cart.addToCart(product, qty);
-            ui.showToast(`${product.name} (x${qty}) added to cart!`, 'success');
-            ui.renderMiniCart(cart.getCart());
-        });
-    }
-    
-    // Setup wishlist button if present
-    const wishlistBtn = document.querySelector('.wishlist-btn');
-    if (wishlistBtn) {
-        // Dynamically import and setup wishlist functionality
-        import('./wishlist.js').then(wishlist => {
-            // Check if product is already in wishlist
-            wishlist.initWishlist().then(() => {
-                const isInWishlist = wishlist.isInWishlist(product.id);
-                if (isInWishlist) {
-                    wishlistBtn.classList.add('in-wishlist');
-                    wishlistBtn.innerHTML = '<i class="fas fa-heart"></i> <span class="btn-text">' + i18n.t('in_wishlist') + '</span>';
-                }
-                
-                // Add click handler
-                pageListenerManager.add(wishlistBtn, 'click', async () => {
-                    try {
-                        await wishlist.toggleWishlist(product.id);
-                        const nowInWishlist = wishlist.isInWishlist(product.id);
-                        
-                        if (nowInWishlist) {
-                            wishlistBtn.classList.add('in-wishlist');
-                            wishlistBtn.innerHTML = '<i class="fas fa-heart"></i> <span class="btn-text">' + i18n.t('in_wishlist') + '</span>';
-                            ui.showToast(i18n.t('added_to_wishlist'), 'success');
-                        } else {
-                            wishlistBtn.classList.remove('in-wishlist');
-                            wishlistBtn.innerHTML = '<i class="far fa-heart"></i> <span class="btn-text">' + i18n.t('add_to_wishlist') + '</span>';
-                            ui.showToast(i18n.t('removed_from_wishlist'), 'info');
-                        }
-                        
-                        // Update wishlist count
-                        const wishlistItems = wishlist.getWishlist();
-                        ui.updateWishlistCount(wishlistItems.length);
-                    } catch (error) {
-                        console.error('Error toggling wishlist:', error);
-                        ui.showToast(i18n.t('error_wishlist'), 'error');
-                    }
-                });
-            });
-        }).catch(error => {
-            console.error('Error loading wishlist module:', error);
-        });
-    }
-
-    // Cleanup function for when leaving the page
-    window.addEventListener('beforeunload', () => {
-        pageListenerManager.removeAll();
-    });
-}
-
-/**
- * Filters the products displayed in the grid based on a category slug.
- * @param {string} categorySlug - The slug of the category to filter by, or 'all'.
- */
-function filterProducts(categorySlug) {
-    const productGrid = document.getElementById('product-grid');
-    if (!productGrid) return;
-    
-    const productsToRender = categorySlug === 'all'
-        ? appState.products
-        : appState.products.filter(p => p.category.toLowerCase().replace(/\s+/g, '-') === categorySlug);
-    
-    productGrid.style.transition = 'opacity 0.3s ease-out';
-    productGrid.style.opacity = '0';
-    
-    setTimeout(() => {
-        ui.renderProductGrid(productsToRender, productGrid);
-        productGrid.style.opacity = '1';
-    }, 300);
 }
 
 /**
