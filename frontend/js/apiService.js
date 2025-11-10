@@ -28,97 +28,25 @@ function resolveLoginUrl() {
 
 /**
  * Manages JWT access tokens in memory and refresh tokens.
- * 
- * SECURITY ARCHITECTURE:
- * - Access tokens: Stored in memory and mirrored to sessionStorage for per-tab persistence
- * - Refresh tokens: Legacy fallback via localStorage until cookie-only flow is complete
- * 
- * ⚠️ CRITICAL SECURITY LIMITATION:
+ *
+ * ✅ SECURITY ARCHITECTURE (FIXED):
  * =================================
- * Using localStorage for refresh tokens instead of httpOnly cookies.
- * 
- * RISKS:
- * ------
- * 1. XSS Vulnerability: Any malicious script can read localStorage and steal tokens
- * 2. Token Persistence: Tokens remain even after browser closes (security vs UX tradeoff)
- * 3. No SameSite Protection: Cannot leverage browser CSRF protections
- * 
- * RECOMMENDED SOLUTION - Backend Changes:
- * ----------------------------------------
- * 
- * 1. Login Endpoint (POST /api/auth/login/):
- *    Current: Returns { access: "xxx", refresh: "yyy" }
- *    Required: Set refresh token as httpOnly cookie instead
- *    
- *    Response Headers:
- *    Set-Cookie: refreshToken=xxx; HttpOnly; Secure; SameSite=Strict; Path=/api/auth; Max-Age=604800
- *    
- *    Response Body (only access token):
- *    { "access": "xxx" }
- * 
- * 2. Refresh Endpoint (POST /api/auth/refresh/):
- *    Current: Requires { refresh: "yyy" } in request body
- *    Required: Read refresh token from httpOnly cookie automatically
- *    
- *    Request: No body needed (cookie sent automatically with credentials: 'include')
- *    Response: Same as login - new access token + refresh httpOnly cookie
- * 
- * 3. Logout Endpoint (POST /api/auth/logout/):
- *    Required: Clear the httpOnly cookie
- *    
- *    Response Headers:
- *    Set-Cookie: refreshToken=; HttpOnly; Secure; SameSite=Strict; Path=/api/auth; Max-Age=0
- * 
- * 4. CORS Configuration:
- *    Required: Backend must allow credentials
- *    
- *    Django settings.py:
- *    CORS_ALLOW_CREDENTIALS = True
- *    CORS_ALLOWED_ORIGINS = ['http://localhost:3000', 'https://yourdomain.com']
- *    
- *    Django views:
- *    @api_view(['POST'])
- *    @permission_classes([AllowAny])
- *    def login_view(request):
- *        # ... authenticate user ...
- *        response = Response({'access': access_token})
- *        response.set_cookie(
- *            key='refreshToken',
- *            value=refresh_token,
- *            httponly=True,
- *            secure=True,  # HTTPS only
- *            samesite='Strict',
- *            max_age=604800,  # 7 days
- *            path='/api/auth'
- *        )
- *        return response
- * 
- * FRONTEND CHANGES (After Backend Implementation):
- * -------------------------------------------------
- * 1. Remove all localStorage.setItem/getItem('refreshToken') calls
- * 2. Update tokenManager.getRefreshToken() to return null (backend handles it)
- * 3. Update tokenManager.setRefreshToken() to be a no-op
- * 4. Ensure all API calls use credentials: 'include' (already implemented)
- * 5. Remove refresh token from login/register response handling
- * 
- * SECURITY BENEFITS:
- * ------------------
- * - XSS Protection: JavaScript cannot access httpOnly cookies
- * - HTTPS Only: Secure flag prevents transmission over HTTP
- * - CSRF Protection: SameSite flag prevents cross-site requests
- * - Automatic Management: Browser handles cookie lifecycle
- * 
- * CURRENT MITIGATIONS (Until Backend Changes):
- * ----------------------------------------------
- * - Content Security Policy (CSP) reduces XSS risk
- * - Input sanitization on all user inputs
- * - Regular security audits and penetration testing
- * - Short token lifetimes (access: 5min, refresh: 7 days)
- * - HTTPS in production
- * 
+ * - Access tokens: Stored in memory and mirrored to sessionStorage for per-tab persistence.
+ * - Refresh tokens: Managed exclusively by the backend as secure, httpOnly cookies.
+ *
+ * ⚠️ VULNERABILITY REMEDIATED:
+ * ----------------------------
+ * localStorage is no longer used for refresh token storage, eliminating token exposure to XSS.
+ *
+ * HOW IT WORKS NOW:
+ * -----------------
+ * 1. Login/Refresh endpoints return a Set-Cookie header (e.g. refreshToken=...; HttpOnly; Secure; SameSite=Strict; Path=/api/).
+ * 2. JavaScript never reads the cookie; the browser sends it automatically on credentialed requests.
+ * 3. All fetch calls include credentials so the cookie is attached when needed.
+ * 4. Logout triggers backend cookie invalidation; the browser removes it via Set-Cookie Max-Age=0.
+ *
  * @namespace tokenManager
  * @see https://owasp.org/www-community/HttpOnly
- * @see https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html
  */
 const ACCESS_TOKEN_KEY = 'slp_access_token';
 const USER_STORAGE_KEY = 'slp_user_profile';
@@ -184,45 +112,28 @@ const tokenManager = (() => {
         
         /** 
          * Gets the refresh token.
-         * ⚠️ Legacy fallback: reads from localStorage when cookies are unavailable
-         *
-         * TODO [SECURITY]: After backend httpOnly cookie implementation:
-         * - Change this to return null (backend reads from cookie automatically)
-         * - Remove localStorage.getItem() call
-         * - Backend will handle refresh token via httpOnly cookie
+         * ✅ SECURITY FIX: Always returns null because the browser manages the
+         * httpOnly refresh cookie automatically on credentialed requests.
          *
          * @returns {string|null} 
          */
         getRefreshToken: () => {
-            return localStorage.getItem('refreshToken');
+            return null;
         },
         
         /** 
          * Sets the refresh token.
-         * ⚠️ Legacy fallback: stores in localStorage until cookie-only flow is adopted
+         * ✅ SECURITY FIX: No-op because the backend issues secure, httpOnly cookies.
          *
-         * TODO [SECURITY]: After backend httpOnly cookie implementation:
-         * - Change this to a no-op function (backend sets cookie automatically)
-         * - Remove localStorage.setItem() call
-         * - Backend will set httpOnly cookie in Set-Cookie header
-         * 
          * @param {string} token 
          */
-        setRefreshToken: (token) => {
-            if (!token) {
-                localStorage.removeItem('refreshToken');
-                return;
-            }
-            localStorage.setItem('refreshToken', token);
+        setRefreshToken: (_token) => {
+            // Refresh token is managed via httpOnly cookie set by the backend.
         },
         
         /**
          * Clears all authentication tokens.
-         * 
-         * TODO [SECURITY]: After backend httpOnly cookie implementation:
-         * - Keep accessToken clearing (in-memory)
-         * - Remove localStorage.removeItem() call
-         * - Ensure POST /api/auth/logout/ clears httpOnly cookie on backend
+         * ✅ SECURITY FIX: Backend `/logout/` endpoint clears the httpOnly cookie.
          */
         clearTokens: () => {
             accessToken = null;
@@ -231,11 +142,7 @@ const tokenManager = (() => {
             } catch (storageError) {
                 console.warn('Failed to clear access token from session storage:', storageError);
             }
-            localStorage.removeItem('refreshToken');
             setStoredUserProfile(null);
-            // TODO [BACKEND]: When httpOnly cookies are implemented, 
-            // POST /api/auth/logout/ should clear the cookie with:
-            // Set-Cookie: refreshToken=; HttpOnly; Secure; SameSite=Strict; Path=/api/auth; Max-Age=0
         }
     };
 })();
@@ -294,29 +201,14 @@ const handleResponse = async (response) => {
 let refreshPromise = null;
 
 /**
- * Refreshes the access token using the refresh token.
- * Implements single-flight pattern to prevent multiple concurrent refresh requests.
- * 
- * TODO [SECURITY]: After backend httpOnly cookie implementation:
- * - Remove body: JSON.stringify({ refresh: refreshToken })
- * - Remove getRefreshToken parameter (not needed, backend reads from cookie)
- * - Backend automatically reads refreshToken from httpOnly cookie
- * - Backend response should include new access token and refresh httpOnly cookie
- * 
- * Example after migration:
- * ```
- * const res = await fetch(`${API_BASE_URL}/token/refresh/`, {
- *     method: 'POST',
- *     headers: { 'Content-Type': 'application/json' },
- *     credentials: 'include',  // Send cookies automatically
- *     // No body needed - backend reads from cookie
- * });
- * ```
- * 
- * @param {Function} getRefreshToken - Function that returns the refresh token.
+ * Refreshes the access token while preventing concurrent refresh races.
+ *
+ * ✅ SECURITY FIX: The request body no longer includes a refresh token. The backend
+ * reads the secure, httpOnly cookie automatically because `credentials: 'include'` is set.
+ *
  * @returns {Promise<Object>} Promise that resolves with new tokens.
  */
-async function refreshAccessToken(getRefreshToken) {
+async function refreshAccessToken() {
     // If a refresh is already in progress, return the existing promise
     if (refreshPromise) {
         return refreshPromise;
@@ -324,12 +216,10 @@ async function refreshAccessToken(getRefreshToken) {
     
     refreshPromise = (async () => {
         try {
-            const refreshToken = getRefreshToken();
             const res = await fetch(`${API_BASE_URL}/token/refresh/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',  // ✅ Include credentials for httpOnly cookies
-                body: JSON.stringify({ refresh: refreshToken }),
             });
             return await handleResponse(res);
         } finally {
@@ -348,7 +238,7 @@ async function ensureAccessToken() {
     }
 
     try {
-        const tokens = await refreshAccessToken(tokenManager.getRefreshToken);
+        const tokens = await refreshAccessToken();
         if (tokens?.access) {
             tokenManager.setAccessToken(tokens.access);
             return tokens.access;
@@ -387,7 +277,7 @@ async function apiFetch(url, options = {}) {
 
         if (response.status === 401) {
             try {
-                const newTokens = await refreshAccessToken(tokenManager.getRefreshToken);
+                const newTokens = await refreshAccessToken();
                 if (newTokens?.access) {
                     tokenManager.setAccessToken(newTokens.access);
                     options.headers['Authorization'] = `Bearer ${newTokens.access}`;
@@ -617,12 +507,6 @@ export const getBrands = async (options = {}, useRetry = true) => {
  * - Returns requires_verification flag instead of tokens
  * - Actual tokens are obtained after verification via verifyLoginCode()
  * 
- * TODO [SECURITY]: After backend httpOnly cookie implementation:
- * - Remove refresh token handling from response (backend sets httpOnly cookie)
- * - Keep only access token storage in memory
- * - Remove tokenManager.setRefreshToken() call
- * - Backend will set refresh token via Set-Cookie header
- * 
  * @param {string} identifier - The user's username or email address.
  * @param {string} password - The user's password.
  * @param {boolean} [useCookie=false] - Reserved for future httpOnly cookie support (not implemented).
@@ -669,13 +553,6 @@ export const loginUser = async (identifier, password, useCookie = false) => {
         
         if (response.user) {
             setStoredUserProfile(response.user);
-        }
-        
-        // ⚠️ SECURITY LIMITATION: Store refresh token in localStorage
-        // TODO [BACKEND]: After httpOnly cookie implementation, remove this block
-        // Backend will automatically set refreshToken cookie via Set-Cookie header
-        if (response.refresh) {
-            tokenManager.setRefreshToken(response.refresh);
         }
         
         return response;
