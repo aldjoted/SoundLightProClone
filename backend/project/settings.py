@@ -305,12 +305,16 @@ SILENCED_SYSTEM_CHECKS = [
 # Email Configuration
 # ========================================
 # Configure email backend for sending verification codes
-if DEBUG:
-    # In development, print emails to console
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
-    # In production, use SMTP
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND')
+
+if not EMAIL_BACKEND:
+    if DEBUG:
+        # Default to console backend in local development
+        EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    else:
+        EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+if EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend':
     EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
     EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
     EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'

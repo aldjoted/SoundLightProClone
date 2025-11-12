@@ -120,10 +120,20 @@ class RateLimitedTokenObtainPairView(TokenObtainPairView):
             profile.save()
             
             # Send verification code via email
+            display_name = user.get_full_name().strip() or user.username
             try:
                 send_mail(
-                    subject='Your Login Verification Code',
-                    message=f'Your verification code is: {verification_code}\n\nThis code will expire in 10 minutes.',
+                    subject='SoundLightPro Login Verification Code',
+                    message=(
+                        f"Hello {display_name},\n\n"
+                        "We received a request to sign in to your SoundLightPro account. "
+                        "Use the one-time verification code below to continue:\n\n"
+                        f"{verification_code}\n\n"
+                        "This code expires in 10 minutes. If you did not try to sign in, please reset "
+                        "your password and contact our support team at support@soundlightpro.com.\n\n"
+                        "Stay secure,\n"
+                        "SoundLightPro Security Team"
+                    ),
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[user.email],
                     fail_silently=False,
