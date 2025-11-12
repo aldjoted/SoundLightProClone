@@ -23,9 +23,15 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'slug', 'parent', 'children']
 
     def get_children(self, obj):
-        # Use django-mptt's get_children() method which is optimized
-        # Only serialize direct children, not all descendants
-        children = obj.get_children()
+        # Prefer cached children when available to avoid extra queries
+        cached_children = getattr(obj, '_cached_children', None)
+        if cached_children is not None:
+            children = list(cached_children)
+        else:
+            children = list(obj.get_children())
+
+        if not children:
+            return []
         return CategorySerializer(children, many=True, context=self.context).data
     
     def get_name(self, obj):

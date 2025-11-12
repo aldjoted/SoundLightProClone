@@ -1,6 +1,7 @@
 import os
 import html
 import stripe
+import asyncio
 from dotenv import load_dotenv
 from typing import Optional
 
@@ -240,8 +241,14 @@ class CategoryList(generics.ListAPIView):
         return super().get(*args, **kwargs)
 
     def get_queryset(self) -> QuerySet[Category]:  # type: ignore
-        # Use django-mptt's get_cached_trees() for efficient tree loading
-        return Category.objects.filter(parent__isnull=True).order_by('name')
+        # Return the full category tree ordered for consistent caching
+        return Category.objects.all().order_by('tree_id', 'lft')
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        root_nodes = queryset.get_cached_trees()
+        serializer = self.get_serializer(root_nodes, many=True)
+        return Response(serializer.data)
 
 
 class BrandList(generics.ListAPIView):
@@ -363,9 +370,10 @@ class ChatbotView(APIView):
     """
     permission_classes = [permissions.AllowAny] # Allow anyone to use the chatbot
 
-    def post(self, request, *args, **kwargs):
+    async def post(self, request, *args, **kwargs):
         try:
-            gemini_model = get_gemini_model()
+            # Running get_gemini_model in a thread keeps the event loop responsive
+            gemini_model = await asyncio.to_thread(get_gemini_model)
         except ValueError as e:
             logger.error(f"Gemini configuration error: {e}")
             return Response(
@@ -385,24 +393,31 @@ class ChatbotView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        safe_user_message = html.escape(user_message)
+        safe_user_message = await asyncio.to_thread(html.escape, user_message)
 
         # --- Vector Search RAG: Find relevant products ---
-        index, product_ids = get_search_index_data()
-        relevant_products = []
-        if index and product_ids:
-            query_embedding = embedding_model.encode([user_message], normalize_embeddings=True)
-            D, I = index.search(query_embedding, 5)
-            found_indices = [idx for idx in I[0] if 0 <= idx < len(product_ids)]
-            found_ids = [product_ids[idx] for idx in found_indices]
-
-            if found_ids:
-                order_preserved = Case(*[When(pk=pid, then=pos) for pos, pid in enumerate(found_ids)])
-                relevant_products = list(
-                    Product.objects.filter(id__in=found_ids, available=True)
-                    .select_related('brand', 'category')
-                    .order_by(order_preserved)
+        try:
+            index, product_ids = await asyncio.to_thread(get_search_index_data)
+            relevant_products = []
+            if index and product_ids:
+                query_embedding = await asyncio.to_thread(
+                    embedding_model.encode, [user_message], normalize_embeddings=True
                 )
+                D, I = await asyncio.to_thread(index.search, query_embedding, 5)
+                found_indices = [idx for idx in I[0] if 0 <= idx < len(product_ids)]
+                found_ids = [product_ids[idx] for idx in found_indices]
+
+                if found_ids:
+                    order_preserved = Case(*[When(pk=pid, then=pos) for pos, pid in enumerate(found_ids)])
+                    relevant_products = await asyncio.to_thread(
+                        list,
+                        Product.objects.filter(id__in=found_ids, available=True)
+                        .select_related('brand', 'category')
+                        .order_by(order_preserved)
+                    )
+        except Exception as e:
+            logger.error(f"Error during vector search RAG: {e}", exc_info=True)
+            relevant_products = []
 
         # --- Format product data for the prompt ---
         product_context = "No specific products found."
@@ -458,8 +473,8 @@ class ChatbotView(APIView):
         )
         
         try:
-            # Send the prompt to Gemini
-            response = gemini_model.generate_content(prompt)
+            # Non-blocking call to Gemini async client
+            response = await gemini_model.generate_content_async(prompt)
             bot_response = response.text
 
             return Response({"reply": bot_response})

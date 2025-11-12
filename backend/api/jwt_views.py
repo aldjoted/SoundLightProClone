@@ -165,6 +165,8 @@ class RateLimitedTokenRefreshView(TokenRefreshView):
             refresh_token = request.COOKIES.get(cookie_settings['key'])
             
             if not refresh_token:
+                # ✅ This is expected when users aren't logged in - no need to log as warning
+                logger.debug('Token refresh attempted without refresh cookie (user not logged in)')
                 return Response(
                     {'detail': 'Refresh token not found in cookies'},
                     status=status.HTTP_401_UNAUTHORIZED

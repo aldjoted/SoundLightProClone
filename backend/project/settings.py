@@ -324,6 +324,22 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@soundlightpro.com'
 import os
 os.makedirs(BASE_DIR / 'logs', exist_ok=True)
 
+
+class SkipExpected401Filter(logging.Filter):
+    """
+    Custom logging filter to suppress expected 401 warnings from token refresh.
+    These warnings appear when unauthenticated users browse the site, which is normal.
+    """
+    def filter(self, record):
+        # Skip "Unauthorized: /api/token/refresh/" warnings - these are expected
+        if record.levelno == logging.WARNING:
+            message = record.getMessage()
+            if 'Unauthorized: /api/token/refresh/' in message or \
+               '"POST /api/token/refresh/ HTTP/1.1" 401' in message:
+                return False
+        return True
+
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -344,12 +360,16 @@ LOGGING = {
         'require_debug_true': {
             '()': 'django.utils.log.RequireDebugTrue',
         },
+        'skip_expected_401': {
+            '()': 'project.settings.SkipExpected401Filter',
+        },
     },
     'handlers': {
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'simple'
+            'formatter': 'simple',
+            'filters': ['skip_expected_401'],  # ✅ Apply filter to console output
         },
         'file': {
             'level': 'WARNING',
