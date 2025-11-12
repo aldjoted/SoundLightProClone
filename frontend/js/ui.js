@@ -1008,143 +1008,177 @@ function closeQuickViewModal() {
  */
 
 export function renderProductDetail(product, container) {
-
     if (!container || !product) return;
 
-
-
-    // Set the browser tab title
-
     document.title = `${escapeHtml(product.name)} - SoundLightPro`;
-
-
-
-    // Update structured data for SEO
-
     updateProductSchema(product);
 
-
-
     const hasImages = product.images && product.images.length > 0;
+    const mainImageSrc = hasImages
+        ? product.images[0].image
+        : 'https://via.placeholder.com/600x400.png?text=No+Image';
 
-    const mainImageSrc = hasImages ? product.images[0].image : 'https://via.placeholder.com/600x400.png?text=No+Image';
-
-    const isOutOfStock = product.stock === 0;
+    const rawStock = Number(product.stock);
+    const stockCount = Number.isFinite(rawStock) && rawStock > 0 ? rawStock : 0;
+    const isOutOfStock = stockCount === 0;
+    const quantityValue = isOutOfStock ? 0 : 1;
+    const quantityMin = isOutOfStock ? 0 : 1;
+    const quantityMax = stockCount > 0 ? stockCount : 1;
 
     const addBtnDisabledAttr = isOutOfStock ? 'disabled' : '';
+    const quantityDisabledAttr = isOutOfStock ? 'disabled' : '';
 
-    const addBtnLabel = isOutOfStock ? 'Out of Stock' : 'Add to Cart';
+    const addBtnLabel = isOutOfStock
+        ? i18n.t('product_out_of_stock', 'Out of Stock')
+        : i18n.t('btn_add_to_cart', 'Add to Cart');
 
-    const stockInfoText = product.stock > 0 ? `${product.stock} units available` : 'Currently out of stock';
+    const wishlistLabel = i18n.t('add_to_wishlist', 'Add to Wishlist');
 
-    
-    
+    const stockBadgeLabel = isOutOfStock
+        ? i18n.t('product_out_of_stock', 'Out of Stock')
+        : i18n.t('product_in_stock', 'In Stock');
+
+    const stockBadgeStatus = isOutOfStock
+        ? 'status-out'
+        : stockCount <= 3
+            ? 'status-low'
+            : 'status-in';
+
+    const stockInfoClass = isOutOfStock
+        ? 'is-out'
+        : stockCount <= 3
+            ? 'is-low'
+            : 'is-in';
+
+    const stockInfoText = isOutOfStock
+        ? i18n.t('product_stock_unavailable', 'Currently out of stock')
+        : stockCount <= 3
+            ? `Only ${stockCount} left in stock`
+            : `${stockCount} units available`;
+
     let thumbnailsHTML = '';
-
     if (hasImages && product.images.length > 1) {
-
         thumbnailsHTML = `
-
             <div class="product-thumbnails">
-
                 ${product.images.map((img, index) => `
-
-                    <img src="${img.image}" alt="${escapeHtml(img.alt_text || product.name)}" class="thumbnail-img ${index === 0 ? 'active' : ''}" width="300" height="300" loading="lazy" />
-
+                    <img
+                        src="${img.image}"
+                        alt="${escapeHtml(img.alt_text || product.name)}"
+                        class="thumbnail-img ${index === 0 ? 'active' : ''}"
+                        width="100"
+                        height="100"
+                        loading="lazy"
+                    />
                 `).join('')}
-
             </div>
-
         `;
-
     }
 
+    const categoryName = product.category ? escapeHtml(product.category) : 'N/A';
+    const brandName = product.brand ? escapeHtml(product.brand.name) : 'N/A';
+    const descriptionText = product.description
+        ? escapeHtml(product.description)
+        : 'No description available.';
 
+    const priceLabel = i18n.formatCurrency ? i18n.formatCurrency(product.price) : `$${parseFloat(product.price).toFixed(2)}`;
 
     const productHTML = `
-
         <div class="product-detail-layout">
-
             <div class="product-gallery">
-
                 <div class="main-image-container">
-
-                    <img id="main-product-image" src="${mainImageSrc}" alt="${escapeHtml(product.name)}" width="800" height="500">
-
+                    <img
+                        id="main-product-image"
+                        src="${mainImageSrc}"
+                        alt="${escapeHtml(product.name)}"
+                        width="600"
+                        height="400"
+                    />
                 </div>
-
                 ${thumbnailsHTML}
-
             </div>
-
             <div class="product-detail-info">
-
-                <p class="category">${escapeHtml(product.category)}</p>
-
-                <h1>${escapeHtml(product.name)}</h1>
-
-                <p class="brand">Brand: <strong>${product.brand ? escapeHtml(product.brand.name) : 'N/A'}</strong></p>
-
-                <p class="price">$${parseFloat(product.price).toFixed(2)}</p>
-
-                <div class="description">
-
-                    <p>${escapeHtml(product.description || 'No description available.')}</p>
-
+                <div class="product-info-header">
+                    <div class="product-pill-group">
+                        ${product.category ? `<span class="product-pill">${categoryName}</span>` : ''}
+                        <span class="product-pill ${stockBadgeStatus}">${escapeHtml(stockBadgeLabel)}</span>
+                    </div>
+                    <h1>${escapeHtml(product.name)}</h1>
                 </div>
-
-                <form id="add-to-cart-form" class="add-to-cart-form">
-
-                    <input type="number" id="quantity" value="1" min="1" max="${product.stock}" aria-label="Quantity">
-
-                    <button type="submit" class="btn btn--primary btn--full-width" ${addBtnDisabledAttr}>
-
-                        <i class="fas fa-shopping-cart"></i> 
-
-                        ${addBtnLabel}
-
-                    </button>
-
-                </form>
-
-                <p class="stock-info">${stockInfoText}</p>
-
+                <div class="product-price-block">
+                    <p class="price">${escapeHtml(priceLabel)}</p>
+                </div>
+                <ul class="product-meta">
+                    <li>
+                        <span class="label">Category</span>
+                        <span class="value">${categoryName}</span>
+                    </li>
+                    <li>
+                        <span class="label">Brand</span>
+                        <span class="value">${brandName}</span>
+                    </li>
+                </ul>
+                <div class="description">
+                    <h2 class="product-section-title">Description</h2>
+                    <p>${descriptionText}</p>
+                </div>
+                <div class="product-actions">
+                    <form id="add-to-cart-form" class="add-to-cart-form">
+                        <div class="quantity-control">
+                            <label for="quantity">Quantity:</label>
+                            <input
+                                type="number"
+                                id="quantity"
+                                value="${quantityValue}"
+                                min="${quantityMin}"
+                                max="${quantityMax}"
+                                ${quantityDisabledAttr}
+                            />
+                        </div>
+                        <button type="submit" class="btn btn--primary" ${addBtnDisabledAttr}>
+                            <i class="fas fa-shopping-cart"></i>
+                            ${escapeHtml(addBtnLabel)}
+                        </button>
+                    </form>
+                    <div class="product-secondary-actions">
+                        <button type="button" class="wishlist-btn" aria-label="${escapeHtml(wishlistLabel)}">
+                            <i class="far fa-heart"></i>
+                            <span class="btn-text">${escapeHtml(wishlistLabel)}</span>
+                        </button>
+                    </div>
+                </div>
+                <p class="stock-info ${stockInfoClass}">${escapeHtml(stockInfoText)}</p>
             </div>
-
         </div>
-
     `;
-
-
 
     container.innerHTML = productHTML;
 
+    // Remove existing sticky CTA if present
+    const existingSticky = document.getElementById('sticky-cta');
+    if (existingSticky) {
+        existingSticky.remove();
+    }
 
-
-    // Sticky CTA (mobile)
-
+    // Add sticky CTA for mobile
     const sticky = document.createElement('div');
-
     sticky.className = 'sticky-cta';
-
     sticky.id = 'sticky-cta';
-
     sticky.innerHTML = `
-
-        <p class="price">$${parseFloat(product.price).toFixed(2)}</p>
-
-        <input type="number" class="qty" id="sticky-qty" value="1" min="1" max="${product.stock || 1}" aria-label="Quantity">
-
-        <button class="btn btn--primary btn--full-width" id="sticky-add" ${addBtnDisabledAttr} aria-label="Add to cart">
-
-            <i class="fas fa-shopping-cart"></i> ${addBtnLabel}
-
+        <p class="price">${escapeHtml(priceLabel)}</p>
+        <input
+            type="number"
+            class="qty"
+            id="sticky-qty"
+            value="${quantityValue}"
+            min="${quantityMin}"
+            max="${quantityMax}"
+            ${quantityDisabledAttr}
+        />
+        <button class="btn btn--primary" id="sticky-add" ${addBtnDisabledAttr}>
+            <i class="fas fa-shopping-cart"></i> ${escapeHtml(addBtnLabel)}
         </button>
-
     `;
-
     document.body.appendChild(sticky);
-
 }
 
 

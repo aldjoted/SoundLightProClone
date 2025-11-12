@@ -103,16 +103,29 @@ class Product(models.Model):
         if language == 'fr' and self.description_fr:
             return self.description_fr
         return self.description
-    
-    def get_average_rating(self):
-        """Calculate the average rating from approved reviews"""
-        from django.db.models import Avg
-        result = self.reviews.filter(is_approved=True).aggregate(Avg('rating'))
-        return round(result['rating__avg'], 1) if result['rating__avg'] else None
-    
-    def get_review_count(self):
-        """Get the count of approved reviews"""
-        return self.reviews.filter(is_approved=True).count()
+
+    @property
+    def average_rating(self):
+        """Return annotated average rating rounded to one decimal."""
+        if not hasattr(self, 'avg_rating'):
+            raise AttributeError(
+                "Product.average_rating requires 'avg_rating' annotation. "
+                "Annotate the queryset before accessing this property."
+            )
+        avg = self.avg_rating
+        if avg is None:
+            return None
+        return round(float(avg), 1)
+
+    @property
+    def review_count(self):
+        """Return annotated approved review count."""
+        if not hasattr(self, 'review_count_cached'):
+            raise AttributeError(
+                "Product.review_count requires 'review_count_cached' annotation. "
+                "Annotate the queryset before accessing this property."
+            )
+        return int(self.review_count_cached or 0)
     
     def get_related_products(self, limit=6):
         """Return manually curated related products first, then fall back to smart suggestions."""

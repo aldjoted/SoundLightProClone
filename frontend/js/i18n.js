@@ -405,6 +405,9 @@ const translations = {
         product_quantity: "Quantity",
         product_share: "Share",
         product_error_loading: "Error loading product details",
+        product_stock_count: "{count} units available",
+        product_stock_low: "Only {count} left in stock",
+        product_stock_unavailable: "Currently out of stock",
 
         // Search Results Page
         search_results_title: "Search Results",
@@ -1113,6 +1116,9 @@ const translations = {
         product_quantity: "Quantité",
         product_share: "Partager",
         product_error_loading: "Erreur lors du chargement des détails du produit",
+        product_stock_count: "{count} unités disponibles",
+        product_stock_low: "Plus que {count} en stock",
+        product_stock_unavailable: "Actuellement en rupture de stock",
 
         // Search Results Page
         search_results_title: "Résultats de Recherche",

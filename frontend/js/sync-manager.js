@@ -16,6 +16,19 @@
 import { cartStateManager } from './cart.js';
 import * as ui from './ui.js';
 
+function normalizeCartItemsShape(items) {
+    if (!items) {
+        return [];
+    }
+    if (Array.isArray(items)) {
+        return items;
+    }
+    if (typeof items === 'object') {
+        return Object.values(items);
+    }
+    return [];
+}
+
 /**
  * SyncManager class handles queuing and syncing of offline operations
  */
@@ -619,12 +632,52 @@ class SyncManager {
                     }
                     break;
                     
-                case 'sync':
-                    // Sync entire wishlist from localStorage
-                    if (data.items && Array.isArray(data.items)) {
-                        await apiService.syncWishlist(data.items);
+                case 'sync': {
+                    const payload = Array.isArray(data?.productIds)
+                        ? data.productIds
+                        : Array.isArray(data?.items)
+                            ? data.items
+                            : [];
+
+                    if (!payload.length) {
+                        console.warn('[SyncManager] No items provided for wishlist sync');
+                        break;
                     }
+
+                    const productIds = payload
+                        .map((value) => {
+                            if (typeof value === 'number') {
+                                return value;
+                            }
+
+                            if (typeof value === 'string') {
+                                const parsed = Number.parseInt(value, 10);
+                                return Number.isNaN(parsed) ? null : parsed;
+                            }
+
+                            if (value && typeof value === 'object') {
+                                const candidate = value.productId ?? value.product_id ?? value.id;
+                                if (typeof candidate === 'number') {
+                                    return candidate;
+                                }
+                                if (typeof candidate === 'string') {
+                                    const parsed = Number.parseInt(candidate, 10);
+                                    return Number.isNaN(parsed) ? null : parsed;
+                                }
+                            }
+
+                            return null;
+                        })
+                        .filter((id) => Number.isInteger(id) && id > 0);
+
+                    if (!productIds.length) {
+                        console.warn('[SyncManager] Wishlist sync payload did not contain valid product IDs');
+                        break;
+                    }
+
+                    await apiService.syncWishlist(productIds);
                     break;
+                }
                     
                 default:
                     console.warn('[SyncManager] Unknown wishlist operation:', operation);
@@ -748,41 +801,46 @@ class SyncManager {
      * Determine cart operation from state change
      */
     determineCartOperation(detail) {
-        // This is a simplified version - in production you'd need more
-        // sophisticated change detection
-        const { newState, oldState } = detail;
-        
-        if (!oldState || !oldState.items) {
+        if (!detail) {
             return null;
         }
-        
-        // Check for additions
-        if (newState.items.length > oldState.items.length) {
-            const newItem = newState.items.find(item => 
-                !oldState.items.some(oldItem => oldItem.id === item.id)
-            );
-            return { type: 'add', data: newItem };
+
+        const newItems = normalizeCartItemsShape(detail.newState?.items);
+        const oldItems = normalizeCartItemsShape(detail.oldState?.items);
+
+        if (!newItems.length && !oldItems.length) {
+            return null;
         }
-        
-        // Check for removals
-        if (newState.items.length < oldState.items.length) {
-            const removedItem = oldState.items.find(item => 
-                !newState.items.some(newItem => newItem.id === item.id)
-            );
-            return { type: 'remove', data: { id: removedItem.id } };
+
+        const oldMap = new Map(oldItems.map((item) => [String(item.id), item]));
+        const newMap = new Map(newItems.map((item) => [String(item.id), item]));
+
+        if (newMap.size > oldMap.size) {
+            for (const [key, item] of newMap.entries()) {
+                if (!oldMap.has(key)) {
+                    return { type: 'add', data: item };
+                }
+            }
         }
-        
-        // Check for updates (quantity changes)
-        for (const newItem of newState.items) {
-            const oldItem = oldState.items.find(item => item.id === newItem.id);
-            if (oldItem && oldItem.quantity !== newItem.quantity) {
-                return { 
-                    type: 'update', 
-                    data: { id: newItem.id, quantity: newItem.quantity } 
+
+        if (newMap.size < oldMap.size) {
+            for (const [key, item] of oldMap.entries()) {
+                if (!newMap.has(key)) {
+                    return { type: 'remove', data: { id: item.id } };
+                }
+            }
+        }
+
+        for (const [key, item] of newMap.entries()) {
+            const previous = oldMap.get(key);
+            if (previous && previous.quantity !== item.quantity) {
+                return {
+                    type: 'update',
+                    data: { id: item.id, quantity: item.quantity }
                 };
             }
         }
-        
+
         return null;
     }
     

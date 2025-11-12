@@ -13,7 +13,7 @@
  */
 
 import * as apiService from './apiService.js';
-import { getWishlistData, isInWishlist, removeFromWishlist, moveToCart } from './wishlist.js';
+import { getWishlistData, isInWishlist, removeFromWishlist, moveToCart, initWishlist } from './wishlist.js';
 import { showToast } from './ui.js';
 import { initRegisterPageValidation } from './auth.js';
 import i18n from './i18n.js';
@@ -56,6 +56,15 @@ export async function initDashboard() {
 
         // Load user profile
         await loadUserProfile();
+
+        // Initialize wishlist for authenticated user
+        try {
+            const userWishlist = await apiService.getWishlist();
+            await initWishlist(true, userWishlist);
+        } catch (wishlistError) {
+            console.warn('Failed to load wishlist, using guest mode:', wishlistError);
+            await initWishlist(false, null);
+        }
 
         // Initialize navigation
         initNavigation();
@@ -649,14 +658,43 @@ export async function deleteReview(reviewId) {
  * Load wishlist section
  */
 async function loadWishlist() {
+    const container = document.getElementById('wishlist-container');
+    if (!container) return;
+
     try {
+        // Show loading state
+        container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>Loading wishlist...</p></div>';
+
         const wishlistData = getWishlistData();
-        renderWishlist(wishlistData);
+        
+        // Handle different return formats
+        let items = [];
+        
+        if (Array.isArray(wishlistData)) {
+            // Guest user - wishlistData is array of product IDs
+            // Fetch product details for each ID
+            for (const productId of wishlistData) {
+                try {
+                    const product = await apiService.getProductById(productId);
+                    items.push({ product });
+                } catch (error) {
+                    console.error(`Failed to load product ${productId}:`, error);
+                }
+            }
+        } else if (wishlistData && wishlistData.items) {
+            // Authenticated user - wishlistData has items array
+            items = wishlistData.items;
+        }
+
+        renderWishlist({ items });
 
         // Setup wishlist actions
         setupWishlistActions();
     } catch (error) {
         console.error('Failed to load wishlist:', error);
+        if (container) {
+            container.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><p>Failed to load wishlist.</p></div>';
+        }
     }
 }
 
@@ -666,6 +704,32 @@ async function loadWishlist() {
 function setupWishlistActions() {
     document.getElementById('clear-wishlist-btn')?.addEventListener('click', handleClearWishlist);
     document.getElementById('move-all-to-cart-btn')?.addEventListener('click', handleMoveAllToCart);
+}
+
+/**
+ * Setup wishlist item actions (remove, move to cart)
+ */
+function setupWishlistItemActions() {
+    const container = document.getElementById('wishlist-container');
+    if (!container) return;
+
+    // Remove existing listeners by cloning
+    const newContainer = container.cloneNode(true);
+    container.parentNode.replaceChild(newContainer, container);
+
+    // Add event delegation for remove buttons
+    newContainer.addEventListener('click', async (e) => {
+        const removeBtn = e.target.closest('.remove-btn');
+        const moveBtn = e.target.closest('.move-to-cart-btn');
+
+        if (removeBtn) {
+            const productId = parseInt(removeBtn.dataset.productId, 10);
+            await removeFromWishlistDashboard(productId);
+        } else if (moveBtn) {
+            const productId = parseInt(moveBtn.dataset.productId, 10);
+            await moveItemToCart(productId);
+        }
+    });
 }
 
 /**
@@ -691,23 +755,42 @@ async function handleClearWishlist() {
 async function handleMoveAllToCart() {
     try {
         const wishlistData = getWishlistData();
-        const items = Array.isArray(wishlistData) ? wishlistData : wishlistData.items || [];
+        let productIds = [];
         
-        if (items.length === 0) {
+        if (Array.isArray(wishlistData)) {
+            // Guest user - array of IDs
+            productIds = wishlistData;
+        } else if (wishlistData && wishlistData.items) {
+            // Authenticated user - extract IDs from items
+            productIds = wishlistData.items.map(item => item.product.id);
+        }
+        
+        if (productIds.length === 0) {
             showToast('Wishlist is empty.', 'info');
             return;
         }
 
-        for (const item of items) {
-            const product = item.product || item;
-            await moveToCart(product.id, product);
+        let successCount = 0;
+        for (const productId of productIds) {
+            try {
+                const product = await apiService.getProductById(productId);
+                await moveToCart(productId, product);
+                successCount++;
+            } catch (error) {
+                console.error(`Failed to move product ${productId}:`, error);
+            }
         }
 
-        showToast(`${items.length} items moved to cart!`, 'success');
-        await loadWishlist();
+        if (successCount > 0) {
+            showToast(`${successCount} item(s) moved to cart!`, 'success');
+            await loadWishlist();
+            await loadOverview(); // Update stats
+        } else {
+            showToast('Failed to move items to cart.', 'error');
+        }
     } catch (error) {
         console.error('Failed to move items to cart:', error);
-        showToast('Failed to move some items to cart.', 'error');
+        showToast('Failed to move items to cart.', 'error');
     }
 }
 
@@ -718,7 +801,7 @@ function renderWishlist(wishlistData) {
     const container = document.getElementById('wishlist-container');
     if (!container) return;
 
-    const items = Array.isArray(wishlistData) ? [] : wishlistData.items || [];
+    const items = wishlistData?.items || [];
 
     if (items.length === 0) {
         container.innerHTML = '<div class="empty-state"><i class="fas fa-heart"></i><p>Your wishlist is empty.</p></div>';
@@ -727,22 +810,29 @@ function renderWishlist(wishlistData) {
 
     container.innerHTML = items.map(item => {
         const product = item.product;
+        if (!product) return '';
+        
         const image = product.images?.[0]?.image || '';
+        const productName = product.name || 'Unknown Product';
+        const productPrice = product.price ? parseFloat(product.price).toFixed(2) : '0.00';
         
         return `
             <div class="wishlist-item-card" data-product-id="${product.id}">
-                <button class="remove-btn" onclick="dashboard.removeFromWishlist(${product.id})">
+                <button class="remove-btn" data-product-id="${product.id}" aria-label="Remove from wishlist">
                     <i class="fas fa-times"></i>
                 </button>
-                ${image ? `<img src="${image}" alt="${product.name}">` : '<div class="no-image"></div>'}
-                <h4>${product.name}</h4>
-                <p class="price">$${product.price}</p>
-                <button class="btn btn-primary btn-sm" onclick="dashboard.moveItemToCart(${product.id})">
+                ${image ? `<img src="${image}" alt="${productName}" loading="lazy">` : '<div class="no-image"></div>'}
+                <h4>${productName}</h4>
+                <p class="price">$${productPrice}</p>
+                <button class="btn btn-primary btn-sm move-to-cart-btn" data-product-id="${product.id}">
                     Add to Cart
                 </button>
             </div>
         `;
-    }).join('');
+    }).filter(html => html).join('');
+    
+    // Setup event listeners after rendering
+    setupWishlistItemActions();
 }
 
 /**
@@ -765,14 +855,14 @@ export async function removeFromWishlistDashboard(productId) {
  */
 export async function moveItemToCart(productId) {
     try {
-        const wishlistData = getWishlistData();
-        const items = wishlistData.items || [];
-        const item = items.find(i => i.product.id === productId);
+        // Fetch product details
+        const product = await apiService.getProductById(productId);
         
-        if (item) {
-            await moveToCart(productId, item.product);
+        if (product) {
+            await moveToCart(productId, product);
             showToast('Item moved to cart!', 'success');
             await loadWishlist();
+            await loadOverview(); // Update stats
         }
     } catch (error) {
         console.error('Failed to move to cart:', error);

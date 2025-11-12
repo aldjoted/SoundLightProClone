@@ -43,12 +43,12 @@ async function loadProductReviews(productId) {
         const { ReviewManager } = await import('../reviews.js');
         const reviewManager = new ReviewManager(productId);
 
-        const stats = await reviewManager.loadStats();
+        const stats = await reviewManager.loadStats(productId);
         if (stats) {
             ui.renderReviewStats(stats, statsContainer);
         }
 
-        const reviews = await reviewManager.loadReviews();
+        const reviews = await reviewManager.loadReviews(productId);
         if (reviews && reviews.length > 0) {
             reviews.forEach((review) => {
                 const reviewCard = ui.renderReviewCard(review);
@@ -58,8 +58,8 @@ async function loadProductReviews(productId) {
             listContainer.innerHTML = `
                 <div class="no-reviews">
                     <i class="far fa-comment-alt"></i>
-                    <h3>${i18n.t('no_reviews')}</h3>
-                    <p>${i18n.t('be_first_review')}</p>
+                    <h3>${i18n.t('no_reviews', 'No customer stories yet')}</h3>
+                    <p>${i18n.t('be_first_review', 'Be the first to share how this gear performs and inspire fellow creatives!')}</p>
                 </div>
             `;
         }
@@ -78,7 +78,7 @@ async function loadProductReviews(productId) {
                         form.addEventListener('submit', async (e) => {
                             e.preventDefault();
                             try {
-                                await reviewManager.submitReview({
+                                await reviewManager.submitReview(productId, {
                                     rating: form.rating.value,
                                     title: form.title.value,
                                     comment: form.comment.value,
@@ -88,14 +88,14 @@ async function loadProductReviews(productId) {
                                 formContainer.classList.add('hidden');
 
                                 listContainer.innerHTML = '<div class="reviews-loading"><div class="spinner"></div></div>';
-                                const updatedReviews = await reviewManager.loadReviews();
+                                const updatedReviews = await reviewManager.loadReviews(productId);
                                 listContainer.innerHTML = '';
                                 updatedReviews.forEach((review) => {
                                     const reviewCard = ui.renderReviewCard(review);
                                     listContainer.appendChild(reviewCard);
                                 });
 
-                                const updatedStats = await reviewManager.loadStats();
+                                const updatedStats = await reviewManager.loadStats(productId);
                                 if (updatedStats) {
                                     ui.renderReviewStats(updatedStats, statsContainer);
                                 }
@@ -119,7 +119,7 @@ async function loadProductReviews(productId) {
         if (sortSelect) {
             sortSelect.addEventListener('change', async (e) => {
                 listContainer.innerHTML = '<div class="reviews-loading"><div class="spinner"></div></div>';
-                const sortedReviews = await reviewManager.loadReviews(e.target.value);
+                const sortedReviews = await reviewManager.loadReviews(productId, e.target.value);
                 listContainer.innerHTML = '';
                 sortedReviews.forEach((review) => {
                     const reviewCard = ui.renderReviewCard(review);
@@ -215,36 +215,44 @@ function setupProductDetailPageEventListeners(product) {
 
     const wishlistBtn = document.querySelector('.wishlist-btn');
     if (wishlistBtn) {
-        import('../wishlist.js').then((wishlist) => {
-            wishlist.initWishlist().then(() => {
-                const isInWishlist = wishlist.isInWishlist(product.id);
-                if (isInWishlist) {
+        import('../wishlist.js').then((wishlistModule) => {
+            const updateWishlistButtonState = (inWishlist) => {
+                if (inWishlist) {
                     wishlistBtn.classList.add('in-wishlist');
+                    wishlistBtn.setAttribute('aria-pressed', 'true');
                     wishlistBtn.innerHTML = `<i class="fas fa-heart"></i> <span class="btn-text">${i18n.t('in_wishlist')}</span>`;
+                } else {
+                    wishlistBtn.classList.remove('in-wishlist');
+                    wishlistBtn.setAttribute('aria-pressed', 'false');
+                    wishlistBtn.innerHTML = `<i class="far fa-heart"></i> <span class="btn-text">${i18n.t('add_to_wishlist')}</span>`;
                 }
+            };
 
-                pageListenerManager.add(wishlistBtn, 'click', async () => {
-                    try {
-                        await wishlist.toggleWishlist(product.id);
-                        const nowInWishlist = wishlist.isInWishlist(product.id);
+            // Initialize button state
+            const isInWishlist = wishlistModule.isInWishlist(product.id);
+            updateWishlistButtonState(isInWishlist);
 
-                        if (nowInWishlist) {
-                            wishlistBtn.classList.add('in-wishlist');
-                            wishlistBtn.innerHTML = `<i class="fas fa-heart"></i> <span class="btn-text">${i18n.t('in_wishlist')}</span>`;
-                            ui.showToast(i18n.t('added_to_wishlist'), 'success');
-                        } else {
-                            wishlistBtn.classList.remove('in-wishlist');
-                            wishlistBtn.innerHTML = `<i class="far fa-heart"></i> <span class="btn-text">${i18n.t('add_to_wishlist')}</span>`;
-                            ui.showToast(i18n.t('removed_from_wishlist'), 'info');
-                        }
+            // Handle click
+            pageListenerManager.add(wishlistBtn, 'click', async () => {
+                try {
+                    const wasAdded = await wishlistModule.toggleWishlist(product.id);
+                    updateWishlistButtonState(wasAdded);
 
-                        const wishlistItems = wishlist.getWishlist();
-                        ui.updateWishlistCount(wishlistItems.length);
-                    } catch (error) {
-                        console.error('Error toggling wishlist:', error);
-                        ui.showToast(i18n.t('error_wishlist'), 'error');
+                    if (wasAdded) {
+                        ui.showToast(i18n.t('added_to_wishlist'), 'success');
+                    } else {
+                        ui.showToast(i18n.t('removed_from_wishlist'), 'info');
                     }
-                });
+
+                    // Update wishlist count if the function exists
+                    if (typeof ui.updateWishlistCount === 'function') {
+                        const wishlistItems = wishlistModule.getWishlist();
+                        ui.updateWishlistCount(wishlistItems.length);
+                    }
+                } catch (error) {
+                    console.error('Error toggling wishlist:', error);
+                    ui.showToast(i18n.t('error_wishlist', 'Error updating wishlist'), 'error');
+                }
             });
         }).catch((error) => {
             console.error('Error loading wishlist module:', error);

@@ -1,33 +1,94 @@
 /**
  * cart.js
- * 
- * This module manages the shopping cart state using a StateManager for better
- * cross-tab synchronization, error handling, and event management.
+ *
+ * Shopping cart state backed by an in-memory Map for O(1) updates and
+ * debounced localStorage persistence via StateManager.
  */
 
-import { StateManager } from './utils.js';
+import { StateManager, debounce } from './utils.js';
 
 const CART_KEY = 'shoppingCart';
+const PERSIST_DEBOUNCE_MS = 500;
 
-// Initialize the cart state manager
-const cartStateManager = new StateManager(CART_KEY, { items: [] });
+const cartStateManager = new StateManager(CART_KEY, { items: {} });
 
-// Set up event listeners for state changes
-cartStateManager.addEventListener('change', (event) => {
-    // Emit the legacy cartUpdated event for backward compatibility
+let inMemoryCart = new Map();
+
+function isValidCartItem(item) {
+    return item && (typeof item.id === 'number' || typeof item.id === 'string');
+}
+
+function normalizeStoredItems(items) {
+    if (!items) return [];
+    if (Array.isArray(items)) {
+        return items.filter(isValidCartItem).map((item) => ({ ...item }));
+    }
+    if (typeof items === 'object') {
+        return Object.values(items)
+            .filter(isValidCartItem)
+            .map((item) => ({ ...item }));
+    }
+    return [];
+}
+
+function cloneCartItems(sourceMap = inMemoryCart) {
+    return Array.from(sourceMap.values()).map((item) => ({ ...item }));
+}
+
+function loadCartFromState(state) {
+    if (!state) {
+        inMemoryCart = new Map();
+        return;
+    }
+
+    const normalizedItems = normalizeStoredItems(state.items);
+    const entries = normalizedItems.map((item) => [String(item.id), item]);
+    inMemoryCart = new Map(entries);
+}
+
+function persistCartToStorage() {
+    const itemsObject = {};
+    inMemoryCart.forEach((item, key) => {
+        itemsObject[key] = { ...item };
+    });
+
+    cartStateManager.update((currentState) => ({
+        ...currentState,
+        items: itemsObject,
+        lastPersistedAt: Date.now()
+    }));
+}
+
+const debouncedPersistCart = debounce(persistCartToStorage, PERSIST_DEBOUNCE_MS);
+
+function dispatchUpdateEvent(oldCartItems = []) {
+    const previous = oldCartItems.map((item) => ({ ...item }));
+    const current = cloneCartItems();
+
     document.dispatchEvent(new CustomEvent('cartUpdated', {
         detail: {
-            cart: event.detail.newState.items,
-            oldCart: event.detail.oldState.items || []
+            cart: current,
+            oldCart: previous
+        }
+    }));
+}
+
+cartStateManager.addEventListener('change', (event) => {
+    const { newState, oldState } = event.detail || {};
+    const previousItems = normalizeStoredItems(oldState?.items);
+
+    loadCartFromState(newState);
+
+    document.dispatchEvent(new CustomEvent('cartUpdated', {
+        detail: {
+            cart: cloneCartItems(),
+            oldCart: previousItems
         }
     }));
 });
 
-// Handle storage quota exceeded errors
 cartStateManager.addEventListener('quotaExceeded', (event) => {
     console.error('Cart storage quota exceeded:', event.detail.error);
-    // Could implement cleanup logic here (remove oldest items, compress data, etc.)
-    // For now, just emit an event that the UI can handle
     document.dispatchEvent(new CustomEvent('cartStorageError', {
         detail: {
             error: event.detail.error,
@@ -36,180 +97,179 @@ cartStateManager.addEventListener('quotaExceeded', (event) => {
     }));
 });
 
-/**
- * Retrieves the cart items from the state manager.
- * @returns {Array<Object>} An array of cart item objects.
- */
-function getCart() {
-    const state = cartStateManager.getState();
-    return state.items || [];
+loadCartFromState(cartStateManager.getState());
+
+export function getCart() {
+    return cloneCartItems();
 }
 
-/**
- * Updates the cart state with new items.
- * @param {Array<Object>} items - The new cart items array.
- */
-function updateCartState(items) {
-    cartStateManager.update({ items });
-}
-
-/**
- * Adds a product to the cart. If the product is already in the cart, it updates the quantity.
- * @param {Object} product - The product object to add.
- * @param {number} quantity - The quantity to add.
- */
 export function addToCart(product, quantity) {
-    if (!product || !product.id || quantity <= 0) {
+    if (!product || product.id === undefined || product.id === null || quantity <= 0) {
         console.error('Invalid product or quantity for addToCart');
         return;
     }
 
-    const currentItems = getCart();
-    const existingItemIndex = currentItems.findIndex(item => item.id === product.id);
+    const oldCart = cloneCartItems();
+    const productKey = String(product.id);
+    const existingItem = inMemoryCart.get(productKey);
 
-    // Determine the image to store in the cart
-    const imageUrl = (product.images && product.images.length > 0) 
-        ? product.images[0].image 
-        : null;
-
-    let newItems;
-    if (existingItemIndex > -1) {
-        // Product exists, update quantity
-        newItems = currentItems.map((item, index) => 
-            index === existingItemIndex 
-                ? { ...item, quantity: item.quantity + quantity }
-                : item
-        );
+    if (existingItem) {
+        const updatedItem = {
+            ...existingItem,
+            quantity: existingItem.quantity + quantity,
+            updatedAt: new Date().toISOString()
+        };
+        inMemoryCart.set(productKey, updatedItem);
     } else {
-        // Product is new, add it to the cart
+        const priceNumber = Number.parseFloat(product.price);
+        const imageUrl = Array.isArray(product.images) && product.images.length > 0
+            ? product.images[0].image
+            : null;
+
         const newItem = {
             id: product.id,
             name: product.name,
-            price: parseFloat(product.price),
+            price: Number.isFinite(priceNumber) ? priceNumber : 0,
             image: imageUrl,
-            quantity: quantity,
-            addedAt: new Date().toISOString() // Track when item was added
+            quantity,
+            addedAt: new Date().toISOString()
         };
-        newItems = [...currentItems, newItem];
+        inMemoryCart.set(productKey, newItem);
     }
 
-    updateCartState(newItems);
+    dispatchUpdateEvent(oldCart);
+    debouncedPersistCart();
 }
 
-/**
- * Updates the quantity of a specific item in the cart.
- * @param {number} productId - The ID of the product to update.
- * @param {number} quantity - The new quantity. Must be 1 or more.
- */
 export function updateCartItemQuantity(productId, quantity) {
-    if (!productId || quantity <= 0) {
+    if (productId === undefined || productId === null || quantity <= 0) {
         console.error('Invalid productId or quantity for updateCartItemQuantity');
         return;
     }
 
-    const currentItems = getCart();
-    const itemIndex = currentItems.findIndex(item => item.id === productId);
+    const productKey = String(productId);
+    const item = inMemoryCart.get(productKey);
 
-    if (itemIndex > -1) {
-        const newItems = currentItems.map((item, index) => 
-            index === itemIndex 
-                ? { ...item, quantity, updatedAt: new Date().toISOString() }
-                : item
-        );
-        updateCartState(newItems);
+    if (item) {
+        const oldCart = cloneCartItems();
+        const updatedItem = {
+            ...item,
+            quantity,
+            updatedAt: new Date().toISOString()
+        };
+        inMemoryCart.set(productKey, updatedItem);
+
+        dispatchUpdateEvent(oldCart);
+        debouncedPersistCart();
     }
 }
 
-/**
- * Removes an item from the cart completely.
- * @param {number} productId - The ID of the product to remove.
- */
 export function removeFromCart(productId) {
-    if (!productId) {
+    if (productId === undefined || productId === null) {
         console.error('Invalid productId for removeFromCart');
         return;
     }
 
-    const currentItems = getCart();
-    const newItems = currentItems.filter(item => item.id !== productId);
-    updateCartState(newItems);
+    const productKey = String(productId);
+    if (inMemoryCart.has(productKey)) {
+        const oldCart = cloneCartItems();
+        inMemoryCart.delete(productKey);
+
+        dispatchUpdateEvent(oldCart);
+        debouncedPersistCart();
+    }
 }
 
-/**
- * Clears the entire cart.
- */
 export function clearCart() {
-    cartStateManager.clear({ items: [] });
+    if (inMemoryCart.size === 0) {
+        cartStateManager.clear({ items: {}, lastPersistedAt: Date.now() });
+        return;
+    }
+
+    const oldCart = cloneCartItems();
+    inMemoryCart.clear();
+
+    dispatchUpdateEvent(oldCart);
+    cartStateManager.clear({ items: {}, lastPersistedAt: Date.now() });
 }
 
-/**
- * Cleans up metadata from cart items (timestamps, etc.).
- * Use this before checkout or periodically to reduce storage size.
- * Keeps only essential product data (id, name, price, image, quantity).
- */
 export function cleanupCartMetadata() {
-    const items = getCart();
-    const cleanedItems = items.map(({ id, name, price, image, quantity }) => ({
-        id,
-        name,
-        price,
-        image,
-        quantity
-    }));
-    updateCartState(cleanedItems);
+    if (inMemoryCart.size === 0) {
+        persistCartToStorage();
+        return;
+    }
+
+    const oldCart = cloneCartItems();
+    const cleanedEntries = Array.from(inMemoryCart.entries()).map(([key, item]) => [
+        key,
+        {
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            image: item.image,
+            quantity: item.quantity
+        }
+    ]);
+    inMemoryCart = new Map(cleanedEntries);
+
+    dispatchUpdateEvent(oldCart);
+    persistCartToStorage();
 }
 
-/**
- * Calculates the total number of items in the cart.
- * @returns {number} The total count of all items.
- */
 export function getCartItemCount() {
-    const items = getCart();
-    return items.reduce((total, item) => total + item.quantity, 0);
+    let total = 0;
+    inMemoryCart.forEach((item) => {
+        total += item.quantity;
+    });
+    return total;
 }
 
-/**
- * Calculates the total price of all items in the cart.
- * @returns {number} The total price.
- */
 export function getCartTotal() {
-    const items = getCart();
-    return items.reduce((total, item) => total + (item.price * item.quantity), 0);
+    let total = 0;
+    inMemoryCart.forEach((item) => {
+        const price = Number.isFinite(item.price) ? item.price : 0;
+        total += price * item.quantity;
+    });
+    return total;
 }
 
-/**
- * Gets cart statistics for analytics or debugging.
- * @returns {Object} Cart statistics.
- */
 export function getCartStats() {
-    const items = getCart();
+    const items = cloneCartItems();
+    const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+    const totalValue = items.reduce((sum, item) => sum + ((Number.isFinite(item.price) ? item.price : 0) * item.quantity), 0);
+    const oldestItem = items.reduce((oldest, item) => {
+        if (!oldest) return item;
+        return new Date(item.addedAt || 0) < new Date(oldest.addedAt || 0) ? item : oldest;
+    }, null);
+
     return {
         itemCount: items.length,
-        totalQuantity: getCartItemCount(),
-        totalValue: getCartTotal(),
+        totalQuantity,
+        totalValue,
         isEmpty: items.length === 0,
-        oldestItem: items.length > 0 ? items.reduce((oldest, item) => 
-            new Date(item.addedAt || 0) < new Date(oldest.addedAt || 0) ? item : oldest
-        ) : null
+        oldestItem
     };
 }
 
-/**
- * Validates cart data integrity.
- * @returns {Object} Validation result with any issues found.
- */
 export function validateCart() {
-    const items = getCart();
     const issues = [];
 
-    items.forEach((item, index) => {
-        if (!item.id) issues.push(`Item at index ${index} missing ID`);
-        if (!item.name) issues.push(`Item at index ${index} missing name`);
-        if (typeof item.price !== 'number' || item.price < 0) {
-            issues.push(`Item at index ${index} has invalid price`);
+    inMemoryCart.forEach((item, key) => {
+        if (!isValidCartItem(item)) {
+            issues.push(`Item with key ${key} is invalid`);
+            return;
+        }
+        if (String(item.id) !== key) {
+            issues.push(`Item key ${key} mismatches id ${item.id}`);
+        }
+        if (!item.name) {
+            issues.push(`Item ${item.id} missing name`);
+        }
+        if (typeof item.price !== 'number' || Number.isNaN(item.price) || item.price < 0) {
+            issues.push(`Item ${item.id} has invalid price`);
         }
         if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
-            issues.push(`Item at index ${index} has invalid quantity`);
+            issues.push(`Item ${item.id} has invalid quantity`);
         }
     });
 
@@ -219,8 +279,4 @@ export function validateCart() {
     };
 }
 
-// Export getCart to be used by the cart page to render items
-export { getCart };
-
-// Export the state manager for advanced usage if needed
 export { cartStateManager };

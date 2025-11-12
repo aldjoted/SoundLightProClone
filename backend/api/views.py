@@ -1,7 +1,6 @@
 import os
 import html
 import stripe
-import asyncio
 from dotenv import load_dotenv
 from typing import Optional
 
@@ -368,12 +367,11 @@ class ChatbotView(APIView):
     
     ✅ IMPROVEMENT: Rate limited to 10 requests per hour per IP to manage API costs
     """
-    permission_classes = [permissions.AllowAny] # Allow anyone to use the chatbot
+    permission_classes = [permissions.AllowAny]  # Allow anyone to use the chatbot
 
-    async def post(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         try:
-            # Running get_gemini_model in a thread keeps the event loop responsive
-            gemini_model = await asyncio.to_thread(get_gemini_model)
+            gemini_model = get_gemini_model()
         except ValueError as e:
             logger.error(f"Gemini configuration error: {e}")
             return Response(
@@ -393,24 +391,21 @@ class ChatbotView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        safe_user_message = await asyncio.to_thread(html.escape, user_message)
+        safe_user_message = html.escape(user_message)
 
         # --- Vector Search RAG: Find relevant products ---
         try:
-            index, product_ids = await asyncio.to_thread(get_search_index_data)
+            index, product_ids = get_search_index_data()
             relevant_products = []
             if index and product_ids:
-                query_embedding = await asyncio.to_thread(
-                    embedding_model.encode, [user_message], normalize_embeddings=True
-                )
-                D, I = await asyncio.to_thread(index.search, query_embedding, 5)
+                query_embedding = embedding_model.encode([user_message], normalize_embeddings=True)
+                D, I = index.search(query_embedding, 5)
                 found_indices = [idx for idx in I[0] if 0 <= idx < len(product_ids)]
                 found_ids = [product_ids[idx] for idx in found_indices]
 
                 if found_ids:
                     order_preserved = Case(*[When(pk=pid, then=pos) for pos, pid in enumerate(found_ids)])
-                    relevant_products = await asyncio.to_thread(
-                        list,
+                    relevant_products = list(
                         Product.objects.filter(id__in=found_ids, available=True)
                         .select_related('brand', 'category')
                         .order_by(order_preserved)
@@ -473,12 +468,17 @@ class ChatbotView(APIView):
         )
         
         try:
-            # Non-blocking call to Gemini async client
-            response = await gemini_model.generate_content_async(prompt)
-            bot_response = response.text
+            response = gemini_model.generate_content(prompt)
+            bot_response = getattr(response, 'text', None)
+
+            if not bot_response:
+                logger.error('Gemini returned empty response')
+                return Response(
+                    {"error": "Sorry, I'm having trouble connecting right now. Please try again later."},
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE
+                )
 
             return Response({"reply": bot_response})
-
         except Exception as e:
             logger.error(f"Error calling Gemini API: {e}", exc_info=True)
             return Response(
@@ -707,8 +707,17 @@ class ProductReviewStatsView(APIView):
 
     def get(self, request, product_id, *args, **kwargs):
         """Get review statistics for a product"""
+        from django.db.models import Avg, Count, Q
+
         try:
-            product = Product.objects.get(id=product_id, available=True)
+            product = (
+                Product.objects.filter(available=True)
+                .annotate(
+                    avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
+                    review_count_cached=Count('reviews', filter=Q(reviews__is_approved=True))
+                )
+                .get(id=product_id)
+            )
         except Product.DoesNotExist:
             return Response(
                 {'detail': 'Product not found.'},
@@ -718,8 +727,8 @@ class ProductReviewStatsView(APIView):
         reviews = ProductReview.objects.filter(product=product, is_approved=True)
         
         # Calculate statistics
-        average_rating = product.get_average_rating()
-        review_count = reviews.count()
+        average_rating = product.average_rating
+        review_count = product.review_count
         
         # Calculate rating distribution
         rating_distribution = {

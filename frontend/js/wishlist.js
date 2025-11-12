@@ -45,19 +45,55 @@ wishlistStateManager.addEventListener('quotaExceeded', (event) => {
  * @param {boolean} authenticated - Whether user is authenticated
  * @param {Object|null} userWishlist - Server wishlist data for authenticated users
  */
-export function initWishlist(authenticated = false, userWishlist = null) {
-    isAuthenticated = authenticated;
-    
-    if (authenticated && userWishlist) {
-        serverWishlist = userWishlist;
-        
-        // Sync guest wishlist with server if there are guest items
-        const guestProductIds = getGuestWishlist();
-        if (guestProductIds.length > 0) {
-            // Queue sync operation (will be handled by sync-manager)
-            queueWishlistSync(guestProductIds);
+export async function initWishlist(authenticated = null, userWishlist = null) {
+    let resolvedAuthenticated = authenticated;
+    let resolvedWishlist = userWishlist;
+
+    if (resolvedAuthenticated === null) {
+        try {
+            const apiService = await import('./apiService.js');
+            const accessToken = await apiService.ensureAccessToken();
+
+            if (accessToken) {
+                resolvedAuthenticated = true;
+
+                if (!resolvedWishlist) {
+                    try {
+                        resolvedWishlist = await apiService.getWishlist();
+                    } catch (fetchError) {
+                        console.warn('[Wishlist] Failed to load server wishlist during init:', fetchError);
+                        resolvedAuthenticated = false;
+                        resolvedWishlist = null;
+                    }
+                }
+            } else {
+                resolvedAuthenticated = false;
+            }
+        } catch (error) {
+            console.warn('[Wishlist] Unable to determine authentication state during init:', error);
+            resolvedAuthenticated = false;
+            resolvedWishlist = null;
         }
     }
+
+    isAuthenticated = Boolean(resolvedAuthenticated);
+
+    if (isAuthenticated) {
+        serverWishlist = resolvedWishlist || { items: [] };
+
+        if (!Array.isArray(serverWishlist.items)) {
+            serverWishlist.items = [];
+        }
+
+        const guestProductIds = getGuestWishlist();
+        if (guestProductIds.length > 0) {
+            await queueWishlistSync(guestProductIds);
+        }
+    } else {
+        serverWishlist = null;
+    }
+
+    return getWishlistData();
 }
 
 /**
@@ -73,12 +109,14 @@ export function getWishlist() {
 
 /**
  * Get full wishlist data (with product details for authenticated users)
- * @returns {Array<Object>|Array<number>} Full wishlist or product IDs
+ * @returns {Object|Array<number>} Full wishlist object with items array, or array of product IDs for guests
  */
 export function getWishlistData() {
     if (isAuthenticated && serverWishlist) {
-        return serverWishlist.items;
+        // Return the full server wishlist object with items array
+        return serverWishlist;
     }
+    // For guests, return array of product IDs
     return getGuestWishlist();
 }
 
@@ -320,6 +358,8 @@ async function queueWishlistSync(guestProductIds) {
         
         if (syncManager) {
             await syncManager.queueWishlistOperation('sync', {
+                productIds: guestProductIds,
+                // Legacy fallback for previously queued payloads
                 items: guestProductIds.map(id => ({ product_id: id }))
             });
         } else {
@@ -327,7 +367,10 @@ async function queueWishlistSync(guestProductIds) {
             const syncQueue = JSON.parse(localStorage.getItem('syncQueue') || '[]');
             syncQueue.push({
                 type: 'wishlist-sync',
-                data: { items: guestProductIds.map(id => ({ product_id: id })) },
+                data: {
+                    productIds: guestProductIds,
+                    items: guestProductIds.map(id => ({ product_id: id }))
+                },
                 timestamp: Date.now()
             });
             localStorage.setItem('syncQueue', JSON.stringify(syncQueue));
