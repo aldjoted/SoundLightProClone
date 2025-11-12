@@ -1434,7 +1434,187 @@ export function updateUserAuthUI(user) {
         }
 
     }
+}
 
+/**
+ * Renders the related products carousel/grid on the product detail page.
+ * @param {Array<Object>} products - Related products returned by the API.
+ * @param {HTMLElement} container - Section element that hosts the related block.
+ */
+export function renderRelatedProducts(products, container) {
+    if (!container) {
+        return;
+    }
+
+    container.classList.add('related-products-section');
+    container.innerHTML = '';
+
+    if (!Array.isArray(products) || products.length === 0) {
+        container.appendChild(createElement('div', { class: 'no-related-products' }, [
+            createElement('i', { class: 'fas fa-boxes' }),
+            createElement('h3', {}, [i18n.t('no_related_products', 'No related gear yet')]),
+            createElement('p', {}, [i18n.t('check_back_later', 'We are curating recommendations for this item. Check back soon!')])
+        ]));
+        return;
+    }
+
+    const header = createElement('div', { class: 'related-products-header' }, [
+        createElement('h2', {}, [i18n.t('related_products_title', 'You May Also Like')]),
+        createElement('p', {}, [i18n.t('related_products_subtitle', 'Complementary gear curated just for you.')])
+    ]);
+
+    const grid = createElement('div', { class: 'related-products-grid' });
+
+    products.forEach((product) => {
+        if (!product || typeof product !== 'object') {
+            return;
+        }
+
+        const productName = escapeHtml(product.name || 'Unnamed Product');
+        const productUrl = `product.html?id=${product.id}`;
+        const imageUrl = getProductImage(product);
+        const brandName = product.brand ? escapeHtml(product.brand.name || '') : '';
+        const priceLabel = i18n.formatCurrency ? i18n.formatCurrency(product.price) : `$${parseFloat(product.price || 0).toFixed(2)}`;
+
+        const stockCount = Number(product.stock || 0);
+        let stockClass = 'in-stock';
+        let stockLabel = i18n.t('product_in_stock', 'In Stock');
+        if (stockCount <= 0) {
+            stockClass = 'out-of-stock';
+            stockLabel = i18n.t('product_out_of_stock', 'Out of Stock');
+        } else if (stockCount <= 3) {
+            stockClass = 'low-stock';
+            stockLabel = i18n.t('product_low_stock', 'Low stock');
+        }
+
+        const ratingValue = Number(product.avg_rating ?? product.average_rating ?? 0) || 0;
+        const reviewTotal = Number(product.review_count ?? product.review_count_cached ?? 0) || 0;
+
+        const card = createElement('article', { class: 'related-product-card' });
+
+        const imageLink = createElement('a', {
+            href: productUrl,
+            class: 'related-product-image-container',
+            'aria-label': productName
+        });
+        const image = createElement('img', {
+            class: 'related-product-image',
+            src: imageUrl,
+            alt: productName,
+            loading: 'lazy',
+            width: '400',
+            height: '400'
+        });
+        imageLink.appendChild(image);
+
+        const quickViewBtn = createElement('button', {
+            class: 'quick-view-badge',
+            type: 'button',
+            'data-product-id': String(product.id || '')
+        }, [
+            createElement('i', { class: 'fas fa-eye' }),
+            document.createTextNode(i18n.t('quick_view', 'Quick View'))
+        ]);
+        quickViewBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            renderQuickViewModal(product);
+        });
+        imageLink.appendChild(quickViewBtn);
+
+        const info = createElement('div', { class: 'related-product-info' });
+
+        if (brandName) {
+            info.appendChild(createElement('p', { class: 'related-product-brand' }, [brandName]));
+        }
+
+        info.appendChild(createElement('a', {
+            class: 'related-product-name',
+            href: productUrl
+        }, [productName]));
+
+        const rating = createElement('div', { class: 'related-product-rating' });
+        const stars = createElement('div', { class: 'related-product-stars' });
+        for (let i = 1; i <= 5; i += 1) {
+            let starClass = 'far fa-star';
+            if (ratingValue >= i) {
+                starClass = 'fas fa-star';
+            } else if (ratingValue >= i - 0.5) {
+                starClass = 'fas fa-star-half-alt';
+            }
+            stars.appendChild(createElement('i', { class: starClass }));
+        }
+        rating.appendChild(stars);
+        rating.appendChild(createElement('span', { class: 'related-product-rating-count' }, [
+            reviewTotal > 0
+                ? `${ratingValue.toFixed(1)} • ${reviewTotal} ${reviewTotal === 1 ? i18n.t('review', 'review') : i18n.t('reviews', 'reviews')}`
+                : i18n.t('no_reviews_short', 'No reviews yet')
+        ]));
+        info.appendChild(rating);
+
+        info.appendChild(createElement('p', { class: 'related-product-price' }, [priceLabel]));
+
+        info.appendChild(createElement('p', { class: `related-product-stock ${stockClass}` }, [
+            stockClass === 'low-stock' && stockCount > 0
+                ? i18n.t('product_low_stock_count', `Only ${stockCount} left!`)
+                : stockLabel
+        ]));
+
+        const actions = createElement('div', { class: 'related-product-actions' });
+        const addToCartBtn = createElement('button', {
+            class: 'btn btn-primary',
+            type: 'button',
+            'aria-label': i18n.t('btn_add_to_cart', 'Add to Cart')
+        }, [
+            createElement('i', { class: 'fas fa-shopping-cart' }),
+            document.createTextNode(i18n.t('btn_add_to_cart', 'Add to Cart'))
+        ]);
+
+        if (stockCount <= 0) {
+            addToCartBtn.disabled = true;
+        }
+
+        addToCartBtn.addEventListener('click', async (event) => {
+            event.preventDefault();
+            try {
+                const cartModule = await import('./cart.js');
+                cartModule.addToCart(product, 1);
+                showToast(`${product.name} ${i18n.t('added_to_cart', 'added to cart!')}`, 'success');
+                updateCartCount(cartModule.getCartItemCount());
+                renderMiniCart(cartModule.getCart());
+            } catch (error) {
+                console.error('Error adding related product to cart:', error);
+                showToast(i18n.t('error_add_to_cart', 'Unable to add this item to your cart.'), 'error');
+            }
+        });
+
+        const viewDetailsBtn = createElement('a', {
+            class: 'btn btn-secondary',
+            href: productUrl
+        }, [
+            createElement('i', { class: 'fas fa-info-circle' }),
+            document.createTextNode(i18n.t('view_product_details', 'View Details'))
+        ]);
+
+        actions.appendChild(addToCartBtn);
+        actions.appendChild(viewDetailsBtn);
+        info.appendChild(actions);
+
+        card.appendChild(imageLink);
+        card.appendChild(info);
+        grid.appendChild(card);
+    });
+
+    container.appendChild(header);
+    container.appendChild(grid);
+
+    const viewAll = createElement('div', { class: 'view-all-related' }, [
+        createElement('a', { class: 'btn', href: 'search-results.html' }, [
+            createElement('i', { class: 'fas fa-th-large' }),
+            document.createTextNode(i18n.t('browse_more_gear', 'Browse more gear'))
+        ])
+    ]);
+
+    container.appendChild(viewAll);
 }
 
 
