@@ -13,6 +13,7 @@
 
 
 import i18n from './i18n.js';
+import { createStarRating, formatReviewDate, calculateRatingPercentages, getRatingColorClass } from './reviews.js';
 
 import { ListenerManager } from './utils.js';
 
@@ -1434,6 +1435,320 @@ export function updateUserAuthUI(user) {
         }
 
     }
+}
+
+
+// ============= Review UI =============
+
+function normalizeRatingDistribution(distribution) {
+    const normalized = {};
+    for (let rating = 1; rating <= 5; rating += 1) {
+        const rawValue = distribution ? (distribution[rating] ?? distribution[String(rating)]) : 0;
+        normalized[rating] = Number(rawValue) || 0;
+    }
+    return normalized;
+}
+
+function getReviewDisplayName(review) {
+    if (review?.user_name) {
+        return review.user_name;
+    }
+
+    const user = review?.user;
+    if (user) {
+        const firstName = user.first_name || '';
+        const lastName = user.last_name || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        if (fullName) {
+            return fullName;
+        }
+        if (user.username) {
+            return user.username;
+        }
+    }
+
+    return i18n.t('anonymous_user', 'Anonymous');
+}
+
+function getNameInitials(name) {
+    const trimmed = (name || '').trim();
+    if (!trimmed) {
+        return 'A';
+    }
+
+    const parts = trimmed.split(/\s+/).filter(Boolean);
+    const initials = parts.slice(0, 2).map((part) => part[0]?.toUpperCase() || '').join('');
+    return initials || 'A';
+}
+
+function attachInteractiveStarHandlers(starContainer, ratingInput) {
+    if (!starContainer || !ratingInput) {
+        return;
+    }
+
+    const stars = Array.from(starContainer.querySelectorAll('i'));
+
+    const setHover = (value) => {
+        const numericValue = Number(value) || 0;
+        stars.forEach((star) => {
+            const starValue = Number(star.getAttribute('data-rating')) || 0;
+            star.classList.toggle('hovered', numericValue > 0 && starValue <= numericValue);
+        });
+    };
+
+    const setRating = (value) => {
+        const numericValue = Number(value) || 0;
+        ratingInput.value = String(numericValue);
+        starContainer.setAttribute('aria-label', `${numericValue} out of 5 stars`);
+        stars.forEach((star) => {
+            const starValue = Number(star.getAttribute('data-rating')) || 0;
+            if (starValue <= numericValue) {
+                star.classList.add('fas', 'selected');
+                star.classList.remove('far');
+                star.setAttribute('aria-checked', 'true');
+            } else {
+                star.classList.add('far');
+                star.classList.remove('fas', 'selected');
+                star.setAttribute('aria-checked', 'false');
+            }
+        });
+        setHover(0);
+    };
+
+    stars.forEach((star) => {
+        const value = Number(star.getAttribute('data-rating')) || 0;
+        star.addEventListener('mouseenter', () => setHover(value));
+        star.addEventListener('mouseleave', () => setHover(Number(ratingInput.value) || 0));
+        star.addEventListener('click', () => setRating(value));
+        star.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                setRating(value);
+            }
+        });
+    });
+
+    starContainer.addEventListener('mouseleave', () => setHover(Number(ratingInput.value) || 0));
+
+    setRating(Number(ratingInput.value) || 0);
+}
+
+export function renderReviewStats(stats, container) {
+    if (!container) return;
+
+    container.classList.add('review-stats-container');
+    container.innerHTML = '';
+
+    if (!stats || typeof stats !== 'object') {
+        container.appendChild(createElement('p', { class: 'no-review-stats' }, [
+            i18n.t('no_reviews', 'No reviews yet')
+        ]));
+        return;
+    }
+
+    const averageRating = Number(stats.average_rating ?? 0) || 0;
+    const reviewCount = Number(stats.review_count ?? 0) || 0;
+    const distribution = normalizeRatingDistribution(stats.rating_distribution || {});
+    const percentages = calculateRatingPercentages({
+        review_count: reviewCount,
+        rating_distribution: distribution,
+    });
+
+    const statsWrapper = createElement('div', { class: 'review-stats' });
+
+    const ratingClass = getRatingColorClass(averageRating);
+    const colorClass = ratingClass === 'rating-very-poor' ? 'rating-terrible' : ratingClass;
+    const averageBlock = createElement('div', {
+        class: `average-rating ${colorClass}`,
+    });
+    const averageValue = reviewCount > 0 ? averageRating.toFixed(1) : '—';
+    averageBlock.appendChild(createElement('p', { class: 'average-rating-value' }, [averageValue]));
+
+    const averageStars = createStarRating(Math.round(averageRating));
+    averageStars.classList.add('average-rating-stars');
+    averageStars.setAttribute('aria-label', `${averageRating.toFixed(1)} out of 5 stars`);
+    averageBlock.appendChild(averageStars);
+
+    const reviewWord = reviewCount === 1 ? i18n.t('review_single', 'review') : i18n.t('reviews_count', 'reviews');
+    const basedOnLabel = i18n.t('reviews_based_on', 'based on');
+    const formattedBasedOn = basedOnLabel.charAt(0).toUpperCase() + basedOnLabel.slice(1);
+    const countLabel = reviewCount > 0
+        ? `${formattedBasedOn} ${reviewCount} ${reviewWord}`
+        : i18n.t('no_reviews', 'No reviews yet');
+    averageBlock.appendChild(createElement('p', { class: 'average-rating-count' }, [countLabel]));
+
+    statsWrapper.appendChild(averageBlock);
+
+    const distributionList = createElement('div', { class: 'rating-distribution' });
+    for (let rating = 5; rating >= 1; rating -= 1) {
+        const row = createElement('div', { class: 'rating-bar' });
+
+        const label = createElement('div', { class: 'rating-bar-label' }, [
+            createElement('span', {}, [String(rating)]),
+            createElement('i', { class: 'fas fa-star' }),
+        ]);
+
+        const percentage = typeof percentages[rating] === 'number' ? percentages[rating] : 0;
+        const barContainer = createElement('div', {
+            class: 'rating-bar-container',
+            role: 'progressbar',
+            'aria-valuemin': '0',
+            'aria-valuemax': '100',
+            'aria-valuenow': String(percentage),
+        });
+        const barFill = createElement('div', { class: 'rating-bar-fill' });
+        barFill.style.width = `${percentage}%`;
+        barContainer.appendChild(barFill);
+
+        const countValue = distribution[rating] ?? 0;
+        const countLabelEl = createElement('span', { class: 'rating-bar-count' }, [String(countValue)]);
+
+        row.appendChild(label);
+        row.appendChild(barContainer);
+        row.appendChild(countLabelEl);
+
+        distributionList.appendChild(row);
+    }
+
+    statsWrapper.appendChild(distributionList);
+    container.appendChild(statsWrapper);
+}
+
+export function renderReviewCard(review) {
+    const card = createElement('article', { class: 'review-card' });
+
+    if (!review || typeof review !== 'object') {
+        card.appendChild(createElement('p', { class: 'review-comment' }, [
+            i18n.t('error_loading_reviews', 'Error loading reviews')
+        ]));
+        return card;
+    }
+
+    const ratingValue = Number(review.rating ?? 0) || 0;
+    const createdAt = review.created_at || review.updated_at || new Date().toISOString();
+    const displayName = getReviewDisplayName(review);
+    const initials = getNameInitials(displayName);
+
+    const header = createElement('div', { class: 'review-card-header' });
+    const userInfo = createElement('div', { class: 'review-user-info' });
+    const avatar = createElement('div', { class: 'review-user-avatar', 'aria-hidden': 'true' }, [initials]);
+    const details = createElement('div', { class: 'review-user-details' });
+    details.appendChild(createElement('p', { class: 'review-user-name' }, [displayName]));
+    details.appendChild(createElement('p', { class: 'review-date' }, [formatReviewDate(createdAt)]));
+
+    userInfo.appendChild(avatar);
+    userInfo.appendChild(details);
+
+    const ratingBadges = createElement('div', { class: 'review-rating-badges' });
+    const stars = createStarRating(Math.round(ratingValue));
+    stars.classList.add('review-stars');
+    stars.setAttribute('aria-label', `${ratingValue} out of 5 stars`);
+    ratingBadges.appendChild(stars);
+
+    if (review.is_verified_purchase) {
+        ratingBadges.appendChild(createElement('span', { class: 'verified-badge' }, [
+            createElement('i', { class: 'fas fa-check-circle' }),
+            document.createTextNode(i18n.t('verified_purchase', 'Verified Purchase')),
+        ]));
+    }
+
+    header.appendChild(userInfo);
+    header.appendChild(ratingBadges);
+
+    card.appendChild(header);
+
+    const titleText = review.title ? review.title.trim() : '';
+    if (titleText) {
+        card.appendChild(createElement('h3', { class: 'review-title' }, [titleText]));
+    }
+
+    const comment = createElement('p', { class: 'review-comment' });
+    comment.textContent = review.comment ? review.comment.trim() : '';
+    card.appendChild(comment);
+
+    return card;
+}
+
+export function renderReviewForm(productId) {
+    const form = createElement('form', { class: 'review-form', 'data-product-id': String(productId) });
+    form.setAttribute('novalidate', 'novalidate');
+
+    form.appendChild(createElement('h3', {}, [i18n.t('write_review', 'Write a Review')]));
+
+    const ratingInputId = `review-rating-${productId}`;
+    const ratingGroup = createElement('div', { class: 'form-group' });
+    ratingGroup.appendChild(createElement('label', { for: ratingInputId }, [
+        i18n.t('your_rating', 'Your Rating'),
+        createElement('span', { class: 'required' }, ['*']),
+    ]));
+
+    const ratingInput = createElement('input', {
+        type: 'hidden',
+        id: ratingInputId,
+        name: 'rating',
+        value: '0',
+    });
+    ratingGroup.appendChild(ratingInput);
+
+    const starControl = createStarRating(0, true);
+    starControl.classList.add('star-rating-input');
+    ratingGroup.appendChild(starControl);
+    attachInteractiveStarHandlers(starControl, ratingInput);
+
+    form.appendChild(ratingGroup);
+
+    const titleGroup = createElement('div', { class: 'form-group' });
+    const titleInputId = `review-title-${productId}`;
+    titleGroup.appendChild(createElement('label', { for: titleInputId }, [i18n.t('review_title', 'Review Title')]));
+    const titleInput = createElement('input', {
+        type: 'text',
+        id: titleInputId,
+        name: 'title',
+        maxLength: '200',
+        placeholder: i18n.t('review_title_placeholder', 'Summarize your experience'),
+    });
+    titleGroup.appendChild(titleInput);
+    form.appendChild(titleGroup);
+
+    const commentGroup = createElement('div', { class: 'form-group' });
+    const commentInputId = `review-comment-${productId}`;
+    commentGroup.appendChild(createElement('label', { for: commentInputId }, [
+        i18n.t('review_comment', 'Your Review'),
+        createElement('span', { class: 'required' }, ['*']),
+    ]));
+    const commentTextarea = createElement('textarea', {
+        id: commentInputId,
+        name: 'comment',
+        maxLength: '2000',
+        rows: '5',
+        placeholder: i18n.t('review_comment_placeholder', 'Share your thoughts about this product'),
+        required: 'required',
+    });
+    commentGroup.appendChild(commentTextarea);
+    const charCount = createElement('div', { class: 'char-count', 'aria-live': 'polite' }, ['0 / 2000']);
+    commentGroup.appendChild(charCount);
+    form.appendChild(commentGroup);
+
+    const actions = createElement('div', { class: 'form-actions' });
+    const submitButton = createElement('button', { type: 'submit', class: 'btn btn-primary' }, [
+        createElement('i', { class: 'fas fa-paper-plane' }),
+        document.createTextNode(` ${i18n.t('submit_review', 'Submit Review')}`),
+    ]);
+    const cancelButton = createElement('button', { type: 'button', class: 'btn btn-secondary' }, [
+        i18n.t('form_cancel', 'Cancel'),
+    ]);
+    actions.appendChild(submitButton);
+    actions.appendChild(cancelButton);
+    form.appendChild(actions);
+
+    const updateCharCount = () => {
+        const length = commentTextarea.value.length;
+        charCount.textContent = `${length} / 2000`;
+    };
+    commentTextarea.addEventListener('input', updateCharCount);
+    updateCharCount();
+
+    return form;
 }
 
 /**

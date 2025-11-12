@@ -16,6 +16,7 @@ class ReviewManager {
         this.reviews = [];
         this.stats = null;
         this.currentSort = 'recent';
+        this.pagination = null;
     }
 
     /**
@@ -27,7 +28,10 @@ class ReviewManager {
     async loadReviews(productId, sort = 'recent') {
         try {
             const apiService = await import('./apiService.js');
-            this.reviews = await apiService.getProductReviews(productId, sort);
+            const response = await apiService.getProductReviews(productId, sort);
+            const { reviews, pagination } = normalizeReviewResponse(response);
+            this.reviews = reviews;
+            this.pagination = pagination;
             this.currentSort = sort;
             return this.reviews;
         } catch (error) {
@@ -101,6 +105,37 @@ class ReviewManager {
     getCurrentSort() {
         return this.currentSort;
     }
+
+    /**
+     * Get pagination state for the last reviews query
+     * @returns {Object|null}
+     */
+    getPagination() {
+        return this.pagination;
+    }
+}
+
+function normalizeReviewResponse(response) {
+    if (!response) {
+        return { reviews: [], pagination: null };
+    }
+
+    if (Array.isArray(response)) {
+        return { reviews: response, pagination: null };
+    }
+
+    const results = Array.isArray(response.results) ? response.results : null;
+    if (results) {
+        const pagination = {
+            count: typeof response.count === 'number' ? response.count : results.length,
+            next: response.next ?? null,
+            previous: response.previous ?? null,
+            pageSize: results.length,
+        };
+        return { reviews: results, pagination };
+    }
+
+    return { reviews: [], pagination: null };
 }
 
 /**

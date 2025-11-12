@@ -202,6 +202,7 @@ const translations = {
         sort_verified: "Verified Purchases",
         verified_purchase: "Verified Purchase",
         no_reviews: "No reviews yet",
+        anonymous_user: "Anonymous",
         be_first_review: "Be the first to review this product!",
         loading_reviews: "Loading reviews...",
         review_submitted: "Review submitted successfully!",
@@ -211,6 +212,7 @@ const translations = {
         title_required: "Please enter a title",
         comment_required: "Please enter your review",
         reviews_based_on: "based on",
+        review_single: "review",
         reviews_count: "reviews",
         
         // Related Products
@@ -913,6 +915,7 @@ const translations = {
         sort_verified: "Achats Vérifiés",
         verified_purchase: "Achat Vérifié",
         no_reviews: "Aucun avis pour le moment",
+        anonymous_user: "Anonyme",
         be_first_review: "Soyez le premier à donner votre avis !",
         loading_reviews: "Chargement des avis...",
         review_submitted: "Avis soumis avec succès !",
@@ -922,6 +925,7 @@ const translations = {
         title_required: "Veuillez entrer un titre",
         comment_required: "Veuillez entrer votre avis",
         reviews_based_on: "basé sur",
+        review_single: "avis",
         reviews_count: "avis",
         
         // Related Products

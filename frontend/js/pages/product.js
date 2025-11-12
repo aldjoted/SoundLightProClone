@@ -34,6 +34,16 @@ async function loadProductReviews(productId) {
     const listContainer = document.getElementById('reviews-list-container');
     const formContainer = document.getElementById('review-form-container');
 
+    if (statsContainer) {
+        statsContainer.classList.add('review-stats-container');
+    }
+    if (listContainer) {
+        listContainer.classList.add('reviews-list-container');
+    }
+    if (formContainer) {
+        formContainer.classList.add('review-form-container');
+    }
+
     if (!statsContainer || !listContainer) {
         console.warn('Review containers not found on page');
         return;
