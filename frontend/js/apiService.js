@@ -956,6 +956,41 @@ export const getRelatedProducts = async (productId, limit = 6) => {
     }
 };
 
+/**
+ * Registers a stock availability notification request.
+ * @param {number|string} productId - The product identifier from the catalog.
+ * @param {string} email - Email address to notify once restocked.
+ * @returns {Promise<Object>} The created notification request payload.
+ */
+export const requestStockNotification = async (productId, email) => {
+    if (!productId) {
+        throw new APIError('Product ID is required', 400, 'INVALID_PRODUCT_ID');
+    }
+
+    const trimmedEmail = (email || '').trim();
+    if (!trimmedEmail) {
+        throw new APIError('Email is required', 400, 'INVALID_EMAIL');
+    }
+
+    try {
+        return await apiFetch(`/products/${productId}/notify/`, {
+            method: 'POST',
+            body: JSON.stringify({ email: trimmedEmail })
+        });
+    } catch (error) {
+        console.error('Failed to create stock notification request:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Unable to register notification: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
 // --- Dashboard API Functions ---
 
 /**

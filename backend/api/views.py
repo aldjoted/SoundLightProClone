@@ -38,7 +38,8 @@ from .serializers import (
     ProductReviewSerializer, CreateReviewSerializer, ProductReviewStatsSerializer,
     UserProfileSerializer, UpdatePasswordSerializer, ShippingAddressSerializer,
     PaymentMethodSerializer, CreatePaymentMethodSerializer, UpdatePaymentMethodSerializer,
-    DashboardOrderSerializer, DashboardOrderItemSerializer, OrderFilterSerializer
+    DashboardOrderSerializer, DashboardOrderItemSerializer, OrderFilterSerializer,
+    StockNotificationRequestSerializer
 )
 from . import services
 from .services import OrderCreationError
@@ -223,6 +224,22 @@ class ProductDetail(generics.RetrieveAPIView):
                 review_count_cached=Count('reviews', filter=Q(reviews__is_approved=True))
             )
         )
+
+
+class StockNotificationRequestView(generics.CreateAPIView):
+    """Capture stock availability notification requests for a product."""
+
+    serializer_class = StockNotificationRequestSerializer
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        data = request.data.copy()
+        data['product'] = self.kwargs['product_id']
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 class CategoryList(generics.ListAPIView):
     """

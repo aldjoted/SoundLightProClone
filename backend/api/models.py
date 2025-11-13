@@ -1,10 +1,16 @@
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth.models import User
 from decimal import Decimal
 from mptt.models import MPTTModel, TreeForeignKey
 from django.utils.translation import gettext_lazy as _
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
+from django.conf import settings
+from django.core.mail import send_mail
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 # Create your models here.
 
@@ -242,6 +248,112 @@ class ProductAttachment(models.Model):
     def __str__(self):
         name = self.label or self.file.name
         return f"Attachment for {self.product.name}: {name}"
+
+
+class StockNotificationRequest(models.Model):
+    """Notification request to alert customers when a product is restocked."""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='stock_notifications'
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='stock_notification_requests'
+    )
+    email = models.EmailField()
+    notified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('product', 'email')
+        ordering = ['-created_at']
+        verbose_name = _("Stock Notification Request")
+        verbose_name_plural = _("Stock Notification Requests")
+
+    def __str__(self):
+        return f"{self.email} -> {self.product.name}"
+
+
+def send_stock_notification_email(notification: "StockNotificationRequest") -> bool:
+    """Send a restock notification email to the requester."""
+
+    subject = _("Product back in stock")
+    product_name = notification.product.name
+    message = _(
+        "Good news! The product '%(product)s' is available again. Visit our store to place your order."
+    ) % {"product": product_name}
+    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None)
+
+    try:
+        send_mail(subject, message, from_email, [notification.email], fail_silently=False)
+        return True
+    except Exception as exc:  # pragma: no cover - defensive logging
+        logger.warning(
+            "Failed to send stock notification email for product %s to %s: %s",
+            notification.product_id,
+            notification.email,
+            exc,
+        )
+        return False
+
+
+def enqueue_stock_notification(notification: "StockNotificationRequest") -> None:
+    """Placeholder for asynchronous task queue integration."""
+
+    if send_stock_notification_email(notification):
+        StockNotificationRequest.objects.filter(pk=notification.pk, notified=False).update(notified=True)
+
+
+@receiver(pre_save, sender=Product)
+def cache_previous_stock(sender, instance: Product, **kwargs):
+    """Store the previous stock level for restock detection."""
+
+    if not instance.pk:
+        instance._previous_stock = None  # type: ignore[attr-defined]
+        return
+
+    try:
+        previous_stock = sender.objects.only('stock').get(pk=instance.pk).stock
+    except sender.DoesNotExist:  # pragma: no cover - defensive
+        previous_stock = None
+
+    instance._previous_stock = previous_stock  # type: ignore[attr-defined]
+
+
+@receiver(post_save, sender=Product)
+def trigger_stock_notifications(sender, instance: Product, created: bool, **kwargs):
+    """Dispatch notifications when a product transitions from out-of-stock to available."""
+
+    if created:
+        instance._previous_stock = None  # type: ignore[attr-defined]
+        return
+
+    previous_stock = getattr(instance, '_previous_stock', None)
+    instance._previous_stock = None  # type: ignore[attr-defined]
+
+    if previous_stock is None or previous_stock > 0 or instance.stock <= 0:
+        return
+
+    pending_requests = list(
+        StockNotificationRequest.objects.select_related('product').filter(
+            product=instance,
+            notified=False
+        )
+    )
+
+    if not pending_requests:
+        return
+
+    def process_notifications():
+        for notification in pending_requests:
+            enqueue_stock_notification(notification)
+
+    transaction.on_commit(process_notifications)
 
 
 class UserProfile(models.Model):

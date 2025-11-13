@@ -24,6 +24,7 @@ urlpatterns = [
     path('products/', views.ProductList.as_view(), name='product_list'),
     # Get details of a single product by its ID
     path('products/<int:pk>/', views.ProductDetail.as_view(), name='product_detail'),
+    path('products/<int:product_id>/notify/', views.StockNotificationRequestView.as_view(), name='product_stock_notify'),
     # List all top-level categories (children are nested by the serializer)
     path('categories/', views.CategoryList.as_view(), name='category_list'),
     # List partner brands

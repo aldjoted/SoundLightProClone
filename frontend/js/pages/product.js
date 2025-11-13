@@ -19,7 +19,7 @@ export async function initProductPage(signal) {
     try {
         const product = await apiService.getProductById(productId, { signal });
         ui.renderProductDetail(product, container);
-        setupProductDetailPageEventListeners(product);
+        await setupProductDetailPageEventListeners(product);
 
         await loadProductReviews(productId);
         await loadRelatedProducts(productId);
@@ -179,8 +179,81 @@ async function loadRelatedProducts(productId) {
     }
 }
 
-function setupProductDetailPageEventListeners(product) {
+async function configureStockNotification(product, listenerManager) {
+    const stock = Number(product?.stock ?? 0);
+    const addToCartForm = document.getElementById('add-to-cart-form');
+    const notifyContainer = document.getElementById('notify-me-container');
+    const notifyForm = document.getElementById('notify-me-form');
+    const emailInput = document.getElementById('notify-email');
+    const stickyCTA = document.getElementById('sticky-cta');
+
+    if (!notifyContainer || !notifyForm || !emailInput) {
+        return;
+    }
+
+    if (stock <= 0) {
+        addToCartForm?.classList.add('hidden');
+        stickyCTA?.classList.add('hidden');
+        notifyContainer.classList.remove('hidden');
+
+        let emailPrefill = '';
+        const storedProfile = apiService.getStoredUserProfile?.();
+        if (storedProfile?.email) {
+            emailPrefill = storedProfile.email;
+        } else {
+            try {
+                const hasSession = await apiService.ensureAccessToken();
+                if (hasSession) {
+                    const profile = await apiService.getUserProfile(false);
+                    emailPrefill = profile?.email || '';
+                }
+            } catch (profileError) {
+                console.warn('Unable to resolve user profile for stock notification:', profileError);
+            }
+        }
+
+        if (emailPrefill) {
+            emailInput.value = emailPrefill;
+            emailInput.readOnly = true;
+        } else {
+            emailInput.value = '';
+            emailInput.readOnly = false;
+        }
+
+        listenerManager?.add(notifyForm, 'submit', async (event) => {
+            event.preventDefault();
+
+            const submitButton = notifyForm.querySelector('button[type="submit"]');
+            const email = emailInput.value.trim();
+
+            if (!email) {
+                ui.showToast(i18n.t('notify_email_required', 'Please enter a valid email address.'), 'error');
+                return;
+            }
+
+            submitButton?.setAttribute('disabled', 'true');
+
+            try {
+                await apiService.requestStockNotification(product.id, email);
+                ui.showToast(i18n.t('stock_notify_success', "Success! We'll notify you when this is back in stock."), 'success');
+            } catch (error) {
+                const message = error?.getUserMessage?.() || error?.message || i18n.t('stock_notify_error', 'Something went wrong. Please try again later.');
+                ui.showToast(message, 'error');
+            } finally {
+                submitButton?.removeAttribute('disabled');
+            }
+        });
+    } else {
+        notifyContainer.classList.add('hidden');
+        addToCartForm?.classList.remove('hidden');
+        stickyCTA?.classList.remove('hidden');
+    }
+}
+
+async function setupProductDetailPageEventListeners(product) {
     const pageListenerManager = new ListenerManager();
+
+    await configureStockNotification(product, pageListenerManager);
 
     const gallery = document.querySelector('.product-gallery');
     if (gallery) {

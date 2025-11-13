@@ -1140,6 +1140,13 @@ export function renderProductDetail(product, container) {
                             ${escapeHtml(addBtnLabel)}
                         </button>
                     </form>
+                    <div id="notify-me-container" class="hidden">
+                        <p data-i18n="out_of_stock_notify">This product is out of stock. Enter your email to be notified when it's back.</p>
+                        <form id="notify-me-form">
+                            <input type="email" id="notify-email" placeholder="Enter your email" required>
+                            <button type="submit" class="btn btn-secondary" data-i18n="notify_me">Notify Me</button>
+                        </form>
+                    </div>
                     <div class="product-secondary-actions">
                         <button type="button" class="wishlist-btn" aria-label="${escapeHtml(wishlistLabel)}">
                             <i class="far fa-heart"></i>

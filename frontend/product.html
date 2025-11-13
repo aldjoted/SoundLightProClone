@@ -169,6 +169,16 @@
         <section id="product-detail-container" class="product-listing">
             <!-- Product details will be dynamically inserted here by JS -->
             <div class="loading-spinner"><div class="spinner"></div><p data-i18n="product_loading">Loading product...</p></div>
+            <!-- Placeholder for stock notification form -->
+            <div class="product-actions">
+                <div id="notify-me-container" class="hidden">
+                    <p data-i18n="out_of_stock_notify">This product is out of stock. Enter your email to be notified when it's back.</p>
+                    <form id="notify-me-form">
+                        <input type="email" id="notify-email" placeholder="Enter your email" required>
+                        <button type="submit" class="btn btn-secondary" data-i18n="notify_me">Notify Me</button>
+                    </form>
+                </div>
+            </div>
         </section>
 
         <!-- Reviews Section -->

@@ -1,10 +1,12 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 import re  # ✅ ADD for validation patterns
 from .models import (
     Category, Brand, Product, ProductImage, Order, OrderItem,
-    Wishlist, WishlistItem, ProductReview, UserProfile, ShippingAddress, PaymentMethod
+    Wishlist, WishlistItem, ProductReview, UserProfile, ShippingAddress, PaymentMethod,
+    StockNotificationRequest
 )
 
 # --- Product Catalog Serializers ---
@@ -161,6 +163,48 @@ class ProductSerializer(serializers.ModelSerializer):
         return obj.get_description('en')
     
     # avg_rating and review_count now rely on queryset annotations to avoid N+1 queries
+
+
+class StockNotificationRequestSerializer(serializers.ModelSerializer):
+    """Serializer for capturing stock notification sign-ups."""
+
+    class Meta:
+        model = StockNotificationRequest
+        fields = ['id', 'product', 'email', 'user', 'notified', 'created_at']
+        read_only_fields = ['user', 'notified', 'created_at']
+        validators = [
+            UniqueTogetherValidator(
+                queryset=StockNotificationRequest.objects.all(),
+                fields=('product', 'email'),
+                message="You have already requested a notification for this product."
+            )
+        ]
+
+    def validate(self, attrs):
+        request = self.context.get('request')
+        user = None
+
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            user = request.user
+
+        email = attrs.get('email', '').strip().lower()
+        if user and not email:
+            email = (user.email or '').strip().lower()
+
+        if not email:
+            raise serializers.ValidationError({'email': 'Email is required to receive notifications.'})
+
+        attrs['email'] = email
+        self._notification_user = user
+        return attrs
+
+    def create(self, validated_data):
+        user = getattr(self, '_notification_user', None)
+        if user:
+            validated_data['user'] = user
+            if not validated_data.get('email'):
+                validated_data['email'] = (user.email or '').strip().lower()
+        return super().create(validated_data)
 
 # --- User Authentication Serializers ---
 
