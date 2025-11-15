@@ -42,13 +42,31 @@ class MultiFileInput(forms.ClearableFileInput):
         super().__init__(attrs)
 
 
+class MultipleFileField(forms.FileField):
+    def clean(self, data, initial=None):
+        if data in self.empty_values:
+            return []
+        if not isinstance(data, (list, tuple)):
+            data = [data]
+        cleaned = []
+        errors = []
+        for item in data:
+            try:
+                cleaned.append(super().clean(item, initial=None))
+            except forms.ValidationError as exc:
+                errors.extend(exc.error_list)
+        if errors:
+            raise forms.ValidationError(errors)
+        return cleaned
+
+
 class ProductAdminForm(forms.ModelForm):
-    new_images = forms.FileField(
+    new_images = MultipleFileField(
         widget=MultiFileInput(),
         required=False,
         help_text="Select one or more images to upload in a single action.",
     )
-    product_media = forms.FileField(
+    product_media = MultipleFileField(
         widget=MultiFileInput(attrs={'accept': '.pdf,.doc,.docx,.xls,.xlsx'}),
         required=False,
         help_text="Optional attachments (e.g., PDFs, manuals).",
@@ -57,12 +75,6 @@ class ProductAdminForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = '__all__'
-
-    def clean_new_images(self):
-        return self.files.getlist('new_images') if hasattr(self, 'files') else []
-
-    def clean_product_media(self):
-        return self.files.getlist('product_media') if hasattr(self, 'files') else []
 
 
 @admin.register(Category)

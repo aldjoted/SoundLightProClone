@@ -11,6 +11,17 @@ import { IS_PRODUCTION, SERVICES, API_BASE_URL, IS_LOCAL_HOST } from './config.j
  */
 export class CSPManager {
   static getCSPDirectives() {
+    // Extract the base URL (without /api) from API_BASE_URL for CSP
+    const apiBaseWithoutPath = API_BASE_URL.replace(/\/api\/?$/, '');
+    let apiOrigin = apiBaseWithoutPath;
+    try {
+      apiOrigin = new URL(API_BASE_URL).origin;
+    } catch (error) {
+      if (typeof window !== 'undefined' && window.location) {
+        apiOrigin = window.location.origin;
+      }
+    }
+    
     const directives = {
       'default-src': ["'self'"],
       'script-src': [
@@ -46,6 +57,9 @@ export class CSPManager {
         'http://localhost:8000',
         'http://127.0.0.1:8000',
         'http://192.168.0.198:8000',
+        'http://192.168.0.112:8000',
+        apiBaseWithoutPath, // Dynamically detected API base
+        apiOrigin,
         // Production URLs
         'https://images.soundlightpro.com',
         'https://cdn.soundlightpro.com',
@@ -60,7 +74,10 @@ export class CSPManager {
         "'self'",
         // Allow whichever API base URL is configured at build/runtime
         API_BASE_URL.replace(/\/$/, ''),
+        apiBaseWithoutPath, // Dynamically detected API base
+        apiOrigin,
         'http://192.168.0.198:8000',
+        'http://192.168.0.112:8000',
         'http://127.0.0.1:8000',
         'http://localhost:8000',
         'https://api.soundlightpro.com',
@@ -78,6 +95,9 @@ export class CSPManager {
         'http://localhost:8000',
         'http://127.0.0.1:8000',
         'http://192.168.0.198:8000',
+        'http://192.168.0.112:8000',
+        apiBaseWithoutPath, // Dynamically detected API base
+        apiOrigin,
         'https://api.soundlightpro.com',
         'https://cdn.soundlightpro.com'
       ],
