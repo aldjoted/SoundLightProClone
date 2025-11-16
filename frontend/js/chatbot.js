@@ -53,10 +53,93 @@ const ChatbotModule = (() => {
         }
     };
 
+    const DEFAULT_CHATBOT_TEMPLATE = `
+        <header class="chatbot-header">
+            <h2 data-i18n="chatbot_title">Chat Support</h2>
+            <button class="close-btn" type="button" aria-label="Close chatbot">
+                <i class="fas fa-times"></i>
+            </button>
+        </header>
+        <ul class="chatbox" role="log" aria-label="Chat conversation" aria-live="polite">
+            <li class="chat incoming">
+                <span class="chat-icon" aria-hidden="true">
+                    <i class="fas fa-robot"></i>
+                </span>
+                <p class="message-content" data-i18n="chatbot_greeting">Hi there! 👋<br>How can I help you today?</p>
+            </li>
+        </ul>
+        <div class="chat-input">
+            <textarea data-i18n="chatbot_placeholder" placeholder="Type your message here..." aria-label="Type your message" rows="1"></textarea>
+            <button type="button" aria-label="Send message">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    `;
+
     // Module state
     let elements = {};
     let lastRequestTime = 0;
     let isInitialized = false;
+
+    function ensureChatbotMarkup() {
+        if (typeof document === 'undefined') return;
+
+        const body = document.body;
+        if (!body) return;
+
+        let toggler = document.querySelector(CONFIG.SELECTORS.toggler);
+        if (!toggler) {
+            toggler = document.createElement('button');
+            toggler.type = 'button';
+            toggler.className = 'chatbot-toggler';
+            toggler.setAttribute('aria-label', 'Open assistant');
+            toggler.setAttribute('aria-controls', 'chatbot-panel');
+            toggler.setAttribute('aria-expanded', 'false');
+            toggler.innerHTML = '<i class="fas fa-comment"></i>';
+            body.appendChild(toggler);
+        } else {
+            toggler.type = 'button';
+            if (!toggler.getAttribute('aria-controls')) {
+                toggler.setAttribute('aria-controls', 'chatbot-panel');
+            }
+            if (!toggler.getAttribute('aria-expanded')) {
+                toggler.setAttribute('aria-expanded', 'false');
+            }
+            if (!toggler.innerHTML.trim()) {
+                toggler.innerHTML = '<i class="fas fa-comment"></i>';
+            }
+        }
+
+        let panel = document.querySelector(CONFIG.SELECTORS.panel) || document.querySelector('.chatbot');
+        if (!panel) {
+            panel = document.createElement('dialog');
+            panel.id = 'chatbot-panel';
+            panel.className = 'chatbot';
+            panel.setAttribute('aria-label', 'Assistant');
+            panel.innerHTML = DEFAULT_CHATBOT_TEMPLATE;
+            body.appendChild(panel);
+        } else {
+            if (!panel.id) {
+                panel.id = 'chatbot-panel';
+            }
+            if (!panel.getAttribute('aria-label')) {
+                panel.setAttribute('aria-label', 'Assistant');
+            }
+            if (!panel.querySelector(CONFIG.SELECTORS.chatbox)) {
+                panel.innerHTML = DEFAULT_CHATBOT_TEMPLATE;
+            }
+
+            const closeBtn = panel.querySelector(CONFIG.SELECTORS.closeBtn);
+            if (closeBtn) {
+                closeBtn.setAttribute('type', 'button');
+            }
+
+            const sendBtn = panel.querySelector(CONFIG.SELECTORS.sendBtn);
+            if (sendBtn) {
+                sendBtn.setAttribute('type', 'button');
+            }
+        }
+    }
 
     /**
      * Enhanced security-hardened markdown-to-HTML converter
@@ -567,6 +650,8 @@ const ChatbotModule = (() => {
         }
 
         try {
+            ensureChatbotMarkup();
+
             if (!cacheElements()) {
                 return false;
             }

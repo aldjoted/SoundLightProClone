@@ -262,9 +262,31 @@ async function setupProductDetailPageEventListeners(product) {
             if (!thumb) return;
 
             const mainImage = document.getElementById('main-product-image');
+            if (!mainImage) return;
+
+            const fullSrc = thumb.dataset.fullSrc || thumb.src;
+            const thumbSrc = thumb.dataset.thumbSrc || thumb.src;
+            const newAlt = thumb.dataset.alt || thumb.alt || product.name || '';
+
+            if (!fullSrc) return;
+
+            const currentFullSrc = mainImage.getAttribute('data-full-src') || mainImage.src;
+            if (currentFullSrc === fullSrc) {
+                gallery.querySelector('.thumbnail-img.active')?.classList.remove('active');
+                thumb.classList.add('active');
+                return;
+            }
+
             mainImage.style.opacity = '0';
             setTimeout(() => {
-                mainImage.src = thumb.src;
+                mainImage.src = fullSrc;
+                mainImage.alt = newAlt;
+                mainImage.setAttribute('data-full-src', fullSrc);
+                if (thumbSrc) {
+                    mainImage.setAttribute('data-thumb-src', thumbSrc);
+                } else {
+                    mainImage.removeAttribute('data-thumb-src');
+                }
                 mainImage.style.opacity = '1';
             }, 200);
 

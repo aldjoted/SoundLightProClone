@@ -55,13 +55,261 @@ function escapeHtml(text) {
 
  */
 
-function getProductImage(product) {
+const DEFAULT_PRODUCT_PLACEHOLDER = 'https://via.placeholder.com/600x400.png?text=No+Image';
 
-    return (product.images && product.images.length > 0)
+function getProductImage(product, variant = 'full') {
 
-        ? product.images[0].image
+    const sources = resolveProductPrimaryImage(product);
 
-        : 'https://via.placeholder.com/400x300.png?text=No+Image';
+    if (variant === 'thumb') {
+
+        return sources.thumb || sources.full || DEFAULT_PRODUCT_PLACEHOLDER;
+
+    }
+
+    return sources.full || DEFAULT_PRODUCT_PLACEHOLDER;
+
+}
+
+const IMAGE_VARIANT_KEYS = {
+
+    full: [
+
+        'image_large_url',
+
+        'image_large',
+
+        'large_url',
+
+        'large',
+
+        'image_full_url',
+
+        'image_full',
+
+        'full_url',
+
+        'full',
+
+        'image_original',
+
+        'original',
+
+        'high',
+
+        'image',
+
+        'url',
+
+        'src'
+
+    ],
+
+    thumb: [
+
+        'image_thumb_url',
+
+        'image_thumbnail_url',
+
+        'image_thumb',
+
+        'thumbnail_url',
+
+        'thumbnail',
+
+        'thumb_url',
+
+        'thumb',
+
+        'image_small_url',
+
+        'image_small',
+
+        'small',
+
+        'preview',
+
+        'mini',
+
+        'micro',
+
+        'image'
+
+    ]
+
+};
+
+const DIRECT_PRODUCT_IMAGE_KEYS = [
+
+    'image_large_url',
+
+    'image_full_url',
+
+    'hero_image',
+
+    'image_large',
+
+    'image_full',
+
+    'image_url',
+
+    'image'
+
+];
+
+function normalizeKey(key) {
+
+    return typeof key === 'string' ? key.toLowerCase().replace(/[-_\s]+/g, '') : '';
+
+}
+
+function pickImageVariant(source, variantKeys) {
+
+    if (!source || typeof source !== 'object') {
+
+        return '';
+
+    }
+
+    const entries = Object.entries(source);
+
+    for (const [key, value] of entries) {
+
+        if (typeof value !== 'string' || !value) {
+
+            continue;
+
+        }
+
+        const normalizedKey = normalizeKey(key);
+
+        const match = variantKeys.some((variantKey) => normalizedKey.includes(normalizeKey(variantKey)));
+
+        if (match) {
+
+            return value;
+
+        }
+
+    }
+
+    for (const [, value] of entries) {
+
+        if (value && typeof value === 'object') {
+
+            const nested = pickImageVariant(value, variantKeys);
+
+            if (nested) {
+
+                return nested;
+
+            }
+
+        }
+
+    }
+
+    return '';
+
+}
+
+function resolveGalleryImageSources(imageData) {
+
+    if (!imageData) {
+
+        return { full: '', thumb: '', alt: '' };
+
+    }
+
+    if (typeof imageData === 'string') {
+
+        return { full: imageData, thumb: imageData, alt: '' };
+
+    }
+
+    const alt = typeof imageData.alt_text === 'string' ? imageData.alt_text : '';
+
+    let full = pickImageVariant(imageData, IMAGE_VARIANT_KEYS.full);
+
+    let thumb = pickImageVariant(imageData, IMAGE_VARIANT_KEYS.thumb);
+
+    if (!full && typeof imageData.image === 'string') {
+
+        full = imageData.image;
+
+    }
+
+    if (!thumb) {
+
+        if (typeof imageData.thumbnail === 'string') {
+
+            thumb = imageData.thumbnail;
+
+        } else if (typeof imageData.thumb === 'string') {
+
+            thumb = imageData.thumb;
+
+        } else if (typeof imageData.small === 'string') {
+
+            thumb = imageData.small;
+
+        }
+
+    }
+
+    if (!thumb) {
+
+        thumb = full;
+
+    }
+
+    return { full, thumb, alt };
+
+}
+
+function resolveProductPrimaryImage(product) {
+
+    if (!product) {
+
+        return { full: '', thumb: '', alt: '' };
+
+    }
+
+    for (const key of DIRECT_PRODUCT_IMAGE_KEYS) {
+
+        if (typeof product[key] === 'string' && product[key]) {
+
+            return { full: product[key], thumb: product[key], alt: product.name || '' };
+
+        }
+
+    }
+
+    if (product.main_image) {
+
+        const main = resolveGalleryImageSources(product.main_image);
+
+        if (main.full) {
+
+            return main;
+
+        }
+
+    }
+
+    if (Array.isArray(product.images) && product.images.length > 0) {
+
+        const first = resolveGalleryImageSources(product.images[0]);
+
+        if (first.full || first.thumb) {
+
+            return first;
+
+        }
+
+    }
+
+    return { full: '', thumb: '', alt: '' };
 
 }
 
@@ -1014,10 +1262,12 @@ export function renderProductDetail(product, container) {
     document.title = `${escapeHtml(product.name)} - SoundLightPro`;
     updateProductSchema(product);
 
-    const hasImages = product.images && product.images.length > 0;
-    const mainImageSrc = hasImages
-        ? product.images[0].image
-        : 'https://via.placeholder.com/600x400.png?text=No+Image';
+    const primaryImage = resolveProductPrimaryImage(product);
+    const mainImageSrc = primaryImage.full || DEFAULT_PRODUCT_PLACEHOLDER;
+    const mainImageThumb = primaryImage.thumb && primaryImage.thumb !== primaryImage.full
+        ? primaryImage.thumb
+        : '';
+    const mainImageAlt = primaryImage.alt || product.name || 'Product image';
 
     const rawStock = Number(product.stock);
     const stockCount = Number.isFinite(rawStock) && rawStock > 0 ? rawStock : 0;
@@ -1058,19 +1308,27 @@ export function renderProductDetail(product, container) {
             : `${stockCount} units available`;
 
     let thumbnailsHTML = '';
-    if (hasImages && product.images.length > 1) {
+    if (Array.isArray(product.images) && product.images.length > 1) {
         thumbnailsHTML = `
             <div class="product-thumbnails">
-                ${product.images.map((img, index) => `
+                ${product.images.map((img, index) => {
+                    const sources = resolveGalleryImageSources(img);
+                    const thumbSrc = sources.thumb || DEFAULT_PRODUCT_PLACEHOLDER;
+                    const fullSrc = sources.full || thumbSrc;
+                    const alt = sources.alt || product.name || '';
+                    return `
                     <img
-                        src="${img.image}"
-                        alt="${escapeHtml(img.alt_text || product.name)}"
+                        src="${escapeHtml(thumbSrc)}"
+                        data-full-src="${escapeHtml(fullSrc)}"
+                        data-thumb-src="${escapeHtml(thumbSrc)}"
+                        data-alt="${escapeHtml(alt)}"
+                        alt="${escapeHtml(alt)}"
                         class="thumbnail-img ${index === 0 ? 'active' : ''}"
                         width="100"
                         height="100"
                         loading="lazy"
                     />
-                `).join('')}
+                `; }).join('')}
             </div>
         `;
     }
@@ -1089,10 +1347,14 @@ export function renderProductDetail(product, container) {
                 <div class="main-image-container">
                     <img
                         id="main-product-image"
-                        src="${mainImageSrc}"
-                        alt="${escapeHtml(product.name)}"
+                        src="${escapeHtml(mainImageSrc)}"
+                        alt="${escapeHtml(mainImageAlt)}"
                         width="600"
                         height="400"
+                        loading="eager"
+                        decoding="async"
+                        data-full-src="${escapeHtml(mainImageSrc)}"
+                        ${mainImageThumb ? `data-thumb-src="${escapeHtml(mainImageThumb)}"` : ''}
                     />
                 </div>
                 ${thumbnailsHTML}
@@ -1991,7 +2253,7 @@ export function renderSearchSuggestions(products, container) {
 
                     <a class="result-link" href="product.html?id=${p.id}">
 
-                        <img class="search-thumb" src="${getProductImage(p)}" alt="${escapeHtml(p.name)}" loading="lazy" width="36" height="36">
+                        <img class="search-thumb" src="${getProductImage(p, 'thumb')}" alt="${escapeHtml(p.name)}" loading="lazy" width="36" height="36">
 
                         <div class="result-details">
 
@@ -2259,7 +2521,11 @@ function updateProductSchema(product) {
 
     const hasImages = product.images && product.images.length > 0;
 
-    const imageUrl = hasImages ? product.images[0].image : 'https://soundlightpro.com/images/logo/logoslp.jpg';
+    const primaryImage = resolveProductPrimaryImage(product);
+
+    const imageUrl = primaryImage.full
+        || (hasImages ? product.images[0].image : '')
+        || 'https://soundlightpro.com/images/logo/logoslp.jpg';
 
     const availability = product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock';
 
