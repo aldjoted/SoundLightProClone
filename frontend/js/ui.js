@@ -52,10 +52,8 @@ function escapeHtml(text) {
  * @param {Object} product - The product object.
 
  * @returns {string} The URL of the first image or a placeholder.
-
  */
-
-const DEFAULT_PRODUCT_PLACEHOLDER = 'https://via.placeholder.com/600x400.png?text=No+Image';
+const DEFAULT_PRODUCT_PLACEHOLDER = 'images/placeholder.svg';
 
 function getProductImage(product, variant = 'full') {
 
@@ -498,15 +496,13 @@ export function showSkeletonLoader(container, count = 8) {
  */
 
 export function renderHeroSlider(_unused = []) {
-
     const swiperWrapper = document.querySelector('.swiper-wrapper');
-
     if (!swiperWrapper) return;
 
-
+    // Check if already rendered to avoid re-rendering
+    if (swiperWrapper.children.length > 1) return;
 
     // Build absolute URL from site root so it works on any page path
-
     const toAbs = (p) => {
         // Normalize path to absolute URL from current page location
         if (p.startsWith('http://') || p.startsWith('https://')) return p;
@@ -601,7 +597,11 @@ export function renderMegaMenu(categories) {
 
     if (!megaMenuContainer) return;
 
-
+    // Optimization: Check if content already exists and matches
+    // This prevents unnecessary DOM thrashing on re-initialization
+    if (megaMenuContainer.children.length > 0 && megaMenuContainer._renderedCategories === JSON.stringify(categories.map(c => c.id))) {
+        return;
+    }
 
     const parentCategories = categories.filter(c => c.parent === null && c.children.length > 0);
 
@@ -612,8 +612,9 @@ export function renderMegaMenu(categories) {
     megaMenuContainer._tabSwitchingInitialized = false;
 
     megaMenuContainer.innerHTML = '';
-
-
+    
+    // Store signature of rendered categories
+    megaMenuContainer._renderedCategories = JSON.stringify(categories.map(c => c.id));
 
     // Header with tabs
 
@@ -958,20 +959,19 @@ export function renderProductGrid(products, container) {
 
             }, [
 
-                createElement('img', { src: getProductImage(product), alt: product.name, loading: 'lazy', width: '400', height: '250' }),
+                createElement('img', { src: getProductImage(product), alt: product.name, loading: 'lazy', width: '400', height: '250' })
 
-                createElement('div', { class: 'product-card-overlay' }, [
-
-                    createElement('button', { class: 'btn btn--secondary quick-view-btn', 'data-product-id': product.id }, [
-
-                        createElement('i', { class: 'fas fa-eye' }),
-
-                        document.createTextNode(' ' + i18n.t('btn_quick_view'))
-
-                    ])
-
+            ]),
+            
+            // Modern Action Bar
+            createElement('div', { class: 'product-card-actions' }, [
+                createElement('button', { class: 'btn-card-action quick-view-btn', 'data-product-id': product.id, 'aria-label': i18n.t('btn_quick_view') }, [
+                    createElement('i', { class: 'fas fa-eye' })
+                ]),
+                createElement('button', { class: 'btn-card-action btn-card-primary add-to-cart-btn', 'data-product-id': product.id }, [
+                    createElement('i', { class: 'fas fa-shopping-cart' }),
+                    document.createTextNode(' ' + i18n.t('btn_add_to_cart'))
                 ])
-
             ]),
 
             createElement('div', { class: 'product-card-content' }, [
@@ -990,15 +990,7 @@ export function renderProductGrid(products, container) {
 
                 createElement('div', { class: 'product-card-footer' }, [
 
-                    createElement('p', { class: 'product-card-price' }, [i18n.formatCurrency(product.price)]),
-
-                    createElement('button', { class: 'btn btn--secondary add-to-cart-btn', 'data-product-id': product.id }, [
-
-                        createElement('i', { class: 'fas fa-shopping-cart' }),
-
-                        document.createTextNode(' ' + i18n.t('btn_add_to_cart'))
-
-                    ])
+                    createElement('p', { class: 'product-card-price' }, [i18n.formatCurrency(product.price)])
 
                 ])
 
@@ -1384,6 +1376,9 @@ export function renderProductDetail(product, container) {
                     <h2 class="product-section-title">Description</h2>
                     <p>${descriptionText}</p>
                 </div>
+
+                ${renderProductMediaSection(product)}
+
                 <div class="product-actions">
                     <form id="add-to-cart-form" class="add-to-cart-form">
                         <div class="quantity-control">
@@ -1511,7 +1506,7 @@ export function renderMiniCart(items = []) {
 
     const overlay = createElement('div', { id: 'mini-cart-overlay', class: 'mini-cart-overlay active' }, [
 
-        createElement('aside', { class: 'mini-cart-drawer', role: 'dialog', 'aria-label': 'Mini cart' }, [
+        createElement('aside', { class: 'mini-cart-drawer', role: 'dialog', 'aria-label': 'Mini cart', 'aria-modal': 'true' }, [
 
             createElement('div', { class: 'mini-cart-header' }, [
 
@@ -2116,7 +2111,7 @@ export function renderRelatedProducts(products, container) {
             href: productUrl
         }, [productName]));
 
-        const rating = createElement('div', { class: 'related-product-rating' });
+        const rating = createElement('div', { class: 'related-product_rating' });
         const stars = createElement('div', { class: 'related-product-stars' });
         for (let i = 1; i <= 5; i += 1) {
             let starClass = 'far fa-star';
@@ -2589,4 +2584,77 @@ function updateProductSchema(product) {
 
     schemaScript.textContent = JSON.stringify(schema, null, 2);
 
+}
+
+function renderProductMediaSection(product) {
+    const videos = product.videos || [];
+    const attachments = product.attachments || [];
+
+    if (videos.length === 0 && attachments.length === 0) {
+        return '';
+    }
+
+    let html = '<div class="product-media-section">';
+    
+    if (videos.length > 0) {
+        html += '<h3 class="product-section-title">Product Videos</h3><div class="video-grid">';
+        videos.forEach(video => {
+            html += '<div class="video-item">';
+            if (video.youtube_url) {
+                // Extract video ID from YouTube URL
+                const videoId = getYouTubeId(video.youtube_url);
+                if (videoId) {
+                    html += `
+                        <div class="video-wrapper">
+                            <iframe 
+                                src="https://www.youtube.com/embed/${videoId}" 
+                                title="${escapeHtml(video.title || 'Product Video')}"
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen>
+                            </iframe>
+                        </div>
+                    `;
+                }
+            } else if (video.video_file) {
+                html += `
+                    <div class="video-wrapper">
+                        <video controls preload="metadata">
+                            <source src="${escapeHtml(video.video_file)}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                `;
+            }
+            if (video.title) {
+                html += `<p class="video-title">${escapeHtml(video.title)}</p>`;
+            }
+            html += '</div>';
+        });
+        html += '</div>';
+    }
+
+    if (attachments.length > 0) {
+        html += '<h3 class="product-section-title">Downloads & Manuals</h3><ul class="attachment-list">';
+        attachments.forEach(att => {
+            html += `
+                <li>
+                    <a href="${escapeHtml(att.file)}" target="_blank" class="attachment-link">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>${escapeHtml(att.label || 'Download')}</span>
+                    </a>
+                </li>
+            `;
+        });
+        html += '</ul>';
+    }
+
+    html += '</div>';
+    return html;
+}
+
+function getYouTubeId(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
 }

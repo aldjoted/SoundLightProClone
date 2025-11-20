@@ -179,6 +179,7 @@ class ProductList(generics.ListAPIView):
         # Note: self.request is a DRF Request object, which has .query_params
         queryset = Product.objects.filter(available=True)\
             .select_related('brand', 'category')\
+            .prefetch_related('images')\
             .annotate(
                 avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
                 review_count_cached=Count('reviews', filter=Q(reviews__is_approved=True))
@@ -219,6 +220,7 @@ class ProductDetail(generics.RetrieveAPIView):
         return (
             Product.objects.filter(available=True)
             .select_related('brand', 'category')
+            .prefetch_related('images', 'attachments', 'related_products')
             .annotate(
                 avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
                 review_count_cached=Count('reviews', filter=Q(reviews__is_approved=True))

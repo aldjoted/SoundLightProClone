@@ -1,0 +1,39 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='api' %}">API</a>
+&rsaquo; <a href="{% url 'admin:api_product_changelist' %}">Products</a>
+&rsaquo; Import Products
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Import Products from Excel</h1>
+    <p>Upload an Excel file (.xlsx) to import products. The file should have the following columns in order:</p>
+    <ul>
+        <li>Name</li>
+        <li>Category</li>
+        <li>Brand</li>
+        <li>Price</li>
+        <li>Stock</li>
+        <li>Description</li>
+    </ul>
+    <p><strong>Note:</strong> Images embedded in cells will be extracted and attached to the product.</p>
+
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-row">
+            <label for="excel_file">Excel File:</label>
+            <input type="file" name="excel_file" id="excel_file" accept=".xlsx" required>
+        </div>
+        <br>
+        <div class="submit-row">
+            <input type="submit" value="Import Products" class="default">
+        </div>
+    </form>
+</div>
+{% endblock %}

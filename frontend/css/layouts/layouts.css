@@ -435,69 +435,77 @@
 /* ============= Hero Slider ============= */
 .hero-slider {
     position: relative;
-    aspect-ratio: 21 / 9;
-    max-height: 700px;
+    width: 100%;
+    height: 85vh; /* Immersive height */
+    max-height: 900px;
+    min-height: 600px;
     overflow: hidden;
     background: var(--bg-dark);
+    /* No border radius for full immersion */
 }
 
 /* Categories overlay rendered on top of the hero slider */
 .hero-categories {
     position: absolute;
     left: 50%;
-    bottom: 24px;
+    bottom: 40px; /* Raised slightly */
     transform: translateX(-50%);
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 12px;
     align-items: center;
     justify-content: center;
-    max-width: min(1100px, 92vw);
-    padding: 10px 12px;
-    border-radius: 9999px;
-    background: rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    z-index: 3;
+    max-width: min(1200px, 90vw);
+    padding: 12px 24px;
+    border-radius: var(--radius-full);
+    background: rgba(15, 23, 42, 0.6); /* Darker, more pro background */
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+    z-index: 10;
 }
 
 .hero-categories .cat-chip {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 6px 12px;
-    border-radius: 9999px;
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    background: rgba(255, 255, 255, 0.08);
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
     color: #fff;
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     text-decoration: none;
-    letter-spacing: 0.2px;
+    letter-spacing: 0.3px;
     white-space: nowrap;
+    transition: all var(--transition-base);
 }
 
 @media (prefers-reduced-motion: no-preference) {
-    .hero-categories .cat-chip {
-        transition: background-color var(--transition-base), border-color var(--transition-base), transform var(--transition-base);
-    }
     .hero-categories .cat-chip:hover {
-        background: rgba(255, 255, 255, 0.18);
-        border-color: rgba(255, 255, 255, 0.55);
-        transform: translateY(-1px);
+        background: rgba(255, 255, 255, 0.2);
+        border-color: var(--primary-light);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 }
 
 @media (max-width: 768px) {
+    .hero-slider {
+        height: 70vh;
+        min-height: 500px;
+    }
     .hero-categories {
-        bottom: 16px;
-        padding: 8px 10px;
-        gap: 6px;
+        bottom: 20px;
+        padding: 8px 12px;
+        gap: 8px;
+        width: 95%;
     }
     .hero-categories .cat-chip {
-        padding: 6px 10px;
-        font-size: 0.8125rem;
+        padding: 6px 12px;
+        font-size: 0.8rem;
     }
 }
 

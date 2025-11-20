@@ -93,6 +93,7 @@ class Product(models.Model):
             models.Index(fields=['available', 'brand']),     # For brand filtering
             models.Index(fields=['-created_at']),            # For sorting by date
             models.Index(fields=['name']),                    # For search operations
+            models.Index(fields=['price']),                   # ✅ ADD: Index for price filtering
         ]
 
     def __str__(self):
@@ -248,6 +249,26 @@ class ProductAttachment(models.Model):
     def __str__(self):
         name = self.label or self.file.name
         return f"Attachment for {self.product.name}: {name}"
+
+
+class ProductVideo(models.Model):
+    """
+    Model for product demonstration videos.
+    Supports both uploaded files and YouTube URLs.
+    """
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='videos')
+    video_file = models.FileField(upload_to='products/videos/', blank=True, null=True, verbose_name=_("Video File"))
+    youtube_url = models.URLField(blank=True, verbose_name=_("YouTube URL"))
+    title = models.CharField(max_length=255, blank=True, verbose_name=_("Title"))
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = _("Product Video")
+        verbose_name_plural = _("Product Videos")
+
+    def __str__(self):
+        return self.title or f"Video for {self.product.name}"
 
 
 class StockNotificationRequest(models.Model):

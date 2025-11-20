@@ -6,7 +6,7 @@ import re  # ✅ ADD for validation patterns
 from .models import (
     Category, Brand, Product, ProductImage, Order, OrderItem,
     Wishlist, WishlistItem, ProductReview, UserProfile, ShippingAddress, PaymentMethod,
-    StockNotificationRequest
+    StockNotificationRequest, ProductVideo, ProductAttachment
 )
 
 # --- Product Catalog Serializers ---
@@ -118,6 +118,46 @@ class ProductImageSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(url)
         return url
 
+class ProductVideoSerializer(serializers.ModelSerializer):
+    """
+    Serializer for ProductVideo model.
+    """
+    video_file = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProductVideo
+        fields = ['title', 'video_file', 'youtube_url']
+
+    def get_video_file(self, obj):
+        try:
+            url = obj.video_file.url if obj.video_file else ''
+        except Exception:
+            url = ''
+        request = self.context.get('request')
+        if request and url:
+            return request.build_absolute_uri(url)
+        return url
+
+class ProductAttachmentSerializer(serializers.ModelSerializer):
+    """
+    Serializer for ProductAttachment model.
+    """
+    file = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProductAttachment
+        fields = ['label', 'file']
+
+    def get_file(self, obj):
+        try:
+            url = obj.file.url if obj.file else ''
+        except Exception:
+            url = ''
+        request = self.context.get('request')
+        if request and url:
+            return request.build_absolute_uri(url)
+        return url
+
 class ProductSerializer(serializers.ModelSerializer):
     """
     Serializer for the Product model.
@@ -131,6 +171,8 @@ class ProductSerializer(serializers.ModelSerializer):
     brand = BrandSerializer(read_only=True)
     # Use the new ProductImageSerializer to nest all related images
     images = ProductImageSerializer(many=True, read_only=True)
+    videos = ProductVideoSerializer(many=True, read_only=True)
+    attachments = ProductAttachmentSerializer(many=True, read_only=True)
     name = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
     avg_rating = serializers.FloatField(read_only=True)
@@ -140,7 +182,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'category', 'brand', 'name', 'description', 
-            'price', 'images', 'stock', 'available',
+            'price', 'images', 'videos', 'attachments', 'stock', 'available',
             'avg_rating', 'review_count'
         ]
     

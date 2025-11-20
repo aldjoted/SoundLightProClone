@@ -1,20 +1,36 @@
 from django import forms
 from django.contrib import admin
-from django.urls import reverse
+from django.urls import reverse, path
 from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
+from django.core.files.base import ContentFile
+import requests
 
 from mptt.admin import DraggableMPTTAdmin
-from import_export import resources
+from import_export import resources, fields
+from import_export.widgets import CharWidget
 from import_export.admin import ImportExportModelAdmin
 
 from .models import (
-    Category, Brand, Product, ProductImage, ProductAttachment, Order, OrderItem, 
+    Category, Brand, Product, ProductImage, ProductAttachment, ProductVideo, Order, OrderItem, 
     Wishlist, WishlistItem, ProductReview, UserProfile, ShippingAddress, PaymentMethod
 )
+
+# ✅ ADD: Import for FAISS re-indexing action
+from .vector_search import build_and_save_faiss_index
+from .admin_views import import_products_with_images
 
 # Register your models here.
 
 class ProductResource(resources.ModelResource):
+    # Add support for importing images via URL
+    main_image_url = fields.Field(
+        column_name='main_image_url',
+        attribute='main_image_url',
+        widget=CharWidget(),
+        readonly=False
+    )
+
     class Meta:
         model = Product
         fields = (
@@ -28,9 +44,39 @@ class ProductResource(resources.ModelResource):
             'available',
             'created_at',
             'updated_at',
+            'main_image_url',
         )
         export_order = fields
         import_id_fields = ('id',)
+
+    def save_m2m(self, obj, data, using_transactions, dry_run):
+        """
+        Override save_m2m to handle image downloading from URL after the product is saved.
+        """
+        super().save_m2m(obj, data, using_transactions, dry_run)
+        if dry_run:
+            return
+        
+        image_url = data.get('main_image_url')
+        if image_url:
+            try:
+                # Download the image
+                response = requests.get(image_url, stream=True, timeout=10)
+                if response.status_code == 200:
+                    # Extract filename
+                    filename = image_url.split('/')[-1].split('?')[0]
+                    if not filename:
+                        filename = f"imported_product_{obj.id}.jpg"
+                    
+                    # Create ProductImage if it doesn't exist
+                    # We use a loose check on the filename to avoid duplicates
+                    if not ProductImage.objects.filter(product=obj, image__icontains=filename).exists():
+                        img = ProductImage(product=obj)
+                        img.image.save(filename, ContentFile(response.content), save=True)
+            except Exception as e:
+                # Log error silently or use django logging
+                print(f"Failed to import image for product {obj.id}: {e}")
+
 
 
 class MultiFileInput(forms.ClearableFileInput):
@@ -107,6 +153,17 @@ class ProductImageInline(admin.TabularInline):
     verbose_name_plural = 'Existing product images'
 
 
+class ProductVideoInline(admin.TabularInline):
+    """
+    Allows adding and editing ProductVideos directly within the Product admin page.
+    """
+    model = ProductVideo
+    extra = 1
+    fields = ['title', 'video_file', 'youtube_url']
+    verbose_name = _("Product Video")
+    verbose_name_plural = _("Product Videos")
+
+
 @admin.register(ProductAttachment)
 class ProductAttachmentAdmin(admin.ModelAdmin):
     """Standalone admin for managing uploaded product documents."""
@@ -129,7 +186,9 @@ class ProductAdmin(ImportExportModelAdmin):
     search_fields = ['name', 'description']
     readonly_fields = ['created_at', 'updated_at', 'image_preview']
     filter_horizontal = ['related_products']
-    inlines = [ProductImageInline]
+    inlines = [ProductImageInline, ProductVideoInline]
+    actions = ['reindex_in_faiss']  # ✅ ADD: Custom action
+    
     fieldsets = (
         (None, {
             'fields': (
@@ -162,7 +221,29 @@ class ProductAdmin(ImportExportModelAdmin):
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
-        return queryset.select_related('brand', 'category').prefetch_related('images', 'attachments', 'related_products')
+        # ✅ PERFORMANCE: Prefetch images for the list display preview to avoid N+1
+        return queryset.select_related('brand', 'category').prefetch_related('images', 'attachments', 'videos', 'related_products')
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('import-excel/', self.admin_site.admin_view(import_products_with_images), name='import_products_excel'),
+        ]
+        return my_urls + urls
+
+    @admin.action(description='Re-index selected products in FAISS')
+    def reindex_in_faiss(self, request, queryset):
+        """
+        Triggers a rebuild of the FAISS index.
+        Note: This rebuilds the ENTIRE index, not just selected items, 
+        as FAISS FlatIP indexes are typically rebuilt from scratch or appended to.
+        For simplicity and consistency, we rebuild all.
+        """
+        count = build_and_save_faiss_index()
+        if count is not None:
+            self.message_user(request, f"Successfully re-indexed {count} products in FAISS.")
+        else:
+            self.message_user(request, "Failed to re-index products. Check logs.", level='ERROR')
 
     @admin.display(description='Image')
     def image_preview(self, obj):
@@ -224,7 +305,8 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ['id', 'first_name', 'last_name', 'email', 'tracking_number']
     list_editable = ['status']
     readonly_fields = ['created_at', 'updated_at']
-    actions = ['mark_as_shipped']
+    actions = ['mark_as_shipped', 'mark_as_delivered', 'mark_as_cancelled'] # ✅ ADD: More actions
+    date_hierarchy = 'created_at' # ✅ ADD: Date navigation
     # Include the OrderItemInline to show order items on the order detail page
     inlines = [OrderItemInline]
     
@@ -253,6 +335,18 @@ class OrderAdmin(admin.ModelAdmin):
         updated = queryset.update(status='shipped')
         if updated:
             self.message_user(request, f"Marked {updated} order(s) as shipped.")
+
+    @admin.action(description='Mark selected orders as Delivered')
+    def mark_as_delivered(self, request, queryset):
+        updated = queryset.update(status='delivered')
+        if updated:
+            self.message_user(request, f"Marked {updated} order(s) as delivered.")
+
+    @admin.action(description='Mark selected orders as Cancelled')
+    def mark_as_cancelled(self, request, queryset):
+        updated = queryset.update(status='cancelled')
+        if updated:
+            self.message_user(request, f"Marked {updated} order(s) as cancelled.")
 
 
 class WishlistItemInline(admin.TabularInline):

@@ -264,6 +264,25 @@ SECURE_BROWSER_XSS_FILTER = True
 # Prevent the site from being displayed in an iframe (clickjacking protection)
 X_FRAME_OPTIONS = 'DENY'
 
+# ✅ SECURITY: Referrer Policy
+# Controls how much referrer information (the URL of the previous page) is included with requests.
+# 'same-origin' sends the full URL for requests to the same origin, but no referrer for cross-origin requests.
+SECURE_REFERRER_POLICY = 'same-origin'
+
+# ✅ SECURITY: Cross-Origin Opener Policy (COOP)
+# Helps process isolation and prevents cross-origin attacks like Spectre.
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
+
+# ✅ SECURITY: Content Security Policy (CSP)
+# Note: Django does not support CSP natively without a middleware like 'django-csp'.
+# If 'django-csp' were installed, we would configure it here.
+# Example configuration if using django-csp:
+# CSP_DEFAULT_SRC = ("'self'",)
+# CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net")
+# CSP_SCRIPT_SRC = ("'self'", "https://cdn.jsdelivr.net", "https://unpkg.com")
+# CSP_IMG_SRC = ("'self'", "data:", "https://via.placeholder.com")
+# CSP_FONT_SRC = ("'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com")
+
 # Production security settings (only apply when DEBUG=False)
 if not DEBUG:
     # Redirect all HTTP requests to HTTPS
