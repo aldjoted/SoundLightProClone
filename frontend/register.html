@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Create a new account at SoundLightPro.">
-    <title>Register - SoundLightPro</title>
+    <meta name="description" content="Create a new account at SoundLightPro." data-i18n="register_meta_description">
+    <title data-i18n="register_title">Register - SoundLightPro</title>
     
     <!-- Security Headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -13,15 +13,15 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://soundlightpro.com/register.html">
-    <meta property="og:title" content="Register - SoundLightPro">
-    <meta property="og:description" content="Create a SoundLightPro account for faster checkout, order tracking, and exclusive offers.">
+    <meta property="og:title" content="Register - SoundLightPro" data-i18n="register_og_title">
+    <meta property="og:description" content="Create a SoundLightPro account for faster checkout, order tracking, and exclusive offers." data-i18n="register_og_description">
     <meta property="og:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
     <meta property="og:site_name" content="SoundLightPro">
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Register - SoundLightPro">
-    <meta name="twitter:description" content="Create a SoundLightPro account for faster checkout and order tracking.">
+    <meta name="twitter:title" content="Register - SoundLightPro" data-i18n="register_twitter_title">
+    <meta name="twitter:description" content="Create a SoundLightPro account for faster checkout and order tracking." data-i18n="register_twitter_description">
     <meta name="twitter:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
     
     <!-- Preconnect to external resources -->
@@ -56,7 +56,7 @@
     </script>
     
     <!-- Skip to main content for accessibility -->
-    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <a href="#main-content" class="skip-link" data-i18n="skip_to_main_content">Skip to main content</a>
 
     <!-- Header -->
     <header class="main-header" role="banner">
@@ -80,7 +80,7 @@
                         </li>
                         <li><a href="services.html" class="nav-link" data-i18n="nav_services">Services</a></li>
                         <li><a href="about.html" class="nav-link" data-i18n="nav_about">About Us</a></li>
-                        <li><a href="contact.html" class="nav-link">Contact</a></li>
+                        <li><a href="contact.html" class="nav-link" data-i18n="nav_contact">Contact</a></li>
                     </ul>
                 </nav>
                 
@@ -141,17 +141,17 @@
 
     <main id="main-content" class="form-page-wrapper" tabindex="-1">
         <div class="form-container">
-            <h2>Create a New Account</h2>
+            <h2 data-i18n="register_page_title">Create a New Account</h2>
             
             <!-- Account Type Tabs -->
             <div class="account-type-tabs">
                 <button type="button" class="tab-btn active" data-tab="individual" aria-label="Individual account">
                     <i class="fas fa-user"></i>
-                    <span>Particulier</span>
+                    <span data-i18n="register_tab_individual">Particulier</span>
                 </button>
                 <button type="button" class="tab-btn" data-tab="professional" aria-label="Professional account">
                     <i class="fas fa-briefcase"></i>
-                    <span>Professionnel</span>
+                    <span data-i18n="register_tab_professional">Professionnel</span>
                 </button>
             </div>
 
@@ -337,7 +337,7 @@
             </form>
 
             <p style="text-align: center; margin-top: 1.5rem;">
-                Already have an account? <a href="login.html">Login here</a>.
+                <span data-i18n="register_have_account">Already have an account?</span> <a href="login.html" data-i18n="register_login_here">Login here</a>.
             </p>
         </div>
     </main>
@@ -357,11 +357,11 @@
         <ul class="chatbox">
             <li class="chat incoming">
                 <span class="chat-icon"><i class="fas fa-robot"></i></span>
-                <p>Hi there! 👋<br>How can I help you today?</p>
+                <p data-i18n="chatbot_greeting_message">Hi there! 👋<br>How can I help you today?</p>
             </li>
         </ul>
         <div class="chat-input">
-            <textarea placeholder="Ask a question..." required></textarea>
+            <textarea placeholder="Ask a question..." required data-i18n-placeholder="chatbot_placeholder"></textarea>
             <button id="send-btn" class="fas fa-paper-plane" aria-label="Send message"></button>
         </div>
     </dialog>
@@ -373,6 +373,6 @@
     <script src="js/auth.js" type="module"></script>
     <script src="js/main.js" type="module"></script>
     <script src="js/chatbot.js" type="module"></script>
-    <script src="js/register-tabs.js"></script>
+    <script src="js/register-tabs.js" type="module"></script>
 </body>
 </html>

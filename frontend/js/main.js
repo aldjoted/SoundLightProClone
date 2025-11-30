@@ -33,7 +33,6 @@ import { initProductPage } from './pages/product.js';
 import { initCartPage } from './pages/cart.js';
 // PWA imports
 import { initOfflineIndicator } from './offline-indicator.js';
-import { initSyncManager } from './sync-manager.js';
 import { initInstallPrompt } from './install-prompt.js';
 
 // ============= Lazy Loading Utilities =============
@@ -217,7 +216,7 @@ async function initApp() {
 /**
  * Initialize PWA features (offline support, sync, install prompt)
  */
-function initPWAFeatures() {
+async function initPWAFeatures() {
     try {
         console.log('[PWA] Initializing PWA features...');
         
@@ -225,7 +224,8 @@ function initPWAFeatures() {
         initOfflineIndicator();
         console.log('[PWA] Offline indicator initialized');
         
-        // Initialize sync manager
+        // Initialize sync manager (dynamic import to match other modules)
+        const { initSyncManager } = await import('./sync-manager.js');
         initSyncManager();
         console.log('[PWA] Sync manager initialized');
         

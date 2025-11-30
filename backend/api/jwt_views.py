@@ -4,7 +4,7 @@ Implements secure refresh token handling via httpOnly cookies.
 Includes 2FA email verification for login.
 """
 
-import random
+import secrets
 import logging
 from datetime import timedelta
 from django.utils import timezone
@@ -110,8 +110,8 @@ class RateLimitedTokenObtainPairView(TokenObtainPairView):
                     status=status.HTTP_401_UNAUTHORIZED
                 )
             
-            # Generate 6-digit verification code
-            verification_code = str(random.randint(100000, 999999))
+            # Generate 6-digit verification code using cryptographically secure random
+            verification_code = str(secrets.randbelow(900000) + 100000)
             
             # Store code in user profile with 10-minute expiration
             profile = user.profile

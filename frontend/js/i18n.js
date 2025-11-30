@@ -89,6 +89,9 @@ const translations = {
         footer_quick_links: "Quick Links",
         footer_customer_service: "Customer Service",
         footer_contact_info: "Contact Info",
+        footer_address: "1451, 63 Bd de la République\nDouala, Cameroon",
+        footer_phone: "+237 6 80 49 49 49",
+        footer_email: "info@soundlightpro.com",
         footer_support_center: "Support Center",
         footer_shipping_info: "Shipping Info",
         footer_returns: "Returns",
@@ -228,6 +231,7 @@ const translations = {
 
         // Index Page
         home_title: "SoundLightPro - Professional Audio and Lighting Equipment",
+        home_meta_description: "SoundLightPro - Professional audio and lighting equipment for events, concerts, and venues",
         skip_to_main_content: "Skip to main content",
         nav_contact: "Contact",
         hero_title_accent: "A New Perspective",
@@ -302,6 +306,7 @@ const translations = {
 
         // About Page
         about_us_title: "About Us - SoundLightPro",
+        about_meta_description: "Learn about SoundLightPro's mission to provide professional audio and lighting equipment in Cameroon.",
         about_us_main_title: "About SoundLightPro",
         about_us_welcome: "Welcome to SoundLightPro, your premier destination for professional audio and lighting solutions.",
         about_us_mission: "Founded with a passion for pristine sound and brilliant light, we have been serving the events, concerts, and venue industry for over a decade. Our mission is to provide artists, engineers, and event organizers with the highest quality equipment that empowers them to create unforgettable experiences.",
@@ -320,6 +325,11 @@ const translations = {
 
         // Cart Page
         cart_title: "Your Shopping Cart - SoundLightPro",
+        cart_meta_description: "Your shopping cart at SoundLightPro.",
+        cart_og_title: "Shopping Cart - SoundLightPro",
+        cart_og_description: "Review your cart and checkout with professional audio and lighting equipment from SoundLightPro.",
+        cart_twitter_title: "Shopping Cart - SoundLightPro",
+        cart_twitter_description: "Review your cart and checkout at SoundLightPro.",
         cart_page_title: "Your Shopping Cart",
         loading_cart: "Loading cart...",
         checkout_title: "Checkout",
@@ -336,8 +346,12 @@ const translations = {
 
         // Contact Page
         contact_title: "Contact Us - SoundLightPro",
+        contact_meta_description: "Contact SoundLightPro for sales, support, and inquiries.",
         contact_page_title: "Contact Us",
+        contact_intro: "We're here to help with any questions about our audio and lighting solutions.",
         contact_address: "Address",
+        contact_email_address: "info@soundlightpro.com",
+        contact_email_secondary: "infos@beglec.cm",
         contact_mobile: "Mobile",
         contact_email: "Email",
         contact_social: "Social",
@@ -345,14 +359,27 @@ const translations = {
         contact_form_title: "Drop Us a Line",
         contact_form_subtitle: "If you have any questions, please feel free to get in touch with us. We will reply to you as soon as possible. Thank you!",
         contact_your_name: "Your Name (required)",
+        contact_name_placeholder: "Your name",
         contact_your_email: "Your Email (required)",
+        contact_email_placeholder: "you@example.com",
         contact_subject: "Subject",
+        contact_subject_placeholder: "What is your inquiry about?",
         contact_your_message: "Your Message",
+        contact_message_placeholder: "How can we help you?",
         contact_send: "Send",
         contact_success_message: "Thank you for your message! We will get back to you soon.",
+        contact_og_title: "Contact Us - SoundLightPro",
+        contact_og_description: "Contact SoundLightPro for sales, support, and inquiries. Located in Douala, Cameroon.",
+        contact_twitter_title: "Contact Us - SoundLightPro",
+        contact_twitter_description: "Contact SoundLightPro for sales, support, and inquiries.",
 
         // Services Page
         services_title: "Services - SoundLightPro",
+        services_meta_description: "Services offered by SoundLightPro, including consultation and system design.",
+        services_og_title: "Our Services - SoundLightPro",
+        services_og_description: "Professional audio and lighting services including equipment rental, installation, technical support, and event production in Cameroon.",
+        services_twitter_title: "Our Services - SoundLightPro",
+        services_twitter_description: "Professional audio and lighting services including equipment rental, installation, and technical support.",
         services_page_title: "Our Services",
         services_consultation_title: "Expert Consultation",
         services_consultation_text: "Not sure what you need? Our team of audio and lighting experts is here to help. We provide personalized consultations to help you select the perfect equipment for your specific needs, whether you're outfitting a new venue or upgrading your touring rig.",
@@ -363,16 +390,30 @@ const translations = {
 
         // Login Page
         login_title: "Login - SoundLightPro",
+        login_meta_description: "Login to your SoundLightPro account.",
+        login_og_title: "Login - SoundLightPro",
+        login_og_description: "Login to your SoundLightPro account to manage orders and access exclusive features.",
+        login_twitter_title: "Login - SoundLightPro",
+        login_twitter_description: "Login to your SoundLightPro account.",
         login_page_title: "Login to Your Account",
-        login_username: "Username",
+        login_username: "Username or Email",
+        login_username_placeholder: "Enter username or email",
         login_password: "Password",
+        login_password_placeholder: "Enter your password",
         login_button: "Login",
         login_no_account: "Don't have an account?",
         login_register_here: "Register here",
 
         // Register Page
         register_title: "Register - SoundLightPro",
+        register_meta_description: "Create a new account at SoundLightPro.",
+        register_og_title: "Register - SoundLightPro",
+        register_og_description: "Create a SoundLightPro account for faster checkout, order tracking, and exclusive offers.",
+        register_twitter_title: "Register - SoundLightPro",
+        register_twitter_description: "Create a SoundLightPro account for faster checkout and order tracking.",
         register_page_title: "Create a New Account",
+        register_tab_individual: "Individual",
+        register_tab_professional: "Professional",
         register_username: "Username",
         register_email: "Email",
         register_first_name: "First Name",
@@ -385,6 +426,7 @@ const translations = {
 
         // Wishlist Page
         wishlist_title: "My Wishlist",
+        wishlist_meta_description: "View and manage your wishlist of favorite audio and lighting products",
         wishlist_subtitle: "Save your favorite items for later",
         wishlist_empty_title: "Your wishlist is empty",
         wishlist_empty_message: "Start adding products you love!",
@@ -395,6 +437,8 @@ const translations = {
         wishlist_in_stock: "In Stock",
 
         // Product Page
+        product_title: "Product Details - SoundLightPro",
+        product_meta_description: "View product details for professional audio and lighting equipment.",
         product_loading: "Loading product...",
         product_description: "Product Description",
         product_specifications: "Specifications",
@@ -720,6 +764,54 @@ const translations = {
         dashboard_error: "An error occurred",
         dashboard_success: "Success!",
         dashboard_confirm_delete: "Are you sure you want to delete this?",
+
+        // Brand Partnerships
+        brand_partnerships_title: "Shop by Brand",
+        brand_partnerships_subtitle: "Explore collections from our official partners",
+        loading_brands: "Loading partner brands...",
+
+        // Testimonials
+        testimonials_title_accent: "Client Success Stories",
+        testimonials_title_main: "What Our Customers Say",
+        testimonials_subtitle: "Trusted by professionals worldwide for quality and reliability",
+        
+        // Testimonial 1
+        testimonial_1_text: "Exceptional quality and professional service. The lighting equipment we purchased exceeded all expectations. Our events have never looked better!",
+        testimonial_1_author: "Jean-Pierre Dubois",
+        testimonial_1_role: "Event Manager, Douala Events",
+        
+        // Testimonial 2
+        testimonial_2_text: "Outstanding customer support and top-tier products. Their technical team helped us set up our entire sound system flawlessly. Highly recommended!",
+        testimonial_2_author: "Amina Nkosi",
+        testimonial_2_role: "Sound Engineer, Studio Pro Yaoundé",
+        
+        // Testimonial 3
+        testimonial_3_text: "Been working with SoundLightPro for 3 years now. Their equipment is reliable, durable, and always delivers crystal-clear sound quality. True professionals!",
+        testimonial_3_author: "David Moukoko",
+        testimonial_3_role: "DJ & Music Producer",
+        
+        // Testimonial 4
+        testimonial_4_text: "Perfect partner for our venue. Fast delivery, competitive prices, and excellent after-sales service. They truly understand the needs of event professionals.",
+        testimonial_4_author: "Marie Kamga",
+        testimonial_4_role: "Venue Owner, Le Grand Palais",
+        
+        // Testimonial 5
+        testimonial_5_text: "The best investment we've made for our church. The sound system is powerful, clear, and easy to use. The team's expertise made installation seamless.",
+        testimonial_5_author: "Pastor Emmanuel Talla",
+        testimonial_5_role: "Technical Director, Grace Church",
+        
+        // Testimonial 6
+        testimonial_6_text: "Incredible range of products and unbeatable prices. Their lighting solutions transformed our nightclub. Professional equipment that really makes a difference!",
+        testimonial_6_author: "Carlos Mendez",
+        testimonial_6_role: "Club Owner, Tropicana Nights",
+
+        // Hero Categories
+        cat_sound_systems: "Sound Systems",
+        cat_lighting: "Lighting",
+        cat_dj_equipment: "DJ Gear",
+        cat_stage_effects: "Stage Effects",
+        cat_cables: "Cables",
+        
     },
     
     fr: {
@@ -941,6 +1033,7 @@ const translations = {
 
         // Index Page
         home_title: "SoundLightPro - Équipement Audio et Éclairage Professionnel",
+        home_meta_description: "SoundLightPro - Équipement audio et éclairage professionnel pour événements, concerts et salles",
         skip_to_main_content: "Passer au contenu principal",
         nav_contact: "Contact",
         hero_title_accent: "Une Nouvelle Perspective",
@@ -970,6 +1063,9 @@ const translations = {
         footer_returns: "Retours",
         footer_warranty: "Garantie",
         footer_contact_info: "Infos Contact",
+        footer_address: "1451, 63 Bd de la République\nDouala, Cameroun",
+        footer_phone: "+237 6 80 49 49 49",
+        footer_email: "info@soundlightpro.com",
         footer_copyright: "Tous droits réservés.",
         footer_privacy_policy: "Politique de Confidentialité",
         footer_terms_of_service: "Conditions d'Utilisation",
@@ -1015,6 +1111,7 @@ const translations = {
 
         // About Page
         about_us_title: "À Propos - SoundLightPro",
+        about_meta_description: "Découvrez la mission de SoundLightPro : fournir des équipements audio et éclairage professionnels au Cameroun.",
         about_us_main_title: "À Propos de SoundLightPro",
         about_us_welcome: "Bienvenue chez SoundLightPro, votre destination de choix pour les solutions audio et d'éclairage professionnelles.",
         about_us_mission: "Fondée avec une passion pour un son pur et une lumière éclatante, nous servons l'industrie des événements, des concerts et des salles depuis plus d'une décennie. Notre mission est de fournir aux artistes, ingénieurs et organisateurs d'événements l'équipement de la plus haute qualité qui leur permet de créer des expériences inoubliables.",
@@ -1033,6 +1130,11 @@ const translations = {
 
         // Cart Page
         cart_title: "Votre Panier - SoundLightPro",
+        cart_meta_description: "Votre panier d'achat chez SoundLightPro.",
+        cart_og_title: "Panier - SoundLightPro",
+        cart_og_description: "Vérifiez votre panier et finalisez votre commande avec l'équipement audio et lumière professionnel de SoundLightPro.",
+        cart_twitter_title: "Panier - SoundLightPro",
+        cart_twitter_description: "Vérifiez votre panier et passez commande chez SoundLightPro.",
         cart_page_title: "Votre Panier",
         loading_cart: "Chargement du panier...",
         checkout_title: "Passer Commande",
@@ -1049,8 +1151,12 @@ const translations = {
 
         // Contact Page
         contact_title: "Nous Contacter - SoundLightPro",
+        contact_meta_description: "Contactez SoundLightPro pour les ventes, le support et toute demande.",
         contact_page_title: "Nous Contacter",
+        contact_intro: "Nous sommes là pour répondre à toutes vos questions sur nos solutions audio et lumière.",
         contact_address: "Adresse",
+        contact_email_address: "info@soundlightpro.com",
+        contact_email_secondary: "infos@beglec.cm",
         contact_mobile: "Mobile",
         contact_email: "E-mail",
         contact_social: "Réseaux Sociaux",
@@ -1058,14 +1164,27 @@ const translations = {
         contact_form_title: "Envoyez-nous un Message",
         contact_form_subtitle: "Si vous avez des questions, n'hésitez pas à nous contacter. Nous vous répondrons dans les plus brefs délais. Merci !",
         contact_your_name: "Votre Nom (requis)",
+        contact_name_placeholder: "Votre nom",
         contact_your_email: "Votre E-mail (requis)",
+        contact_email_placeholder: "vous@exemple.com",
         contact_subject: "Sujet",
+        contact_subject_placeholder: "Quel est l'objet de votre demande ?",
         contact_your_message: "Votre Message",
+        contact_message_placeholder: "Comment pouvons-nous vous aider ?",
         contact_send: "Envoyer",
         contact_success_message: "Merci pour votre message ! Nous vous répondrons bientôt.",
+        contact_og_title: "Nous Contacter - SoundLightPro",
+        contact_og_description: "Contactez SoundLightPro pour les ventes, le support et toute demande. Situé à Douala, Cameroun.",
+        contact_twitter_title: "Nous Contacter - SoundLightPro",
+        contact_twitter_description: "Contactez SoundLightPro pour les ventes, le support et toute demande.",
 
         // Services Page
         services_title: "Services - SoundLightPro",
+        services_meta_description: "Services proposés par SoundLightPro, notamment consultation et conception de systèmes.",
+        services_og_title: "Nos Services - SoundLightPro",
+        services_og_description: "Services audio et lumière professionnels incluant location d'équipement, installation, support technique et production d'événements au Cameroun.",
+        services_twitter_title: "Nos Services - SoundLightPro",
+        services_twitter_description: "Services audio et lumière professionnels incluant location d'équipement, installation et support technique.",
         services_page_title: "Nos Services",
         services_consultation_title: "Consultation d'Experts",
         services_consultation_text: "Vous ne savez pas ce dont vous avez besoin ? Notre équipe d'experts en audio et éclairage est là pour vous aider. Nous offrons des consultations personnalisées pour vous aider à sélectionner l'équipement parfait pour vos besoins spécifiques, que vous équipiez une nouvelle salle ou amélioriez votre installation de tournée.",
@@ -1076,16 +1195,30 @@ const translations = {
 
         // Login Page
         login_title: "Connexion - SoundLightPro",
+        login_meta_description: "Connectez-vous à votre compte SoundLightPro.",
+        login_og_title: "Connexion - SoundLightPro",
+        login_og_description: "Connectez-vous à votre compte SoundLightPro pour gérer vos commandes et accéder aux fonctionnalités exclusives.",
+        login_twitter_title: "Connexion - SoundLightPro",
+        login_twitter_description: "Connectez-vous à votre compte SoundLightPro.",
         login_page_title: "Connectez-vous à Votre Compte",
-        login_username: "Nom d'utilisateur",
+        login_username: "Nom d'utilisateur ou E-mail",
+        login_username_placeholder: "Entrez votre nom d'utilisateur ou e-mail",
         login_password: "Mot de passe",
+        login_password_placeholder: "Entrez votre mot de passe",
         login_button: "Se connecter",
         login_no_account: "Vous n'avez pas de compte ?",
         login_register_here: "Inscrivez-vous ici",
 
         // Register Page
         register_title: "Inscription - SoundLightPro",
+        register_meta_description: "Créez un nouveau compte chez SoundLightPro.",
+        register_og_title: "Inscription - SoundLightPro",
+        register_og_description: "Créez un compte SoundLightPro pour un checkout plus rapide, le suivi des commandes et des offres exclusives.",
+        register_twitter_title: "Inscription - SoundLightPro",
+        register_twitter_description: "Créez un compte SoundLightPro pour un checkout plus rapide et le suivi des commandes.",
         register_page_title: "Créer un Nouveau Compte",
+        register_tab_individual: "Particulier",
+        register_tab_professional: "Professionnel",
         register_username: "Nom d'utilisateur",
         register_email: "E-mail",
         register_first_name: "Prénom",
@@ -1098,6 +1231,7 @@ const translations = {
 
         // Wishlist Page
         wishlist_title: "Ma Liste de Souhaits",
+        wishlist_meta_description: "Consultez et gérez votre liste de souhaits de produits audio et lumière favoris",
         wishlist_subtitle: "Enregistrez vos articles préférés pour plus tard",
         wishlist_empty_title: "Votre liste de souhaits est vide",
         wishlist_empty_message: "Commencez à ajouter des produits que vous aimez !",
@@ -1108,6 +1242,8 @@ const translations = {
         wishlist_in_stock: "En Stock",
 
         // Product Page
+        product_title: "Détails du Produit - SoundLightPro",
+        product_meta_description: "Consultez les détails des produits pour équipements audio et lumière professionnels.",
         product_loading: "Chargement du produit...",
         product_description: "Description du Produit",
         product_specifications: "Spécifications",
@@ -1545,20 +1681,39 @@ class I18n {
         document.querySelectorAll('[data-i18n]').forEach(element => {
             const key = element.getAttribute('data-i18n');
             const translation = this.t(key);
-            
+
+            if (!translation) {
+                return;
+            }
+
             if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
                 element.placeholder = translation;
+            } else if (element.tagName === 'META') {
+                element.setAttribute('content', translation);
+            } else if (element.tagName === 'TITLE') {
+                element.textContent = translation;
             } else {
                 // Convert \n to <br> for display in HTML
                 const htmlTranslation = translation.replace(/\n/g, '<br>');
                 element.innerHTML = htmlTranslation;
             }
         });
+
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+            const key = element.getAttribute('data-i18n-placeholder');
+            const translation = this.t(key);
+            if (translation) {
+                element.placeholder = translation;
+            }
+        });
         
         // Translate elements with data-i18n-title (for tooltips)
         document.querySelectorAll('[data-i18n-title]').forEach(element => {
             const key = element.getAttribute('data-i18n-title');
-            element.title = this.t(key);
+            const translation = this.t(key);
+            if (translation) {
+                element.title = translation;
+            }
         });
     }
     

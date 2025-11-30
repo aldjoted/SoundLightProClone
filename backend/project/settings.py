@@ -63,6 +63,8 @@ INSTALLED_APPS = [
     'django_mptt_admin',
     'import_export',
     'django_ratelimit',
+    'drf_spectacular',  # ✅ ADD: OpenAPI/Swagger documentation
+    'csp',  # ✅ ADD: Content Security Policy
 
     # Our custom app
     'api',
@@ -70,6 +72,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'csp.middleware.CSPMiddleware',  # ✅ ADD: Content Security Policy middleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     # CORS Middleware must be placed as high as possible, especially before any view middleware
     'corsheaders.middleware.CorsMiddleware',
@@ -197,6 +200,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
     'EXCEPTION_HANDLER': 'api.exceptions.custom_exception_handler',  # ✅ ADD custom error handling
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',  # ✅ ADD: OpenAPI schema generation
 }
 
 # --- Simple JWT Configuration ---
@@ -273,15 +277,53 @@ SECURE_REFERRER_POLICY = 'same-origin'
 # Helps process isolation and prevents cross-origin attacks like Spectre.
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
 
-# ✅ SECURITY: Content Security Policy (CSP)
-# Note: Django does not support CSP natively without a middleware like 'django-csp'.
-# If 'django-csp' were installed, we would configure it here.
-# Example configuration if using django-csp:
-# CSP_DEFAULT_SRC = ("'self'",)
-# CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net")
-# CSP_SCRIPT_SRC = ("'self'", "https://cdn.jsdelivr.net", "https://unpkg.com")
-# CSP_IMG_SRC = ("'self'", "data:", "https://via.placeholder.com")
-# CSP_FONT_SRC = ("'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com")
+# ✅ SECURITY: Content Security Policy (CSP) using django-csp 4.0+
+# Protects against XSS and other injection attacks by specifying valid sources for content
+# New format for django-csp >= 4.0
+CONTENT_SECURITY_POLICY = {
+    'DIRECTIVES': {
+        'default-src': ("'self'",),
+        'style-src': (
+            "'self'",
+            "'unsafe-inline'",  # Required for some inline styles
+            "https://fonts.googleapis.com",
+            "https://cdn.jsdelivr.net",
+        ),
+        'script-src': (
+            "'self'",
+            "https://cdn.jsdelivr.net",
+            "https://unpkg.com",
+            "https://js.stripe.com",  # Stripe payment scripts
+        ),
+        'img-src': (
+            "'self'",
+            "data:",
+            "blob:",
+            "https://via.placeholder.com",
+            "https://*.stripe.com",
+        ),
+        'font-src': (
+            "'self'",
+            "https://fonts.gstatic.com",
+            "https://cdnjs.cloudflare.com",
+        ),
+        'connect-src': (
+            "'self'",
+            "https://api.stripe.com",
+            "https://generativelanguage.googleapis.com",  # Gemini API
+        ),
+        'frame-src': (
+            "'self'",
+            "https://js.stripe.com",  # Stripe iframe
+            "https://www.youtube.com",  # Product videos
+        ),
+    }
+}
+
+# Report-only mode in development, enforce in production
+if DEBUG:
+    CONTENT_SECURITY_POLICY_REPORT_ONLY = CONTENT_SECURITY_POLICY.copy()
+    CONTENT_SECURITY_POLICY = None
 
 # Production security settings (only apply when DEBUG=False)
 if not DEBUG:
@@ -319,6 +361,37 @@ SILENCED_SYSTEM_CHECKS = [
     'django_ratelimit.E003',  # Cache backend is not a shared cache
     'django_ratelimit.W001',  # Cache backend is not officially supported
 ]
+
+# ========================================
+# OpenAPI / Swagger Documentation (drf-spectacular)
+# ========================================
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'SoundLightPro API',
+    'DESCRIPTION': 'Professional audio, lighting, and DJ equipment e-commerce API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': '/api/',
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': False,
+    },
+    'SECURITY': [
+        {'Bearer': []},
+    ],
+    'TAGS': [
+        {'name': 'Authentication', 'description': 'User registration, login, and token management'},
+        {'name': 'Products', 'description': 'Product catalog and search'},
+        {'name': 'Categories', 'description': 'Product categories'},
+        {'name': 'Brands', 'description': 'Product brands'},
+        {'name': 'Orders', 'description': 'Order management and checkout'},
+        {'name': 'Wishlist', 'description': 'User wishlist management'},
+        {'name': 'Reviews', 'description': 'Product reviews and ratings'},
+        {'name': 'Dashboard', 'description': 'User dashboard and profile management'},
+        {'name': 'Chatbot', 'description': 'AI-powered customer support'},
+    ],
+}
 
 # ========================================
 # Email Configuration

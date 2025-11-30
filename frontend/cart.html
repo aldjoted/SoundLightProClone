@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Your shopping cart at SoundLightPro.">
-    <title>Your Shopping Cart - SoundLightPro</title>
+    <meta name="description" content="Your shopping cart at SoundLightPro." data-i18n="cart_meta_description">
+    <title data-i18n="cart_title">Your Shopping Cart - SoundLightPro</title>
     
     <!-- Security Headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -13,15 +13,15 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://soundlightpro.com/cart.html">
-    <meta property="og:title" content="Shopping Cart - SoundLightPro">
-    <meta property="og:description" content="Review your cart and checkout with professional audio and lighting equipment from SoundLightPro.">
+    <meta property="og:title" content="Shopping Cart - SoundLightPro" data-i18n="cart_og_title">
+    <meta property="og:description" content="Review your cart and checkout with professional audio and lighting equipment from SoundLightPro." data-i18n="cart_og_description">
     <meta property="og:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
     <meta property="og:site_name" content="SoundLightPro">
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Shopping Cart - SoundLightPro">
-    <meta name="twitter:description" content="Review your cart and checkout at SoundLightPro.">
+    <meta name="twitter:title" content="Shopping Cart - SoundLightPro" data-i18n="cart_twitter_title">
+    <meta name="twitter:description" content="Review your cart and checkout at SoundLightPro." data-i18n="cart_twitter_description">
     <meta name="twitter:image" content="https://soundlightpro.com/images/logo/logoslp.jpg">
 
     <!-- Preconnect to external resources -->
@@ -64,7 +64,7 @@
     </script>
     
     <!-- Skip to main content for accessibility -->
-    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <a href="#main-content" class="skip-link" data-i18n="skip_to_main_content">Skip to main content</a>
 
     <!-- Header -->
     <header class="main-header" role="banner">
@@ -88,7 +88,7 @@
                         </li>
                         <li><a href="services.html" class="nav-link" data-i18n="nav_services">Services</a></li>
                         <li><a href="about.html" class="nav-link" data-i18n="nav_about">About Us</a></li>
-                        <li><a href="contact.html" class="nav-link">Contact</a></li>
+                        <li><a href="contact.html" class="nav-link" data-i18n="nav_contact">Contact</a></li>
                     </ul>
                 </nav>
                 
@@ -149,7 +149,7 @@
 
     <main id="main-content" class="container">
         <div class="page-header">
-            <h1 data-i18n="nav_cart">Your Shopping Cart</h1>
+            <h1 data-i18n="cart_page_title">Your Shopping Cart</h1>
         </div>
         <div id="cart-container">
             <div class="loading-spinner"><div class="spinner"></div><p data-i18n="msg_loading">Loading cart...</p></div>
@@ -158,41 +158,41 @@
         <!-- Checkout Form - Initially hidden -->
         <div id="checkout-section" class="hidden">
             <div class="cart-summary">
-                <h2>Checkout</h2>
+                <h2 data-i18n="checkout_title">Checkout</h2>
                 <div id="checkout-message" class="hidden"></div>
                 
                 <form id="checkout-form" class="checkout-form">
                     <fieldset>
-                        <legend>Shipping Information</legend>
+                        <legend data-i18n="shipping_information">Shipping Information</legend>
                         <div>
-                            <label for="first_name">First Name</label>
+                            <label for="first_name" data-i18n="first_name_label">First Name</label>
                             <input type="text" id="first_name" name="first_name" required autocomplete="given-name">
                         </div>
                         <div>
-                            <label for="last_name">Last Name</label>
+                            <label for="last_name" data-i18n="last_name_label">Last Name</label>
                             <input type="text" id="last_name" name="last_name" required autocomplete="family-name">
                         </div>
                         <div>
-                            <label for="email">Email Address</label>
+                            <label for="email" data-i18n="email_label">Email Address</label>
                             <input type="email" id="email" name="email" required autocomplete="email">
                         </div>
                         <div>
-                            <label for="address">Address</label>
+                            <label for="address" data-i18n="address_label">Address</label>
                             <input type="text" id="address" name="address" required autocomplete="street-address">
                         </div>
                         <div>
-                            <label for="postal_code">Postal Code</label>
+                            <label for="postal_code" data-i18n="postal_code_label">Postal Code</label>
                             <input type="text" id="postal_code" name="postal_code" required autocomplete="postal-code">
                         </div>
                         <div>
-                            <label for="city">City</label>
+                            <label for="city" data-i18n="city_label">City</label>
                             <input type="text" id="city" name="city" required autocomplete="address-level2">
                         </div>
                     </fieldset>
 
                     <fieldset>
-                        <legend>Payment Details</legend>
-                        <label for="card-element">Credit or debit card</label>
+                        <legend data-i18n="payment_details">Payment Details</legend>
+                        <label for="card-element" data-i18n="credit_debit_card">Credit or debit card</label>
                         <div id="card-element">
                           <!-- A Stripe Element will be inserted here. -->
                         </div>
@@ -201,7 +201,7 @@
                         <div id="card-errors" role="alert"></div>
                     </fieldset>
 
-                    <button type="submit" id="submit-payment-btn" class="btn btn-primary checkout-btn" aria-label="Complete payment">Pay Now</button>
+                    <button type="submit" id="submit-payment-btn" class="btn btn-primary checkout-btn" aria-label="Complete payment" data-i18n="pay_now">Pay Now</button>
                 </form>
             </div>
         </div>
@@ -223,11 +223,11 @@
         <ul class="chatbox">
             <li class="chat incoming">
                 <span class="chat-icon"><i class="fas fa-robot"></i></span>
-                <p>Hi there! 👋<br>How can I help you today?</p>
+                <p data-i18n="chatbot_greeting_message">Hi there! 👋<br>How can I help you today?</p>
             </li>
         </ul>
         <div class="chat-input">
-            <textarea placeholder="Ask a question..." required></textarea>
+            <textarea placeholder="Ask a question..." required data-i18n-placeholder="chatbot_placeholder"></textarea>
             <button id="send-btn" aria-label="Send message">
                 <i class="fas fa-paper-plane"></i>
             </button>
@@ -239,7 +239,7 @@
             <div class="footer-grid">
                 <div class="footer-column footer-brand">
                     <img src="images/logo/logoslp.jpg" alt="SoundLightPro Logo" class="footer-logo">
-                    <p class="footer-text">Professional audio and lighting solutions for events, concerts, and venues worldwide.</p>
+                    <p class="footer-text" data-i18n="footer_description">Professional audio and lighting solutions for events, concerts, and venues worldwide.</p>
                     <div class="social-icons">
                         <a href="https://www.facebook.com/beglec.cm/" aria-label="Facebook" target="_blank" rel="noopener noreferrer" class="social-link">
                             <i class="fab fa-facebook-f"></i>
@@ -250,47 +250,47 @@
                     </div>
                 </div>
                 <div class="footer-column">
-                    <h4 class="footer-subtitle">Quick Links</h4>
+                    <h4 class="footer-subtitle" data-i18n="footer_quick_links">Quick Links</h4>
                     <ul class="footer-links">
-                        <li><a href="about.html">About Us</a></li>
-                        <li><a href="index.html#products">Products</a></li>
-                        <li><a href="services.html">Services</a></li>
-                        <li><a href="contact.html">Contact</a></li>
+                        <li><a href="about.html" data-i18n="footer_about">About Us</a></li>
+                        <li><a href="index.html#products" data-i18n="nav_products">Products</a></li>
+                        <li><a href="services.html" data-i18n="footer_services">Services</a></li>
+                        <li><a href="contact.html" data-i18n="footer_contact">Contact</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
-                    <h4 class="footer-subtitle">Customer Service</h4>
+                    <h4 class="footer-subtitle" data-i18n="footer_customer_service">Customer Service</h4>
                     <ul class="footer-links">
-                        <li><a href="support-center.html">Support Center</a></li>
-                        <li><a href="shipping-info.html">Shipping Info</a></li>
-                        <li><a href="returns.html">Returns</a></li>
-                        <li><a href="warranty.html">Warranty</a></li>
+                        <li><a href="support-center.html" data-i18n="footer_support_center">Support Center</a></li>
+                        <li><a href="shipping-info.html" data-i18n="footer_shipping_info">Shipping Info</a></li>
+                        <li><a href="returns.html" data-i18n="footer_returns">Returns</a></li>
+                        <li><a href="warranty.html" data-i18n="footer_warranty">Warranty</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
-                    <h4 class="footer-subtitle">Contact Info</h4>
+                    <h4 class="footer-subtitle" data-i18n="footer_contact_info">Contact Info</h4>
                     <address class="footer-contact">
                         <p class="contact-item">
                             <i class="fas fa-map-marker-alt"></i>
-                            <span>1451, 63 Bd de la République<br>Douala, Cameroon</span>
+                            <span data-i18n="footer_address">1451, 63 Bd de la République<br>Douala, Cameroon</span>
                         </p>
                         <p class="contact-item">
                             <i class="fas fa-phone"></i>
-                            <a href="tel:+237680494949">+237 6 80 49 49 49</a>
+                            <a href="tel:+237680494949" data-i18n="footer_phone">+237 6 80 49 49 49</a>
                         </p>
                         <p class="contact-item">
                             <i class="fas fa-envelope"></i>
-                            <a href="mailto:info@soundlightpro.com">info@soundlightpro.com</a>
+                            <a href="mailto:info@soundlightpro.com" data-i18n="footer_email">info@soundlightpro.com</a>
                         </p>
                     </address>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2025 SoundLightPro. All rights reserved.</p>
+                <p>&copy; 2025 SoundLightPro. <span data-i18n="footer_all_rights">All rights reserved.</span></p>
                 <div class="footer-bottom-links">
-                    <a href="privacy-policy.html">Privacy Policy</a>
-                    <a href="terms-of-service.html">Terms of Service</a>
-                    <a href="cookie-policy.html">Cookie Policy</a>
+                    <a href="privacy-policy.html" data-i18n="footer_privacy_policy">Privacy Policy</a>
+                    <a href="terms-of-service.html" data-i18n="footer_terms_of_service">Terms of Service</a>
+                    <a href="cookie-policy.html" data-i18n="footer_cookie_policy">Cookie Policy</a>
                 </div>
             </div>
         </div>

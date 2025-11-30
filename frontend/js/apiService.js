@@ -319,7 +319,7 @@ async function apiFetch(url, options = {}) {
 }
 
 // --- Exported API functions ---
-export { apiFetch, ensureAccessToken, getStoredUserProfile, clearStoredUserProfile };
+export { API_BASE_URL, apiFetch, ensureAccessToken, getStoredUserProfile, clearStoredUserProfile };
 
 /**
  * API fetch with retry logic for better resilience.

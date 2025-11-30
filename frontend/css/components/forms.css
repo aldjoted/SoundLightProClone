@@ -879,3 +879,195 @@
         max-width: 680px;
     }
 }
+
+/* ============================================================ */
+/* FORM VALIDATION VISUAL FEEDBACK                              */
+/* ============================================================ */
+
+/* Form Group Container */
+.form-group {
+    position: relative;
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Error State */
+.form-group.has-error input,
+.form-group.has-error textarea,
+.form-group.has-error select {
+    border-color: var(--danger-color);
+    background-color: rgba(239, 68, 68, 0.03);
+    padding-right: 2.5rem;
+}
+
+.form-group.has-error input:focus,
+.form-group.has-error textarea:focus,
+.form-group.has-error select:focus {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+    border-color: var(--danger-color);
+}
+
+.form-group.has-error label {
+    color: var(--danger-color);
+}
+
+/* Error Message */
+.error-message {
+    display: none;
+    color: var(--danger-color);
+    font-size: 0.8rem;
+    margin-top: var(--spacing-xs);
+    padding-left: var(--spacing-xs);
+    animation: slideDown 0.2s ease;
+}
+
+.form-group.has-error .error-message {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.error-message i {
+    font-size: 0.75rem;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Success/Valid State */
+.form-group.is-valid input,
+.form-group.is-valid textarea,
+.form-group.is-valid select {
+    border-color: var(--success-color);
+    background-color: rgba(16, 185, 129, 0.03);
+    padding-right: 2.5rem;
+}
+
+.form-group.is-valid input:focus,
+.form-group.is-valid textarea:focus,
+.form-group.is-valid select:focus {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    border-color: var(--success-color);
+}
+
+/* Validation Icons */
+.form-group .validation-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    opacity: 0;
+    transition: opacity var(--transition-base);
+    pointer-events: none;
+}
+
+/* Account for label height */
+.form-group label + input + .validation-icon,
+.form-group label ~ .validation-icon {
+    top: calc(50% + 12px);
+}
+
+.form-group.has-error .validation-icon.icon-error {
+    opacity: 1;
+    color: var(--danger-color);
+}
+
+.form-group.is-valid .validation-icon.icon-success {
+    opacity: 1;
+    color: var(--success-color);
+}
+
+/* Input with icon adjustment */
+.form-group.has-error input,
+.form-group.is-valid input {
+    padding-right: 2.75rem;
+}
+
+/* Warning State */
+.form-group.has-warning input,
+.form-group.has-warning textarea {
+    border-color: var(--warning-color);
+    background-color: rgba(245, 158, 11, 0.03);
+}
+
+.form-group.has-warning .warning-message {
+    display: block;
+    color: var(--warning-color);
+    font-size: 0.8rem;
+    margin-top: var(--spacing-xs);
+}
+
+/* Form Validation Summary */
+.form-validation-summary {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid var(--danger-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-validation-summary h4 {
+    color: var(--danger-color);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-sm) 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.form-validation-summary ul {
+    margin: 0;
+    padding-left: var(--spacing-lg);
+    font-size: 0.85rem;
+    color: var(--danger-color);
+}
+
+.form-validation-summary li {
+    margin-bottom: var(--spacing-xs);
+}
+
+/* Success Summary */
+.form-success-message {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid var(--success-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    color: var(--success-color);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-weight: 500;
+}
+
+/* Required Field Indicator */
+.required {
+    color: var(--danger-color);
+    margin-left: 2px;
+}
+
+/* Character Counter */
+.char-counter {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-align: right;
+    margin-top: var(--spacing-xs);
+}
+
+.char-counter.near-limit {
+    color: var(--warning-color);
+}
+
+.char-counter.at-limit {
+    color: var(--danger-color);
+    font-weight: 600;
+}

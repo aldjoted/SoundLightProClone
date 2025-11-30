@@ -731,3 +731,36 @@ class ProductReview(models.Model):
             self.is_verified_purchase = has_purchased
         
         super().save(*args, **kwargs)
+
+
+class PasswordResetToken(models.Model):
+    """
+    Model for password reset tokens.
+    Tokens are single-use and expire after a set time.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_reset_tokens')
+    token = models.CharField(max_length=64, unique=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
+    
+    class Meta:
+        verbose_name = _("Password Reset Token")
+        verbose_name_plural = _("Password Reset Tokens")
+        indexes = [
+            models.Index(fields=['token', 'used', 'expires_at']),
+        ]
+    
+    def __str__(self):
+        return f"Password reset token for {self.user.username}"
+    
+    @property
+    def is_valid(self):
+        """Check if token is still valid (not used and not expired)"""
+        from django.utils import timezone
+        return not self.used and self.expires_at > timezone.now()
+    
+    def mark_used(self):
+        """Mark token as used"""
+        self.used = True
+        self.save(update_fields=['used'])

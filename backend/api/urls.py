@@ -18,6 +18,14 @@ urlpatterns = [
     path('register/', views.RegisterView.as_view(), name='register'),
     # To get details of the current logged-in user
     path('user/', views.UserDetailView.as_view(), name='user_detail'),
+    
+    # --- Password Reset Endpoints ---
+    # Request password reset (sends email) - Rate Limited: 5/hour
+    path('password-reset/', views.PasswordResetRequestView.as_view(), name='password_reset_request'),
+    # Confirm password reset with token - Rate Limited: 10/hour
+    path('password-reset/confirm/', views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    # Validate token (check if valid before showing form)
+    path('password-reset/validate/', views.PasswordResetValidateTokenView.as_view(), name='password_reset_validate'),
 
     # --- Product Catalog Endpoints ---
     # List all available products (supports ?search=... query)

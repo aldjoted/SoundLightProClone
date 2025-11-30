@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 from .models import (
     Category, Brand, Product, Order, OrderItem, Wishlist, WishlistItem, ProductReview,
-    UserProfile, ShippingAddress, PaymentMethod
+    UserProfile, ShippingAddress, PaymentMethod, PasswordResetToken
 )
 from .embeddings import model as embedding_model, get_product_text
 from .vector_search import get_search_index_data
@@ -39,8 +39,13 @@ from .serializers import (
     UserProfileSerializer, UpdatePasswordSerializer, ShippingAddressSerializer,
     PaymentMethodSerializer, CreatePaymentMethodSerializer, UpdatePaymentMethodSerializer,
     DashboardOrderSerializer, DashboardOrderItemSerializer, OrderFilterSerializer,
-    StockNotificationRequestSerializer
+    StockNotificationRequestSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 )
+import secrets
+from django.utils import timezone
+from datetime import timedelta
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
 from . import services
 from .services import OrderCreationError
 
@@ -142,6 +147,177 @@ class LogoutView(APIView):
         )
         
         return response
+
+
+@method_decorator(ratelimit(key='ip', rate='5/h', method='POST', block=True), name='dispatch')
+class PasswordResetRequestView(APIView):
+    """
+    API view to request a password reset.
+    Sends an email with a reset link if the email exists.
+    Rate limited to 5 requests per hour per IP.
+    
+    For security, always returns success even if email doesn't exist
+    to prevent email enumeration attacks.
+    """
+    permission_classes = (permissions.AllowAny,)
+    
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        email = serializer.validated_data['email']
+        
+        try:
+            user = User.objects.get(email__iexact=email)
+            
+            # Invalidate any existing tokens for this user
+            PasswordResetToken.objects.filter(user=user, used=False).update(used=True)
+            
+            # Generate a secure token
+            token = secrets.token_urlsafe(32)
+            
+            # Create reset token (expires in 1 hour)
+            reset_token = PasswordResetToken.objects.create(
+                user=user,
+                token=token,
+                expires_at=timezone.now() + timedelta(hours=1)
+            )
+            
+            # Build reset URL
+            frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+            reset_url = f"{frontend_url}/reset-password.html?token={token}"
+            
+            # Send email
+            try:
+                subject = 'Reset Your SoundLightPro Password'
+                message = f"""Hello {user.username},
+
+You requested to reset your password for your SoundLightPro account.
+
+Click the link below to reset your password:
+{reset_url}
+
+This link will expire in 1 hour.
+
+If you didn't request this password reset, you can safely ignore this email.
+
+Best regards,
+The SoundLightPro Team"""
+                
+                send_mail(
+                    subject=subject,
+                    message=message,
+                    from_email=settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@soundlightpro.com',
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+                logger.info(f"Password reset email sent to {email}")
+            except Exception as e:
+                logger.error(f"Failed to send password reset email: {e}")
+                # Don't expose email sending errors to client
+                
+        except User.DoesNotExist:
+            # Don't reveal that email doesn't exist (security)
+            logger.info(f"Password reset requested for non-existent email: {email}")
+        
+        # Always return success to prevent email enumeration
+        return Response(
+            {'detail': 'If an account with that email exists, a password reset link has been sent.'},
+            status=status.HTTP_200_OK
+        )
+
+
+@method_decorator(ratelimit(key='ip', rate='10/h', method='POST', block=True), name='dispatch')
+class PasswordResetConfirmView(APIView):
+    """
+    API view to confirm password reset with token.
+    Validates token and sets new password.
+    Rate limited to 10 attempts per hour per IP.
+    """
+    permission_classes = (permissions.AllowAny,)
+    
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        token = serializer.validated_data['token']
+        new_password = serializer.validated_data['new_password']
+        
+        try:
+            reset_token = PasswordResetToken.objects.select_related('user').get(
+                token=token,
+                used=False
+            )
+            
+            # Check if token is expired
+            if not reset_token.is_valid:
+                return Response(
+                    {'error': 'This password reset link has expired. Please request a new one.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Update user's password
+            user = reset_token.user
+            user.set_password(new_password)
+            user.save()
+            
+            # Mark token as used
+            reset_token.mark_used()
+            
+            # Blacklist all refresh tokens for this user (force re-login)
+            try:
+                from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+                tokens = OutstandingToken.objects.filter(user=user)
+                for token_obj in tokens:
+                    BlacklistedToken.objects.get_or_create(token=token_obj)
+            except Exception as e:
+                logger.warning(f"Failed to blacklist tokens after password reset: {e}")
+            
+            logger.info(f"Password successfully reset for user: {user.username}")
+            
+            return Response(
+                {'detail': 'Your password has been successfully reset. You can now login with your new password.'},
+                status=status.HTTP_200_OK
+            )
+            
+        except PasswordResetToken.DoesNotExist:
+            return Response(
+                {'error': 'Invalid or expired password reset link. Please request a new one.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class PasswordResetValidateTokenView(APIView):
+    """
+    API view to validate a password reset token.
+    Used by frontend to check if token is valid before showing reset form.
+    """
+    permission_classes = (permissions.AllowAny,)
+    
+    def get(self, request):
+        token = request.query_params.get('token', '')
+        
+        if not token:
+            return Response(
+                {'valid': False, 'error': 'No token provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            reset_token = PasswordResetToken.objects.get(token=token, used=False)
+            
+            if reset_token.is_valid:
+                return Response({'valid': True}, status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {'valid': False, 'error': 'Token has expired'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except PasswordResetToken.DoesNotExist:
+            return Response(
+                {'valid': False, 'error': 'Invalid token'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 # --- Product Catalog Views ---
@@ -339,8 +515,8 @@ class OrderView(APIView):
             # Handle business logic errors (stock issues, payment failures, etc.)
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # Log unexpected errors for debugging (in production, use proper logging)
-            print(f"Unexpected error in order creation: {e}")
+            # Log unexpected errors for debugging
+            logger.exception(f"Unexpected error in order creation: {e}")
             return Response(
                 {"error": "An unexpected error occurred. Please try again later."}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -597,7 +773,7 @@ class WishlistSyncView(APIView):
     """
     permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs) -> Response:
         """Sync guest wishlist items with user's wishlist"""
         guest_product_ids = request.data.get('product_ids', [])
         
@@ -607,25 +783,35 @@ class WishlistSyncView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Get or create user's wishlist
-        wishlist, created = Wishlist.objects.get_or_create(user=request.user)
-        
-        # Get existing product IDs in user's wishlist
-        existing_product_ids = set(
-            wishlist.items.values_list('product_id', flat=True)
-        )
-        
-        # Add new products that aren't already in the wishlist
-        added_count = 0
-        for product_id in guest_product_ids:
-            if product_id not in existing_product_ids:
-                try:
-                    product = Product.objects.get(id=product_id, available=True)
-                    WishlistItem.objects.create(wishlist=wishlist, product=product)
-                    added_count += 1
-                except Product.DoesNotExist:
-                    # Skip products that don't exist
-                    continue
+        # ✅ PERFORMANCE: Use atomic transaction and bulk insert
+        with transaction.atomic():
+            # Get or create user's wishlist
+            wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+            
+            # Get existing product IDs in user's wishlist
+            existing_product_ids = set(
+                wishlist.items.values_list('product_id', flat=True)
+            )
+            
+            # Filter to only new product IDs
+            new_product_ids = [pid for pid in guest_product_ids if pid not in existing_product_ids]
+            
+            # Get available products in bulk
+            available_products = Product.objects.filter(
+                id__in=new_product_ids, 
+                available=True
+            ).values_list('id', flat=True)
+            
+            # Create wishlist items in bulk
+            items_to_create = [
+                WishlistItem(wishlist=wishlist, product_id=pid)
+                for pid in available_products
+            ]
+            
+            if items_to_create:
+                WishlistItem.objects.bulk_create(items_to_create, ignore_conflicts=True)
+            
+            added_count = len(items_to_create)
         
         # Return updated wishlist
         serializer = WishlistSerializer(wishlist, context={'request': request})
@@ -724,9 +910,9 @@ class ProductReviewStatsView(APIView):
     """
     permission_classes = [permissions.AllowAny]
 
-    def get(self, request, product_id, *args, **kwargs):
+    def get(self, request, product_id, *args, **kwargs) -> Response:
         """Get review statistics for a product"""
-        from django.db.models import Avg, Count, Q
+        from django.db.models import Avg, Count, Q, Case, When, IntegerField
 
         try:
             product = (
@@ -743,19 +929,27 @@ class ProductReviewStatsView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        reviews = ProductReview.objects.filter(product=product, is_approved=True)
-        
         # Calculate statistics
         average_rating = product.average_rating
         review_count = product.review_count
         
-        # Calculate rating distribution
+        # ✅ PERFORMANCE: Calculate rating distribution in a single query using conditional aggregation
+        distribution = ProductReview.objects.filter(
+            product=product, is_approved=True
+        ).aggregate(
+            r5=Count('id', filter=Q(rating=5)),
+            r4=Count('id', filter=Q(rating=4)),
+            r3=Count('id', filter=Q(rating=3)),
+            r2=Count('id', filter=Q(rating=2)),
+            r1=Count('id', filter=Q(rating=1)),
+        )
+        
         rating_distribution = {
-            '5': reviews.filter(rating=5).count(),
-            '4': reviews.filter(rating=4).count(),
-            '3': reviews.filter(rating=3).count(),
-            '2': reviews.filter(rating=2).count(),
-            '1': reviews.filter(rating=1).count(),
+            '5': distribution['r5'],
+            '4': distribution['r4'],
+            '3': distribution['r3'],
+            '2': distribution['r2'],
+            '1': distribution['r1'],
         }
         
         stats = {
@@ -972,7 +1166,6 @@ class PaymentMethodListCreateView(APIView):
         
         try:
             # Retrieve payment method details from Stripe
-            import stripe
             stripe_pm = stripe.PaymentMethod.retrieve(stripe_pm_id)
             
             # Create PaymentMethod instance
@@ -1059,11 +1252,10 @@ class PaymentMethodDetailView(APIView):
         
         # Also detach from Stripe
         try:
-            import stripe
             stripe.PaymentMethod.detach(payment_method.stripe_payment_method_id)
         except stripe.error.StripeError as e:
             # Log error but continue with deletion
-            print(f"Error detaching payment method from Stripe: {e}")
+            logger.warning(f"Error detaching payment method from Stripe: {e}")
         
         payment_method.delete()
         return Response({'detail': 'Payment method deleted successfully.'}, status=status.HTTP_200_OK)

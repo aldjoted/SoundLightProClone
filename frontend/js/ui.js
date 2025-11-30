@@ -514,67 +514,103 @@ export function renderHeroSlider(_unused = []) {
         return new URL(p, window.location.href).toString();
     };
     
-    
-    const images = [
-
-        'images/hero/soundlightpro-banner-home1.jpg',
-
-        'images/hero/soundlightpro-banner-home2.jpg',
-
-        'images/hero/soundlightpro-banner-home22.jpg',
-
-        'images/hero/soundlightpro-banner-home2222.jpg',
-
-        'images/hero/soundlightpro-banner-home3.jpg',
-
-        'images/hero/soundlightpro-banner-home4.jpg',
-
-        'images/hero/soundlightpro-banner-home6.jpg',
-
-        'images/hero/MYO-ACOUSTIC-SOUNDLIGHTPRO.png'
-
+    // Hero slide content with images, titles, descriptions, and CTAs
+    const slides = [
+        {
+            image: 'images/hero/soundlightpro-banner-home1.jpg',
+            title: i18n.t('hero_slide1_title', 'Professional Sound Systems'),
+            subtitle: i18n.t('hero_slide1_subtitle', 'Premium audio equipment for events & venues'),
+            cta: i18n.t('hero_slide1_cta', 'Shop Audio'),
+            ctaLink: 'search-results.html?category=sound-systems'
+        },
+        {
+            image: 'images/hero/soundlightpro-banner-home2.jpg',
+            title: i18n.t('hero_slide2_title', 'Stage Lighting Solutions'),
+            subtitle: i18n.t('hero_slide2_subtitle', 'Create stunning visual experiences'),
+            cta: i18n.t('hero_slide2_cta', 'Explore Lighting'),
+            ctaLink: 'search-results.html?category=lighting'
+        },
+        {
+            image: 'images/hero/soundlightpro-banner-home22.jpg',
+            title: i18n.t('hero_slide3_title', 'DJ Equipment'),
+            subtitle: i18n.t('hero_slide3_subtitle', 'Everything you need to rock the party'),
+            cta: i18n.t('hero_slide3_cta', 'View DJ Gear'),
+            ctaLink: 'search-results.html?category=dj-equipment'
+        },
+        {
+            image: 'images/hero/soundlightpro-banner-home2222.jpg',
+            title: i18n.t('hero_slide4_title', 'Special Effects'),
+            subtitle: i18n.t('hero_slide4_subtitle', 'Fog machines, lasers & more'),
+            cta: i18n.t('hero_slide4_cta', 'Shop Effects'),
+            ctaLink: 'search-results.html?category=stage-effects'
+        },
+        {
+            image: 'images/hero/soundlightpro-banner-home3.jpg',
+            title: i18n.t('hero_slide5_title', 'New Arrivals'),
+            subtitle: i18n.t('hero_slide5_subtitle', 'Discover the latest professional gear'),
+            cta: i18n.t('hero_slide5_cta', 'See What\'s New'),
+            ctaLink: 'search-results.html?sort=newest'
+        },
+        {
+            image: 'images/hero/soundlightpro-banner-home4.jpg',
+            title: i18n.t('hero_slide6_title', 'Expert Support'),
+            subtitle: i18n.t('hero_slide6_subtitle', 'Professional advice & installation services'),
+            cta: i18n.t('hero_slide6_cta', 'Contact Us'),
+            ctaLink: 'contact.html'
+        },
+        {
+            image: 'images/hero/soundlightpro-banner-home6.jpg',
+            title: i18n.t('hero_slide7_title', 'Complete Event Solutions'),
+            subtitle: i18n.t('hero_slide7_subtitle', 'Sound, light & stage equipment packages'),
+            cta: i18n.t('hero_slide7_cta', 'View Packages'),
+            ctaLink: 'services.html'
+        },
+        {
+            image: 'images/hero/MYO-ACOUSTIC-SOUNDLIGHTPRO.png',
+            title: i18n.t('hero_slide8_title', 'MYO Acoustic Series'),
+            subtitle: i18n.t('hero_slide8_subtitle', 'Premium acoustic solutions for any venue'),
+            cta: i18n.t('hero_slide8_cta', 'Learn More'),
+            ctaLink: 'search-results.html?brand=myo-acoustic'
+        }
     ];
 
-
-
     swiperWrapper.innerHTML = '';
-
     const frag = document.createDocumentFragment();
-
-    images.forEach((src, index) => {
-
+    
+    slides.forEach((slideData, index) => {
         const slide = document.createElement('div');
-
         slide.className = 'swiper-slide';
-
-    const img = document.createElement('img');
-
-    img.className = 'slide-bg';
-
-    img.alt = `Promotional banner ${index + 1}`;
-
-    img.src = toAbs(src);
-
-    img.width = 1920; // intrinsic size hint to reduce CLS
-
-    img.height = 822; // matches ~21:9 ratio
-
+        
+        const img = document.createElement('img');
+        img.className = 'slide-bg';
+        img.alt = slideData.title;
+        img.src = toAbs(slideData.image);
+        img.width = 1920;
+        img.height = 822;
         if (index > 0) img.loading = 'lazy';
-
+        
         const overlay = document.createElement('div');
-
         overlay.className = 'slide-overlay';
-
+        
+        // Create hero content
+        const heroContent = document.createElement('div');
+        heroContent.className = 'hero-content';
+        heroContent.innerHTML = `
+            <h2 class="hero-title">${escapeHtml(slideData.title)}</h2>
+            <p class="hero-subtitle">${escapeHtml(slideData.subtitle)}</p>
+            <a href="${slideData.ctaLink}" class="btn btn--primary hero-cta">
+                ${escapeHtml(slideData.cta)}
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        `;
+        
         slide.appendChild(img);
-
         slide.appendChild(overlay);
-
+        slide.appendChild(heroContent);
         frag.appendChild(slide);
-
     });
-
+    
     swiperWrapper.appendChild(frag);
-
 }
 
 
@@ -2657,4 +2693,63 @@ function getYouTubeId(url) {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : null;
+}
+
+/**
+ * Updates the wishlist item count displayed in the header.
+ * @param {number} count - The number of items in the wishlist.
+ */
+export function updateWishlistCount(count) {
+    const wishlistCountElement = document.getElementById('wishlist-item-count');
+    if (wishlistCountElement) {
+        wishlistCountElement.textContent = count;
+        // Add animation for update
+        wishlistCountElement.classList.add('updated');
+        setTimeout(() => {
+            wishlistCountElement.classList.remove('updated');
+        }, 500);
+    }
+}
+
+/**
+ * Renders a single wishlist item card.
+ * @param {Object} product - The product object.
+ * @returns {HTMLElement} The wishlist item element.
+ */
+export function renderWishlistItem(product) {
+    const item = document.createElement('div');
+    item.className = 'wishlist-item';
+    item.dataset.productId = product.id;
+    
+    const imageUrl = product.main_image || product.image || '/images/placeholder.jpg';
+    const price = typeof product.price === 'number' ? product.price.toFixed(2) : product.price;
+    
+    item.innerHTML = `
+        <div class="wishlist-item-image">
+            <a href="product.html?id=${product.id}">
+                <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(product.name)}" loading="lazy">
+            </a>
+        </div>
+        <div class="wishlist-item-details">
+            <h3 class="wishlist-item-name">
+                <a href="product.html?id=${product.id}">${escapeHtml(product.name)}</a>
+            </h3>
+            ${product.brand_name ? `<p class="wishlist-item-brand">${escapeHtml(product.brand_name)}</p>` : ''}
+            <p class="wishlist-item-price">$${escapeHtml(price)}</p>
+            ${product.stock_quantity > 0 
+                ? '<span class="stock-status in-stock"><i class="fas fa-check"></i> In Stock</span>'
+                : '<span class="stock-status out-of-stock"><i class="fas fa-times"></i> Out of Stock</span>'
+            }
+        </div>
+        <div class="wishlist-item-actions">
+            <button class="btn btn-primary add-to-cart-btn" data-product-id="${product.id}" ${product.stock_quantity <= 0 ? 'disabled' : ''}>
+                <i class="fas fa-shopping-cart"></i> Add to Cart
+            </button>
+            <button class="btn btn-outline remove-from-wishlist-btn" data-product-id="${product.id}" aria-label="Remove from wishlist">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    
+    return item;
 }

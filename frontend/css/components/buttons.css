@@ -258,3 +258,110 @@
         transform: translateY(-2px);
     }
 }
+
+/* ============================================= */
+/* Button Loading States                         */
+/* ============================================= */
+
+.btn.is-loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+    cursor: wait;
+}
+
+.btn.is-loading * {
+    visibility: hidden;
+}
+
+.btn.is-loading::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    top: 50%;
+    left: 50%;
+    margin: -9px 0 0 -9px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: btnSpinner 0.7s linear infinite;
+}
+
+/* Secondary button loading spinner */
+.btn--secondary.is-loading::after,
+.btn-secondary.is-loading::after {
+    border-color: rgba(79, 70, 229, 0.2);
+    border-top-color: var(--primary-color);
+}
+
+/* Small spinner for smaller buttons */
+.btn--sm.is-loading::after {
+    width: 14px;
+    height: 14px;
+    margin: -7px 0 0 -7px;
+    border-width: 2px;
+}
+
+/* Large spinner for larger buttons */
+.btn--lg.is-loading::after {
+    width: 22px;
+    height: 22px;
+    margin: -11px 0 0 -11px;
+}
+
+@keyframes btnSpinner {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Disabled state during loading */
+.btn.is-loading:disabled,
+.btn.is-loading[disabled] {
+    opacity: 0.8;
+}
+
+/* Success state after action */
+.btn.is-success {
+    background: var(--success-color) !important;
+    border-color: var(--success-color) !important;
+    color: white !important;
+}
+
+.btn.is-success::before {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    margin-right: var(--spacing-sm);
+}
+
+/* Error state */
+.btn.is-error {
+    background: var(--danger-color) !important;
+    border-color: var(--danger-color) !important;
+    color: white !important;
+    animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-5px); }
+    40%, 80% { transform: translateX(5px); }
+}
+
+/* Icon-only button loading */
+.btn-icon.is-loading {
+    min-width: 44px;
+}
+
+.btn-icon.is-loading::after {
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+}
+
+/* Full-width button loading */
+.btn--full-width.is-loading::after {
+    left: 50%;
+}

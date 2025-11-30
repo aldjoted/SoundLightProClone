@@ -19,9 +19,20 @@ if TYPE_CHECKING:
     from django.db.models import QuerySet
 
 from .models import Product, Order, OrderItem
+from django.conf import settings
 
 # ✅ IMPROVEMENT: Setup logger
 logger = logging.getLogger(__name__)
+
+
+def get_safe_error_message(detailed_message: str, generic_message: str = "An error occurred.") -> str:
+    """
+    Return detailed error messages in DEBUG mode, generic messages in production.
+    This prevents information leakage about internal IDs and system structure.
+    """
+    if settings.DEBUG:
+        return detailed_message
+    return generic_message
 
 # Load environment variables
 load_dotenv()
@@ -97,8 +108,12 @@ def create_order_from_cart(
             products = {product.id: product for product in locked_products}
             missing_ids = set(product_ids) - set(products.keys())
             if missing_ids:
+                logger.warning(f"Order creation failed: Product IDs not found: {missing_ids}")
                 raise OrderCreationError(
-                    f"Product with ID {next(iter(missing_ids))} not found."
+                    get_safe_error_message(
+                        f"Product with ID {next(iter(missing_ids))} not found.",
+                        "One or more products in your cart are no longer available."
+                    )
                 )
 
             order = Order.objects.create(
@@ -117,10 +132,21 @@ def create_order_from_cart(
             for item_data in cart_items:
                 product = products.get(item_data['id'])
                 if not product:
-                    raise OrderCreationError(f"Product with ID {item_data['id']} not found.")
+                    logger.warning(f"Order creation failed: Product ID {item_data['id']} not in locked set")
+                    raise OrderCreationError(
+                        get_safe_error_message(
+                            f"Product with ID {item_data['id']} not found.",
+                            "One or more products in your cart are no longer available."
+                        )
+                    )
 
                 if not product.available:
-                    raise OrderCreationError(f"Product '{product.name}' is no longer available.")
+                    raise OrderCreationError(
+                        get_safe_error_message(
+                            f"Product '{product.name}' is no longer available.",
+                            "One or more products in your cart are no longer available."
+                        )
+                    )
 
                 quantity = item_data['quantity']
                 if quantity <= 0:

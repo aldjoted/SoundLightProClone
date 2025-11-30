@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="View product details for professional audio and lighting equipment.">
-    <title data-i18n="product_loading">Product Details - SoundLightPro</title>
+    <meta name="description" content="View product details for professional audio and lighting equipment." data-i18n="product_meta_description">
+    <title data-i18n="product_title">Product Details - SoundLightPro</title>
     
     <!-- PWA Configuration -->
     <meta name="theme-color" content="#6366f1">
@@ -82,7 +82,7 @@
     </script>
     
     <!-- Skip to main content for accessibility -->
-    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <a href="#main-content" class="skip-link" data-i18n="skip_to_main_content">Skip to main content</a>
 
     <!-- Header -->
     <header class="main-header" role="banner">
@@ -166,6 +166,29 @@
     </header>
 
     <main id="main-content" class="container">
+        <!-- Breadcrumb Navigation -->
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <ol class="breadcrumb-list" itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a href="index.html" class="breadcrumb-link" itemprop="item">
+                        <i class="fas fa-home" aria-hidden="true"></i>
+                        <span itemprop="name" data-i18n="nav_home">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a href="search-results.html" class="breadcrumb-link" itemprop="item" id="breadcrumb-category">
+                        <span itemprop="name" data-i18n="nav_products">Products</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li class="breadcrumb-item active" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem" aria-current="page">
+                    <span itemprop="name" id="breadcrumb-product">Loading...</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </nav>
+
         <section id="product-detail-container" class="product-listing">
             <!-- Product details will be dynamically inserted here by JS -->
             <div class="loading-spinner"><div class="spinner"></div><p data-i18n="product_loading">Loading product...</p></div>

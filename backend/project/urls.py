@@ -18,13 +18,48 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import JsonResponse
+from django.db import connection
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 # Custom 404 handler
 handler404 = 'api.views.custom_404_view'
 
+
+def health_check(request):
+    """
+    Health check endpoint for load balancers and monitoring.
+    Returns database connectivity status and basic app health.
+    """
+    health_status = {
+        'status': 'healthy',
+        'database': 'connected',
+        'version': '1.0.0',
+    }
+    
+    # Check database connectivity
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT 1')
+    except Exception as e:
+        health_status['status'] = 'unhealthy'
+        health_status['database'] = f'disconnected: {str(e)}'
+        return JsonResponse(health_status, status=503)
+    
+    return JsonResponse(health_status, status=200)
+
+
 urlpatterns = [
     # Django's built-in admin site
     path('admin/', admin.site.urls),
+
+    # ✅ Health check endpoint for monitoring/load balancers
+    path('api/health/', health_check, name='health_check'),
+    
+    # ✅ OpenAPI documentation endpoints
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
     # Include the URLs from our 'api' app
     # All API endpoints are available at /api/
