@@ -59,6 +59,9 @@ async function loadProductReviews(productId) {
         }
 
         const reviews = await reviewManager.loadReviews(productId);
+        // Clear the loading spinner before rendering reviews
+        listContainer.innerHTML = '';
+        
         if (reviews && reviews.length > 0) {
             reviews.forEach((review) => {
                 const reviewCard = ui.renderReviewCard(review);

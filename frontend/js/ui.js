@@ -2147,7 +2147,7 @@ export function renderRelatedProducts(products, container) {
             href: productUrl
         }, [productName]));
 
-        const rating = createElement('div', { class: 'related-product_rating' });
+        const rating = createElement('div', { class: 'related-product-rating' });
         const stars = createElement('div', { class: 'related-product-stars' });
         for (let i = 1; i <= 5; i += 1) {
             let starClass = 'far fa-star';

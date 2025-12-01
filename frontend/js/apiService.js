@@ -602,9 +602,46 @@ export const verifyLoginCode = async (email, code) => {
         if (error instanceof APIError) {
             let message = error.getUserMessage();
             if (error.status === 401) {
-                message = 'Invalid or expired verification code';
+                message = error.response?.detail || 'Invalid or expired verification code';
+            } else if (error.status === 423) {
+                message = error.response?.detail || 'Account is temporarily locked. Please try again later.';
             } else if (error.status === 429) {
                 message = 'Too many verification attempts. Please try again in a few minutes.';
+            }
+            throw new APIError(message, error.status, error.code, error.response);
+        }
+        throw error;
+    }
+};
+
+/**
+ * Resends the 6-digit login verification code.
+ * 
+ * ✅ NEW: Resend verification code functionality
+ * - Requests a new verification code to be sent to the user's email
+ * - Rate limited to 3 requests per minute
+ * 
+ * @param {string} email - The user's email address.
+ * @returns {Promise<Object>} A promise that resolves with the response.
+ */
+export const resendVerificationCode = async (email) => {
+    if (!email) {
+        throw new APIError('Email is required', 400, 'MISSING_EMAIL');
+    }
+    
+    try {
+        return await apiFetch('/resend-verification/', {
+            method: 'POST',
+            body: JSON.stringify({ email }),
+        });
+    } catch (error) {
+        console.error('Resend verification failed:', error);
+        if (error instanceof APIError) {
+            let message = error.getUserMessage();
+            if (error.status === 423) {
+                message = error.response?.detail || 'Account is temporarily locked.';
+            } else if (error.status === 429) {
+                message = 'Too many resend attempts. Please wait before trying again.';
             }
             throw new APIError(message, error.status, error.code, error.response);
         }

@@ -35,6 +35,11 @@ export default defineConfig({
         'shipping-info': 'shipping-info.html',
         'support-center': 'support-center.html',
         warranty: 'warranty.html',
+        dashboard: 'dashboard.html',
+        wishlist: 'wishlist.html',
+        'forgot-password': 'forgot-password.html',
+        'reset-password': 'reset-password.html',
+        'verify-login': 'verify-login.html',
         404: '404.html'
       },
       output: {

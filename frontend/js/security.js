@@ -2,9 +2,77 @@
  * security.js
  * 
  * Security utilities and Content Security Policy implementation
+ * 
+ * ✅ SECURITY IMPROVEMENT: Now supports CSP nonces from backend
+ * - Inline scripts must use nonces for CSP compliance
+ * - 'unsafe-inline' removed from script-src
  */
 
 import { IS_PRODUCTION, SERVICES, API_BASE_URL, IS_LOCAL_HOST } from './config.js';
+
+/**
+ * CSP Nonce Manager
+ * Retrieves and manages CSP nonces from backend responses
+ */
+export class CSPNonceManager {
+  static _nonce = null;
+  
+  /**
+   * Get the current CSP nonce.
+   * The nonce is retrieved from the X-CSP-Nonce header set by the backend.
+   * @returns {string|null} The nonce value or null if not available
+   */
+  static getNonce() {
+    return this._nonce;
+  }
+  
+  /**
+   * Set the CSP nonce from a response header.
+   * Should be called after receiving any API response.
+   * @param {string} nonce - The nonce value from X-CSP-Nonce header
+   */
+  static setNonce(nonce) {
+    if (nonce && typeof nonce === 'string') {
+      this._nonce = nonce;
+    }
+  }
+  
+  /**
+   * Extract nonce from fetch response and store it.
+   * @param {Response} response - The fetch response object
+   */
+  static extractFromResponse(response) {
+    const nonce = response.headers.get('X-CSP-Nonce');
+    if (nonce) {
+      this.setNonce(nonce);
+    }
+  }
+  
+  /**
+   * Create a script element with the current nonce.
+   * Use this for dynamically created scripts to comply with CSP.
+   * @param {string} src - Script source URL (optional)
+   * @param {string} content - Inline script content (optional)
+   * @returns {HTMLScriptElement} Script element with nonce attribute
+   */
+  static createScript(src = null, content = null) {
+    const script = document.createElement('script');
+    
+    if (this._nonce) {
+      script.nonce = this._nonce;
+    }
+    
+    if (src) {
+      script.src = src;
+    }
+    
+    if (content) {
+      script.textContent = content;
+    }
+    
+    return script;
+  }
+}
 
 /**
  * Content Security Policy configuration
@@ -22,19 +90,27 @@ export class CSPManager {
       }
     }
     
+    // Get nonce if available (for dynamic CSP generation)
+    const nonce = CSPNonceManager.getNonce();
+    const nonceDirective = nonce ? `'nonce-${nonce}'` : null;
+    
     const directives = {
       'default-src': ["'self'"],
       'script-src': [
         "'self'",
-        // ⚠️ SECURITY NOTE: 'unsafe-inline' should be removed in production
-        // TODO: Implement nonce-based CSP for inline scripts
-        // For now, keeping for compatibility with inline event handlers
-        "'unsafe-inline'",
+        // ✅ SECURITY FIX: 'unsafe-inline' removed - using nonces instead
+        // Nonce will be added dynamically if available
+        ...(nonceDirective ? [nonceDirective] : []),
         'https://cdnjs.cloudflare.com',
         'https://cdn.jsdelivr.net',
         'https://www.googletagmanager.com',
         'https://www.google-analytics.com',
-        'https://unpkg.com'
+        'https://unpkg.com',
+        'https://js.stripe.com',
+        // CAPTCHA providers
+        'https://js.hcaptcha.com',
+        'https://www.google.com',
+        'https://www.gstatic.com',
       ],
       'style-src': [
         "'self'",
@@ -68,7 +144,9 @@ export class CSPManager {
         'https://www.google-analytics.com',
         'https://www.googletagmanager.com',
         // Placeholder service
-        'https://via.placeholder.com'
+        'https://via.placeholder.com',
+        // CAPTCHA providers
+        'https://*.hcaptcha.com',
       ],
       'connect-src': [
         "'self'",
@@ -82,12 +160,19 @@ export class CSPManager {
         'http://localhost:8000',
         'https://api.soundlightpro.com',
         'https://www.google-analytics.com',
-        'https://sentry.io'
+        'https://sentry.io',
+        // CAPTCHA verification
+        'https://hcaptcha.com',
+        'https://www.google.com',
       ],
       'frame-src': [
         "'self'",
         'https://www.youtube.com',
-        'https://www.youtube-nocookie.com'
+        'https://www.youtube-nocookie.com',
+        'https://js.stripe.com',
+        // CAPTCHA iframes
+        'https://newassets.hcaptcha.com',
+        'https://www.google.com',
       ],
       'media-src': [
         "'self'",
@@ -422,6 +507,7 @@ export const initSecurity = () => {
 
 export default {
   CSPManager,
+  CSPNonceManager,
   SecurityHeaders,
   InputSanitizer,
   CSRFProtection,

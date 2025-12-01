@@ -305,18 +305,34 @@
                 }, 1000);
                 
             } catch (err) {
-                // Display error
-                formMessage.textContent = err.message || 'Verification failed. Please try again.';
-                formMessage.className = 'alert alert-error';
+                // Check if account is locked
+                if (err.status === 423 || err.response?.locked) {
+                    formMessage.textContent = err.message || 'Account is temporarily locked. Please try again later.';
+                    formMessage.className = 'alert alert-error';
+                    
+                    // Disable form for locked duration
+                    submitBtn.disabled = true;
+                    const retryAfter = err.response?.retry_after || 900;
+                    setTimeout(() => {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }, retryAfter * 1000);
+                } else {
+                    // Display error with attempts remaining if provided
+                    let errorMsg = err.message || 'Verification failed. Please try again.';
+                    formMessage.textContent = errorMsg;
+                    formMessage.className = 'alert alert-error';
+                    
+                    // Restore button
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+                
                 showToast('Verification failed', 'error');
                 
                 // Clear inputs
                 codeInputs.forEach(input => input.value = '');
                 codeInputs[0].focus();
-                
-                // Restore button
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
             }
         });
         
@@ -325,25 +341,55 @@
         const timerElement = document.getElementById('timer');
         const resendBtn = document.getElementById('resend-btn');
         
-        const countdown = setInterval(() => {
-            timeLeft--;
-            timerElement.textContent = timeLeft;
+        function startResendTimer() {
+            timeLeft = 60;
+            resendBtn.disabled = true;
+            resendBtn.innerHTML = `Resend (<span class="timer">${timeLeft}</span>s)`;
             
-            if (timeLeft <= 0) {
-                clearInterval(countdown);
+            const countdown = setInterval(() => {
+                timeLeft--;
+                const timerSpan = resendBtn.querySelector('.timer');
+                if (timerSpan) timerSpan.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    resendBtn.disabled = false;
+                    resendBtn.innerHTML = 'Resend Code';
+                }
+            }, 1000);
+        }
+        
+        // Start initial timer
+        startResendTimer();
+        
+        // Resend functionality
+        resendBtn.addEventListener('click', async () => {
+            resendBtn.disabled = true;
+            resendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            
+            try {
+                await apiService.resendVerificationCode(email);
+                showToast('A new verification code has been sent to your email.', 'success');
+                
+                // Clear inputs for new code
+                codeInputs.forEach(input => input.value = '');
+                codeInputs[0].focus();
+                
+                // Restart timer
+                startResendTimer();
+            } catch (err) {
+                showToast(err.message || 'Failed to resend code. Please try again.', 'error');
+                
+                // Check if locked
+                if (err.status === 423 || err.response?.locked) {
+                    formMessage.textContent = err.message || 'Account is temporarily locked.';
+                    formMessage.className = 'alert alert-error';
+                }
+                
+                // Re-enable button after error
                 resendBtn.disabled = false;
                 resendBtn.innerHTML = 'Resend Code';
             }
-        }, 1000);
-        
-        // Resend functionality (would need backend endpoint)
-        resendBtn.addEventListener('click', () => {
-            showToast('Resend functionality coming soon', 'info');
-            // TODO: Implement resend endpoint
-            // Reset timer
-            timeLeft = 60;
-            resendBtn.disabled = true;
-            resendBtn.innerHTML = 'Resend (<span class="timer" id="timer">60</span>s)';
         });
     </script>
 </body>

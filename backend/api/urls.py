@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .jwt_views import RateLimitedTokenObtainPairView, RateLimitedTokenRefreshView, VerifyLoginCodeView
+from .jwt_views import RateLimitedTokenObtainPairView, RateLimitedTokenRefreshView, VerifyLoginCodeView, ResendVerificationCodeView
 
 # This file defines the URL endpoints for the 'api' app.
 
@@ -10,14 +10,18 @@ urlpatterns = [
     path('token/', RateLimitedTokenObtainPairView.as_view(), name='token_obtain_pair'),
     # To verify 6-digit login code and get tokens (Rate Limited: 5/minute)
     path('verify-login/', VerifyLoginCodeView.as_view(), name='verify_login'),
+    # To resend verification code (Rate Limited: 3/minute)
+    path('resend-verification/', ResendVerificationCodeView.as_view(), name='resend_verification'),
     # To get a new access token using a refresh token (Rate Limited: 10/minute)
     path('token/refresh/', RateLimitedTokenRefreshView.as_view(), name='token_refresh'),
     # For user logout
     path('logout/', views.LogoutView.as_view(), name='logout'),
-    # For new user registration (Rate Limited: 3/hour)
+    # For new user registration (Rate Limited: 3/hour + CAPTCHA)
     path('register/', views.RegisterView.as_view(), name='register'),
     # To get details of the current logged-in user
     path('user/', views.UserDetailView.as_view(), name='user_detail'),
+    # Get CAPTCHA configuration for frontend
+    path('captcha-config/', views.CaptchaConfigView.as_view(), name='captcha_config'),
     
     # --- Password Reset Endpoints ---
     # Request password reset (sends email) - Rate Limited: 5/hour

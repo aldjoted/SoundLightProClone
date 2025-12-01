@@ -41,6 +41,7 @@ from .serializers import (
     DashboardOrderSerializer, DashboardOrderItemSerializer, OrderFilterSerializer,
     StockNotificationRequestSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 )
+from .captcha import verify_captcha, get_client_ip, is_captcha_enabled, get_captcha_provider, get_captcha_site_key
 import secrets
 from django.utils import timezone
 from datetime import timedelta
@@ -79,6 +80,8 @@ class RegisterView(generics.CreateAPIView):
     API view for user registration.
     Allows any user (authentication not required) to create a new account.
     Rate limited to 3 registrations per hour per IP address.
+    
+    ✅ SECURITY: CAPTCHA verification required when configured.
     """
     queryset = User.objects.all()
     permission_classes = (permissions.AllowAny,)
@@ -86,9 +89,41 @@ class RegisterView(generics.CreateAPIView):
     
     def create(self, request, *args, **kwargs):
         try:
+            # ✅ SECURITY: Verify CAPTCHA before processing registration
+            captcha_token = request.data.get('captcha_token', '')
+            client_ip = get_client_ip(request)
+            
+            # Skip CAPTCHA in test mode (never enable in production!)
+            if not getattr(settings, 'CAPTCHA_TEST_MODE', False):
+                if not verify_captcha(captcha_token, client_ip, expected_action='register'):
+                    logger.warning(f"CAPTCHA verification failed for registration from IP: {client_ip}")
+                    return Response(
+                        {
+                            'error': 'CAPTCHA verification failed',
+                            'detail': 'Please complete the CAPTCHA verification.',
+                            'code': 'CAPTCHA_FAILED'
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
             return super().create(request, *args, **kwargs)
         except Ratelimited:
             return ratelimit_error(request, None)
+
+
+class CaptchaConfigView(APIView):
+    """
+    API view to get CAPTCHA configuration for frontend.
+    Returns the provider type and site key (never the secret key).
+    """
+    permission_classes = (permissions.AllowAny,)
+    
+    def get(self, request, *args, **kwargs):
+        return Response({
+            'enabled': is_captcha_enabled(),
+            'provider': get_captcha_provider(),
+            'site_key': get_captcha_site_key(),
+        })
 
 class UserDetailView(APIView):
     """
@@ -158,8 +193,31 @@ class PasswordResetRequestView(APIView):
     
     For security, always returns success even if email doesn't exist
     to prevent email enumeration attacks.
+    
+    ✅ IMPROVEMENT: Dynamically detects frontend URL from request origin
     """
     permission_classes = (permissions.AllowAny,)
+    
+    def _get_frontend_url(self, request):
+        """
+        Determine the frontend URL dynamically from the request.
+        Priority: Origin header > Referer header > FRONTEND_URL env > default
+        """
+        # Try Origin header first (most reliable for CORS requests)
+        origin = request.META.get('HTTP_ORIGIN', '')
+        if origin:
+            return origin.rstrip('/')
+        
+        # Try Referer header as fallback
+        referer = request.META.get('HTTP_REFERER', '')
+        if referer:
+            from urllib.parse import urlparse
+            parsed = urlparse(referer)
+            if parsed.scheme and parsed.netloc:
+                return f"{parsed.scheme}://{parsed.netloc}"
+        
+        # Fall back to environment variable or default
+        return os.getenv('FRONTEND_URL', 'http://localhost:5173').rstrip('/')
     
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
@@ -183,8 +241,8 @@ class PasswordResetRequestView(APIView):
                 expires_at=timezone.now() + timedelta(hours=1)
             )
             
-            # Build reset URL
-            frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+            # Build reset URL dynamically based on request origin
+            frontend_url = self._get_frontend_url(request)
             reset_url = f"{frontend_url}/reset-password.html?token={token}"
             
             # Send email

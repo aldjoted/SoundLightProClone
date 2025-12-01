@@ -1,8 +1,10 @@
 from django.db import models, transaction
 from django.contrib.auth.models import User
 from decimal import Decimal
+from datetime import timedelta
 from mptt.models import MPTTModel, TreeForeignKey
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.conf import settings
@@ -402,6 +404,10 @@ class UserProfile(models.Model):
     login_verification_code = models.CharField(max_length=6, blank=True, verbose_name=_("Login Verification Code"))
     login_verification_code_expires = models.DateTimeField(null=True, blank=True, verbose_name=_("Verification Code Expiry"))
     
+    # Account lockout fields for brute force protection
+    failed_login_attempts = models.PositiveIntegerField(default=0, verbose_name=_("Failed Login Attempts"))
+    lockout_until = models.DateTimeField(null=True, blank=True, verbose_name=_("Account Locked Until"))
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -411,6 +417,34 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"Profile for {self.user.username}"
+    
+    @property
+    def is_locked(self):
+        """Check if account is currently locked due to failed attempts"""
+        if self.lockout_until and self.lockout_until > timezone.now():
+            return True
+        return False
+    
+    @property
+    def lockout_remaining_seconds(self):
+        """Get remaining lockout time in seconds"""
+        if self.lockout_until and self.lockout_until > timezone.now():
+            return int((self.lockout_until - timezone.now()).total_seconds())
+        return 0
+    
+    def increment_failed_attempts(self):
+        """Increment failed login attempts and lock if threshold reached"""
+        self.failed_login_attempts += 1
+        if self.failed_login_attempts >= 5:
+            # Lock account for 15 minutes
+            self.lockout_until = timezone.now() + timedelta(minutes=15)
+        self.save(update_fields=['failed_login_attempts', 'lockout_until'])
+    
+    def reset_failed_attempts(self):
+        """Reset failed attempts counter after successful login"""
+        self.failed_login_attempts = 0
+        self.lockout_until = None
+        self.save(update_fields=['failed_login_attempts', 'lockout_until'])
 
 
 @receiver(post_save, sender=User)

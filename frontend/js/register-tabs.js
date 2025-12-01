@@ -1,9 +1,169 @@
 /**
  * Register Page - Account Type Tabs Handler
  * Manages switching between individual and professional account forms
+ * 
+ * ✅ SECURITY: Integrated CAPTCHA verification for registration
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+import { CaptchaManager } from './captcha.js';
+import { registerUser } from './apiService.js';
+
+// Track which captcha container is currently active
+let activeCaptchaContainer = null;
+
+/**
+ * Initialize CAPTCHA for the active form
+ * @param {string} containerId - The ID of the captcha container
+ */
+async function initCaptchaForForm(containerId) {
+    // Don't re-render if it's the same container
+    if (activeCaptchaContainer === containerId) {
+        return;
+    }
+    
+    // Initialize CAPTCHA if not already done
+    const isEnabled = await CaptchaManager.init();
+    
+    if (isEnabled) {
+        // Render captcha in the new container
+        CaptchaManager.render(containerId, {
+            theme: 'light',
+            callback: () => {
+                console.log('[CAPTCHA] Verified');
+            },
+            expiredCallback: () => {
+                console.log('[CAPTCHA] Expired, please verify again');
+            },
+            errorCallback: (err) => {
+                console.error('[CAPTCHA] Error:', err);
+            }
+        });
+        activeCaptchaContainer = containerId;
+    }
+}
+
+/**
+ * Show message in form
+ * @param {HTMLElement} messageEl - The message element
+ * @param {string} message - The message text
+ * @param {string} type - 'success' or 'error'
+ */
+function showFormMessage(messageEl, message, type = 'error') {
+    if (!messageEl) return;
+    
+    messageEl.textContent = message;
+    messageEl.className = `form-message ${type}`;
+    messageEl.classList.remove('hidden');
+    
+    // Auto-hide success messages
+    if (type === 'success') {
+        setTimeout(() => {
+            messageEl.classList.add('hidden');
+        }, 5000);
+    }
+}
+
+/**
+ * Handle form submission with CAPTCHA
+ * @param {Event} e - Submit event
+ * @param {string} formType - 'individual' or 'professional'
+ */
+async function handleFormSubmit(e, formType) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const submitButton = form.querySelector('button[type="submit"]');
+    const messageEl = form.querySelector('[id^="form-message"]');
+    
+    // Get form data
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Disable submit button
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
+    }
+    
+    try {
+        // Get CAPTCHA token
+        let captchaToken = '';
+        if (CaptchaManager.isEnabled()) {
+            try {
+                captchaToken = await CaptchaManager.getToken('register');
+            } catch (captchaError) {
+                showFormMessage(messageEl, captchaError.message || 'Please complete the CAPTCHA', 'error');
+                return;
+            }
+        }
+        
+        // Prepare registration data
+        const registrationData = {
+            username: data.username,
+            email: data.email,
+            password: data.password,
+            password2: data.password2,
+            first_name: data.first_name || '',
+            last_name: data.last_name || '',
+            captcha_token: captchaToken,
+        };
+        
+        // Add professional-specific fields
+        if (formType === 'professional') {
+            registrationData.company_name = data.company_name;
+            registrationData.vat_number = data.vat_number;
+            registrationData.phone = data.phone;
+            registrationData.billing_address = data.billing_address;
+            registrationData.billing_city = data.billing_city;
+            registrationData.billing_postal = data.billing_postal;
+            registrationData.billing_country = data.billing_country;
+            
+            if (!data.same_as_billing) {
+                registrationData.shipping_address = data.shipping_address;
+                registrationData.shipping_city = data.shipping_city;
+                registrationData.shipping_postal = data.shipping_postal;
+                registrationData.shipping_country = data.shipping_country;
+            }
+        }
+        
+        // Submit registration
+        const result = await registerUser(registrationData);
+        
+        showFormMessage(messageEl, 'Account created successfully! Redirecting to login...', 'success');
+        
+        // Redirect to login page after success
+        setTimeout(() => {
+            window.location.href = 'login.html?registered=true';
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Registration error:', error);
+        
+        // Handle CAPTCHA-specific errors
+        if (error.code === 'CAPTCHA_FAILED') {
+            showFormMessage(messageEl, 'CAPTCHA verification failed. Please try again.', 'error');
+            CaptchaManager.reset();
+        } else {
+            showFormMessage(messageEl, error.message || 'Registration failed. Please try again.', 'error');
+        }
+        
+        // Reset CAPTCHA on error
+        if (CaptchaManager.isEnabled()) {
+            CaptchaManager.reset();
+        }
+        
+    } finally {
+        // Re-enable submit button
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = formType === 'individual' 
+                ? '<i class="fas fa-user-plus"></i> Create Individual Account'
+                : '<i class="fas fa-briefcase"></i> Create Professional Account';
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('Register tabs script loaded');
     
     // Get tab buttons and form containers
@@ -15,9 +175,12 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Tab buttons found:', tabButtons.length);
     console.log('Tab contents found:', tabContents.length);
 
+    // Initialize CAPTCHA for the default active form (individual)
+    await initCaptchaForForm('captcha-container-ind');
+
     // Tab switching functionality
     tabButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', async function() {
             const targetTab = this.getAttribute('data-tab');
             
             // Remove active class from all tabs and contents
@@ -32,6 +195,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (targetContent) {
                 targetContent.classList.add('active');
             }
+            
+            // Re-render CAPTCHA in the new form
+            const captchaContainerId = targetTab === 'individual' 
+                ? 'captcha-container-ind' 
+                : 'captcha-container-pro';
+            await initCaptchaForForm(captchaContainerId);
         });
     });
 
@@ -96,24 +265,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Form submission handlers (placeholder - to be integrated with backend)
+    // Form submission handlers with CAPTCHA integration
     const individualForm = document.getElementById('register-form-individual');
     const professionalForm = document.getElementById('register-form-professional');
 
     if (individualForm) {
-        individualForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            console.log('Individual account registration:', new FormData(this));
-            // TODO: Integrate with backend API
-        });
+        individualForm.addEventListener('submit', (e) => handleFormSubmit(e, 'individual'));
     }
 
     if (professionalForm) {
-        professionalForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            console.log('Professional account registration:', new FormData(this));
-            // TODO: Integrate with backend API
-        });
+        professionalForm.addEventListener('submit', (e) => handleFormSubmit(e, 'professional'));
     }
 });
 

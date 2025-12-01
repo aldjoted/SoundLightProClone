@@ -73,6 +73,8 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'csp.middleware.CSPMiddleware',  # ✅ ADD: Content Security Policy middleware
+    'api.middleware.CSPNonceMiddleware',  # ✅ ADD: CSP nonce generation for inline scripts
+    'api.middleware.SecurityHeadersMiddleware',  # ✅ ADD: Additional security headers
     'django.contrib.sessions.middleware.SessionMiddleware',
     # CORS Middleware must be placed as high as possible, especially before any view middleware
     'corsheaders.middleware.CorsMiddleware',
@@ -280,6 +282,7 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
 # ✅ SECURITY: Content Security Policy (CSP) using django-csp 4.0+
 # Protects against XSS and other injection attacks by specifying valid sources for content
 # New format for django-csp >= 4.0
+# Note: 'unsafe-inline' removed from script-src - CSPNonceMiddleware adds nonces instead
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': ("'self'",),
@@ -291,9 +294,13 @@ CONTENT_SECURITY_POLICY = {
         ),
         'script-src': (
             "'self'",
+            # ✅ SECURITY FIX: Removed 'unsafe-inline' - nonces are added by CSPNonceMiddleware
             "https://cdn.jsdelivr.net",
             "https://unpkg.com",
             "https://js.stripe.com",  # Stripe payment scripts
+            "https://js.hcaptcha.com",  # hCaptcha scripts
+            "https://www.google.com",  # reCAPTCHA scripts
+            "https://www.gstatic.com",  # reCAPTCHA scripts
         ),
         'img-src': (
             "'self'",
@@ -301,6 +308,7 @@ CONTENT_SECURITY_POLICY = {
             "blob:",
             "https://via.placeholder.com",
             "https://*.stripe.com",
+            "https://*.hcaptcha.com",
         ),
         'font-src': (
             "'self'",
@@ -311,11 +319,15 @@ CONTENT_SECURITY_POLICY = {
             "'self'",
             "https://api.stripe.com",
             "https://generativelanguage.googleapis.com",  # Gemini API
+            "https://hcaptcha.com",  # hCaptcha verification
+            "https://www.google.com",  # reCAPTCHA verification
         ),
         'frame-src': (
             "'self'",
             "https://js.stripe.com",  # Stripe iframe
             "https://www.youtube.com",  # Product videos
+            "https://newassets.hcaptcha.com",  # hCaptcha iframe
+            "https://www.google.com",  # reCAPTCHA iframe
         ),
     }
 }
@@ -361,6 +373,31 @@ SILENCED_SYSTEM_CHECKS = [
     'django_ratelimit.E003',  # Cache backend is not a shared cache
     'django_ratelimit.W001',  # Cache backend is not officially supported
 ]
+
+# ========================================
+# CAPTCHA Configuration
+# ========================================
+# Supports hCaptcha (recommended) or reCAPTCHA v2/v3
+# Configure ONE of the following providers via environment variables:
+#
+# For hCaptcha (privacy-focused, GDPR compliant):
+#   HCAPTCHA_SITE_KEY=your_site_key
+#   HCAPTCHA_SECRET_KEY=your_secret_key
+#
+# For reCAPTCHA v3 (invisible, score-based):
+#   RECAPTCHA_V3_SITE_KEY=your_site_key
+#   RECAPTCHA_V3_SECRET_KEY=your_secret_key
+#   RECAPTCHA_MIN_SCORE=0.5  # Optional, default 0.5
+#
+# For reCAPTCHA v2 (checkbox):
+#   RECAPTCHA_SITE_KEY=your_site_key
+#   RECAPTCHA_SECRET_KEY=your_secret_key
+#
+# If no CAPTCHA is configured, the system will allow requests without verification.
+# This is intentional for development environments.
+
+# CAPTCHA bypass for testing (set to True in test settings, never in production)
+CAPTCHA_TEST_MODE = os.getenv('CAPTCHA_TEST_MODE', 'False') == 'True'
 
 # ========================================
 # OpenAPI / Swagger Documentation (drf-spectacular)
