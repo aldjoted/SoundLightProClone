@@ -195,31 +195,60 @@ def create_order_from_cart(
                     'user_email': user.email,
                 }
             )
-        except stripe.error.CardError as e:
-            err = e.error
-            error_msg = f"Payment declined: {err.get('message', 'Card was declined')}"
-            logger.warning(f"Card error for order {order.pk}: {error_msg}")
-            raise OrderCreationError(error_msg) from e
-        except stripe.error.RateLimitError as e:
-            error_msg = "Too many payment requests. Please try again in a moment."
-            logger.warning(f"Stripe rate limit hit for order {order.pk}")
-            raise OrderCreationError(error_msg) from e
-        except stripe.error.InvalidRequestError as e:
-            error_msg = f"Invalid payment request: {str(e)}"
-            logger.error(f"Invalid Stripe request for order {order.pk}: {e}")
-            raise OrderCreationError(error_msg) from e
-        except stripe.error.AuthenticationError as e:
-            logger.error(f"Stripe authentication error: {e}", exc_info=True)
-            raise OrderCreationError(
-                "Payment system configuration error. Please contact support."
-            ) from e
-        except stripe.error.APIConnectionError as e:
-            error_msg = "Payment service is temporarily unavailable. Please try again."
-            logger.error(f"Stripe API connection error for order {order.pk}: {e}")
-            raise OrderCreationError(error_msg) from e
-        except StripeError as e:
+        except Exception as e:
+            # --- Compensation Phase: Rollback stock if payment fails ---
+            logger.error(f"Payment processing failed for order {order.pk}. Initiating stock rollback. Error: {e}")
+            
+            try:
+                with transaction.atomic():
+                    # Re-fetch order items to get quantities
+                    items_to_restore = OrderItem.objects.filter(order=order).select_related('product')
+                    
+                    # Lock products for update to prevent race conditions
+                    product_ids = [item.product.id for item in items_to_restore]
+                    products_to_update = Product.objects.select_for_update().filter(id__in=product_ids)
+                    product_map = {p.id: p for p in products_to_update}
+                    
+                    for item in items_to_restore:
+                        product = product_map.get(item.product.id)
+                        if product:
+                            product.stock += item.quantity
+                            logger.info(f"Restoring {item.quantity} stock for product {product.id}")
+                    
+                    # Bulk update products
+                    if products_to_update:
+                        Product.objects.bulk_update(products_to_update, ['stock'])
+                    
+                    # Cancel the order
+                    order.status = 'cancelled'
+                    order.save(update_fields=['status', 'updated_at'])
+                    logger.info(f"Order {order.pk} cancelled and stock restored due to payment failure.")
+                    
+            except Exception as rollback_error:
+                # Critical error: Rollback failed. Stock is now inconsistent.
+                logger.critical(f"CRITICAL: Stock rollback failed for order {order.pk}! Error: {rollback_error}", exc_info=True)
+            
+            # Determine the appropriate error message for the user
             error_msg = f"Payment processing error: {str(e)}"
-            logger.error(f"Stripe error for order {order.pk}: {e}", exc_info=True)
+            
+            if isinstance(e, stripe.error.CardError):
+                err = e.error
+                error_msg = f"Payment declined: {err.get('message', 'Card was declined')}"
+                logger.warning(f"Card error for order {order.pk}: {error_msg}")
+            elif isinstance(e, stripe.error.RateLimitError):
+                error_msg = "Too many payment requests. Please try again in a moment."
+                logger.warning(f"Stripe rate limit hit for order {order.pk}")
+            elif isinstance(e, stripe.error.InvalidRequestError):
+                error_msg = f"Invalid payment request: {str(e)}"
+                logger.error(f"Invalid Stripe request for order {order.pk}: {e}")
+            elif isinstance(e, stripe.error.AuthenticationError):
+                error_msg = "Payment system configuration error. Please contact support."
+                logger.error(f"Stripe authentication error: {e}", exc_info=True)
+            elif isinstance(e, stripe.error.APIConnectionError):
+                error_msg = "Payment service is temporarily unavailable. Please try again."
+                logger.error(f"Stripe API connection error for order {order.pk}: {e}")
+            
+            # Re-raise as OrderCreationError
             raise OrderCreationError(error_msg) from e
 
         # --- Phase 3: Confirm payment in a short transaction ---

@@ -1,6 +1,6 @@
 # Cahier des Charges - Projet SoundLightPro
 
-**Date : 1er décembre 2025**
+**Date : 2 décembre 2025**
 
 ---
 
@@ -60,6 +60,11 @@ Cette section décrit les fonctionnalités actuellement en production et validé
 * Architecture transactionnelle en deux phases : réservation du stock → paiement → confirmation.
 * Gestion des erreurs Stripe détaillée (carte refusée, limite de débit, etc.).
 
+#### Gestion des Échecs de Paiement (P0.CRITICAL-1) ✅
+* Mécanisme de rollback transactionnel implémenté.
+* En cas d'échec de paiement Stripe (Phase 2), le stock est automatiquement restauré et la commande annulée.
+* Logs détaillés pour le suivi des incidents de paiement.
+
 #### Notifications de Disponibilité Stock (P1.2) ✅
 * Modèle `StockNotificationRequest` pour les demandes de notification.
 * Signaux Django (`pre_save`, `post_save`) sur le modèle `Product` pour détecter les réassorts.
@@ -108,6 +113,15 @@ Cette section décrit les fonctionnalités actuellement en production et validé
   * Standard : basé sur catégorie et fourchette de prix (±30%).
   * Sémantique : recherche vectorielle IA via FAISS.
 
+#### Importation de Produits en Masse (P1.6) ✅
+* Support de l'importation Excel/CSV via `django-import-export`.
+* Gestion des images multiples via URLs dans l'import.
+* Action d'administration pour ré-indexer dans FAISS.
+
+#### Téléchargements et Pièces Jointes (P2.6) ✅
+* Section "Downloads & Manuals" sur la page produit.
+* Support des fichiers PDF, manuels, etc.
+
 ### 2.5. IA et Recherche
 
 #### Chatbot IA (P2.1) ✅
@@ -143,139 +157,6 @@ Cette section décrit les fonctionnalités actuellement en production et validé
 * Interface Swagger UI pour tester les endpoints.
 
 #### Consolidation de la Documentation (TD.3) ✅
-* La documentation redondante a été nettoyée et consolidée.
-
----
-
-## 3. Problèmes Critiques Identifiés (Action Immédiate Requise)
-
-### 🔴 P0.CRITICAL-1 - Restauration du Stock en Cas d'Échec de Paiement
-* **Problème :** Dans `services.py`, le stock est décrémenté en Phase 1 mais **n'est jamais restauré** si le paiement Stripe échoue en Phase 2.
-* **Impact :** Perte permanente de stock dans la base de données.
-* **Solution :** Implémenter un mécanisme de rollback du stock en cas d'échec de paiement.
-* **Effort estimé :** 1-2 heures.
-
-### 🔴 P0.CRITICAL-2 - Rotation des Credentials Exposés
-* **Problème :** Le fichier `.env` contient des credentials réels (clé API Gmail, Stripe, Gemini, hCaptcha).
-* **Impact :** Risque de compromission si le fichier est exposé (git, logs, etc.).
-* **Solution :** Effectuer une rotation immédiate de tous les secrets.
-* **Effort estimé :** 1-2 heures.
-
-### 🔴 P0.CRITICAL-3 - Mot de Passe Base de Données Faible
-* **Problème :** `DB_PASSWORD=2003` (4 chiffres seulement).
-* **Impact :** Vulnérable aux attaques par force brute.
-* **Solution :** Générer un mot de passe complexe (32+ caractères).
-* **Effort estimé :** 30 minutes.
-
----
-
-## 4. Évolutions et Nouvelles Fonctionnalités (Feuille de Route)
-
-Cette section détaille les exigences pour les prochaines versions de la plateforme, priorisées par impact.
-
-### 4.1. Priorité 0 (Critique - Prochaine Version)
-
-#### P0.2 - Tests Automatisés
-* **Exigence :** Mettre en place une suite de tests robuste pour garantir la non-régression et la fiabilité.
-* **Backend :** Tests unitaires pour les services et modèles (Django test suite).
-* **Backend :** Tests d'intégration pour les API critiques (Commandes, Auth, Avis).
-* **Frontend :** Tests E2E (Vitest + Playwright).
-* **DevOps :** Intégration dans le pipeline CI/CD (GitHub Actions).
-* **Effort estimé :** 5-7 jours.
-
-#### P0.4 - Migration vers Redis pour le Cache
-* **Exigence :** Remplacer le cache en mémoire locale par Redis pour supporter les déploiements multi-processus.
-* **Impact :** La limitation de débit actuelle (`LocMemCache`) est par processus, pas globale.
-* **Solution :** Configurer `django-redis` pour le cache par défaut.
-* **Effort estimé :** 1-2 jours.
-
-#### P0.5 - Option "Se Souvenir de l'Appareil" pour la 2FA
-* **Exigence :** Réduire la friction de connexion pour les utilisateurs de confiance.
-* **Solution :** Stocker un token "appareil de confiance" en cookie httpOnly (durée : 30 jours).
-* **Solution :** Permettre aux utilisateurs de voir/révoquer leurs appareils de confiance.
-* **Effort estimé :** 2-3 jours.
-
-### 4.2. Priorité 1 (Haute Valeur - Ce Trimestre)
-
-#### P1.1 - Comparateur de Produits
-* **Exigence :** Permettre aux utilisateurs de comparer les spécifications de plusieurs produits côte à côte.
-* **Frontend :** Interface pour comparer jusqu'à 4 produits simultanément, avec mise en surbrillance des différences.
-* **Backend :** Nouveau point d'API pour récupérer et formater les données de comparaison pour plusieurs ID de produits.
-* **Prérequis :** P1.7 (Spécifications Dynamiques).
-* **Effort estimé :** 4-6 jours.
-
-#### P1.3 - Filtrage Avancé
-* **Statut :** Filtrage basique (par marque ou catégorie unique) implémenté.
-* **Exigence :** Améliorer la découverte de produits via des filtres multi-sélections.
-* **Backend :** Implémenter une logique de filtrage avancée (ex: `django-filter`).
-* **Frontend :** Filtres multi-sélections (marque, catégorie, gamme de prix).
-* **Frontend :** Filtres basés sur les spécifications (puissance, poids, etc.) – voir P1.7.
-* **Frontend :** Persistance des filtres dans les paramètres de l'URL.
-* **Effort estimé :** 4-6 jours.
-
-#### P1.6 - Amélioration de l'Importation Admin
-* **Exigence :** Faciliter l'importation en masse de produits, y compris leurs images multiples.
-* **Backend :** Personnaliser l'intégration `django-import-export` pour le modèle `Product`.
-* **Backend :** Ajouter le support pour l'importation d'images multiples (via une colonne `image_urls` séparées par des virgules dans le fichier d'import).
-* **Backend :** Surcharger les méthodes d'import pour parser la colonne d'images, les télécharger (ou les trouver) et créer les objets `ProductImage` associés.
-* **Effort estimé :** 4-6 jours.
-
-#### P1.7 - Modèle de Spécifications Dynamiques
-* **Exigence :** Permettre de stocker des fiches techniques flexibles pour alimenter le comparateur et le filtrage.
-* **Backend :** Créer un nouveau modèle (`ProductSpecification`) ou ajouter un `JSONField` au modèle `Product` pour stocker des paires clé-valeur arbitraires (ex: "Puissance": "500W", "Poids": "15kg").
-* **Backend :** Mettre à jour l'interface admin pour éditer ces spécifications.
-* **Note :** Cette tâche est un prérequis pour P1.1 (Comparateur) et P1.3 (Filtres avancés).
-* **Effort estimé :** 3-5 jours.
-
-#### P1.8 - Persistance du Panier Côté Serveur
-* **Exigence :** Synchroniser le panier entre appareils et éviter la perte de données.
-* **Problème actuel :** Le panier est stocké uniquement en localStorage (spécifique à l'appareil).
-* **Backend :** Créer un modèle `Cart` et `CartItem` liés à l'utilisateur.
-* **Backend :** API endpoints pour synchroniser le panier.
-* **Frontend :** Fusionner le panier local avec le panier serveur après connexion.
-* **Effort estimé :** 4-6 jours.
-
-### 4.3. Priorité 2 (Valeur Moyenne - Prochain Trimestre)
-
-#### P2.2 - Récupération de Paniers Abandonnés
-* **Exigence :** Mettre en place un système pour relancer les utilisateurs ayant abandonné leur panier.
-* **Backend :** Logique pour tracker les paniers "abandonnés" (ex: paniers de > 3h avec articles).
-* **Backend :** Campagnes d'email automatisées (ex: rappel après 24h).
-* **Frontend :** Tableau de bord analytique pour suivre le taux de récupération.
-* **Prérequis :** P1.8 (Persistance du Panier Côté Serveur).
-* **Effort estimé :** 4-6 jours.
-
-#### P2.3 - Aperçu Rapide Produit
-* **Exigence :** Permettre aux utilisateurs d'ajouter au panier depuis la liste de produits sans changer de page.
-* **Backend :** Assurer l'optimisation du point d'API de détail produit (`/api/products/<id>/`) pour un chargement rapide.
-* **Frontend :** Modale d'aperçu rapide sur la grille de produits.
-* **Effort estimé :** 2-3 jours.
-
-#### P2.5 - Amélioration de l'Autocomplétion de Recherche
-* **Exigence :** Fournir des suggestions de recherche pertinentes en temps réel.
-* **Backend :** Créer un nouveau point d'API léger pour les suggestions (`/api/search/suggest/`).
-* **Frontend :** Suggestions de produits, catégories et marques dans le menu déroulant de recherche.
-* **Frontend :** Historique des recherches récentes.
-* **Effort estimé :** 4-6 jours.
-
-#### P2.6 - Exposition des Pièces Jointes sur le Frontend
-* **Exigence :** Permettre aux utilisateurs de télécharger des manuels et fiches techniques.
-* **Statut :** Le modèle `ProductAttachment` et le serializer existent déjà.
-* **Frontend :** Afficher une section "Téléchargements" sur la page de détail produit.
-* **Effort estimé :** 1-2 jours.
-
-#### P2.7 - Mise à jour de l'Index Vectoriel en Temps Réel
-* **Exigence :** Assurer que la recherche IA (chatbot) dispose toujours des données produits à jour.
-* **Backend :** La commande `build_product_index` est actuellement manuelle.
-* **Backend :** Implémenter des signaux Django (`post_save`, `post_delete`) sur le modèle `Product` pour mettre à jour automatiquement (ajout, ré-indexation, suppression) l'index vectoriel FAISS, soit en temps réel, soit via une tâche en file d'attente.
-* **Effort estimé :** 3-4 jours.
-
-### 4.4. Priorité 3 (Faible Priorité - Futur)
-
-#### P3.1 - Support Multi-Devises
-* **Exigence :** Afficher les prix dans la devise locale de l'utilisateur (XAF, EUR, USD).
-* **Backend :** Intégration d'une API de taux de change (ex: BCE).
-* **Backend :** Stocker les prix dans une devise de base (ex: EUR) et convertir à la volée.
 * **Effort estimé :** 7-10 jours.
 
 #### P3.2 - Tableau de Bord Analytique Admin

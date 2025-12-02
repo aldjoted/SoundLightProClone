@@ -276,7 +276,7 @@ class TestCreateOrderFromCart(TransactionTestCase):
 
     @patch('api.services.stripe.Charge.create')
     def test_stripe_card_error_raises_order_creation_error(self, mock_stripe_charge):
-        """Stripe card error should raise OrderCreationError and rollback."""
+        """Stripe card error should raise OrderCreationError and rollback stock."""
         import stripe
         
         # Create a proper CardError with the required structure
@@ -308,8 +308,15 @@ class TestCreateOrderFromCart(TransactionTestCase):
         
         self.assertIn("declined", str(context.exception).lower())
         
-        # Stock should be reduced since order was created before payment
-        # The order exists but is in pending_payment status
+        # Verify stock was restored
+        self.product1.refresh_from_db()
+        self.assertEqual(self.product1.stock, initial_stock, "Stock should be restored after payment failure")
+        
+        # Verify order status is cancelled
+        # We need to find the order that was created. Since we don't get it back from the function (it raises),
+        # we query the latest order for this user.
+        order = Order.objects.filter(user=self.user).latest('created_at')
+        self.assertEqual(order.status, 'cancelled', "Order status should be cancelled after payment failure")
 
 
 class TestGetOrderSummary(TestCase):
