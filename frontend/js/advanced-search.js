@@ -8,6 +8,7 @@ import * as apiService from './apiService.js';
 import * as cart from './cart.js';
 import { renderSearchSuggestions, showToast } from './ui.js';
 import { debounce } from './utils.js';
+import { GoogleAnalytics } from './analytics.js';
 
 /**
  * Adaptive Debouncer - Adjusts delay based on typing speed
@@ -20,7 +21,7 @@ class AdaptiveDebouncer {
         this.maxDelay = maxDelay;
         this.recentInputs = [];
     }
-    
+
     /**
      * Calculates appropriate delay based on typing speed
      * @returns {number} The delay in milliseconds
@@ -29,14 +30,14 @@ class AdaptiveDebouncer {
         const now = Date.now();
         // Keep only inputs from the last second
         this.recentInputs = this.recentInputs.filter(t => now - t < 1000);
-        
+
         // If user is typing rapidly (3+ inputs in last second), use shorter delay
         if (this.recentInputs.length > 3) {
             return this.minDelay; // Fast typing = fast response
         }
         return this.maxDelay; // Slow typing = save API calls
     }
-    
+
     /**
      * Creates a debounced function with adaptive timing
      * @param {Function} fn - Function to debounce
@@ -69,7 +70,7 @@ class AdvancedSearch {
         this.input.setAttribute('aria-autocomplete', 'list');
         this.input.setAttribute('aria-expanded', 'false');
         this.input.setAttribute('aria-haspopup', 'listbox');
-        
+
         // ✅ Use adaptive debouncer for better UX
         const adaptiveDebouncer = new AdaptiveDebouncer();
         this.debouncedSearch = adaptiveDebouncer.debounce(() => this.search());
@@ -165,14 +166,29 @@ class AdvancedSearch {
             renderSearchSuggestions(products, this.container);
             this.initKeyboardState();
             this.showSuggestions();
+
+            // Track search analytics
+            GoogleAnalytics.trackSearch(this.query, products?.length || 0);
         } catch (err) {
             if (err?.name === 'AbortError') return;
-            this.container.innerHTML = `<div class="search-no-results"><i class="far fa-frown"></i><p>Search failed. Try again.</p></div>`;
+            this.container.innerHTML = '';
+            const noResults = document.createElement('div');
+            noResults.className = 'search-no-results';
+
+            const icon = document.createElement('i');
+            icon.className = 'far fa-frown';
+
+            const p = document.createElement('p');
+            p.textContent = 'Search failed. Try again.';
+
+            noResults.appendChild(icon);
+            noResults.appendChild(p);
+            this.container.appendChild(noResults);
             this.showSuggestions();
         }
     }
 
-    showSuggestions() { 
+    showSuggestions() {
         this.container.classList.remove('hidden');
         this.input.setAttribute('aria-expanded', 'true');
     }

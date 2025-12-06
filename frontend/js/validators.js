@@ -5,6 +5,8 @@
  * ✅ IMPROVEMENT: Eliminates code duplication and provides consistent error messages
  */
 
+import { InputSanitizer } from './security.js';
+
 /**
  * Validators class containing all validation methods
  */
@@ -19,13 +21,19 @@ export class Validators {
             return { valid: false, message: 'Email is required' };
         }
 
+        // Use InputSanitizer for advanced email validation
+        const advancedResult = InputSanitizer.validateEmailAdvanced(value);
+        if (!advancedResult.valid) {
+            return { valid: false, message: advancedResult.reason || 'Invalid email format' };
+        }
+
         // RFC 5322 compliant regex (simplified but robust)
         const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-        
+
         if (!emailRegex.test(value)) {
             return { valid: false, message: 'Invalid email format' };
         }
-        
+
         // Check email length constraints
         const [localPart, domain] = value.split('@');
         if (localPart.length > 64) {
@@ -34,17 +42,17 @@ export class Validators {
         if (domain.length > 255) {
             return { valid: false, message: 'Email domain too long (max 255 chars)' };
         }
-        
+
         // Block known disposable email domains
         const disposableDomains = [
-            'tempmail.com', '10minutemail.com', 'guerrillamail.com', 
+            'tempmail.com', '10minutemail.com', 'guerrillamail.com',
             'mailinator.com', 'throwaway.email', 'temp-mail.org'
         ];
         const domainLower = domain.toLowerCase();
         if (disposableDomains.includes(domainLower)) {
             return { valid: false, message: 'Disposable email addresses are not allowed' };
         }
-        
+
         return { valid: true };
     }
 
@@ -65,15 +73,15 @@ export class Validators {
             number: /[0-9]/.test(value),
             special: /[^A-Za-z0-9]/.test(value)
         };
-        
+
         // Calculate strength score (0-5)
         const score = Object.values(checks).filter(Boolean).length;
-        
+
         // Determine strength level
         let strength = 'weak';
         if (score >= 4) strength = 'strong';
         else if (score >= 3) strength = 'medium';
-        
+
         // Check for common passwords (basic check)
         const commonPasswords = ['password', '12345678', 'qwerty', 'admin', 'letmein'];
         if (commonPasswords.some(p => value.toLowerCase().includes(p))) {
@@ -84,7 +92,7 @@ export class Validators {
                 strength: 'weak'
             };
         }
-        
+
         // Minimum requirements: at least 8 chars and 3 types of characters
         if (score < 3) {
             const missing = [];
@@ -93,7 +101,7 @@ export class Validators {
             if (!checks.lowercase) missing.push('lowercase letter');
             if (!checks.number) missing.push('number');
             if (!checks.special) missing.push('special character');
-            
+
             return {
                 valid: false,
                 message: `Password must contain: ${missing.slice(0, 3).join(', ')}`,
@@ -101,7 +109,7 @@ export class Validators {
                 strength
             };
         }
-        
+
         return { valid: true, score, strength };
     }
 
@@ -116,15 +124,15 @@ export class Validators {
         }
 
         const trimmed = value.trim();
-        
+
         if (trimmed.length < 3) {
             return { valid: false, message: 'Username must be at least 3 characters' };
         }
-        
+
         if (trimmed.length > 30) {
             return { valid: false, message: 'Username must be less than 30 characters' };
         }
-        
+
         // Allow letters, numbers, underscore, and hyphen
         if (!/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
             return {
@@ -132,12 +140,12 @@ export class Validators {
                 message: 'Username can only contain letters, numbers, underscore, and hyphen'
             };
         }
-        
+
         // Must start with a letter
         if (!/^[a-zA-Z]/.test(trimmed)) {
             return { valid: false, message: 'Username must start with a letter' };
         }
-        
+
         return { valid: true };
     }
 
@@ -153,7 +161,7 @@ export class Validators {
 
         // Remove common formatting characters
         const cleaned = value.replace(/[\s\-().+]/g, '');
-        
+
         // Check if it contains only digits (and optionally starts with +)
         if (!/^\+?\d{8,15}$/.test(cleaned)) {
             return {
@@ -161,7 +169,7 @@ export class Validators {
                 message: 'Phone number must be 8-15 digits (with optional + prefix)'
             };
         }
-        
+
         return { valid: true };
     }
 
@@ -176,9 +184,15 @@ export class Validators {
             return { valid: false, message: 'URL is required' };
         }
 
+        // Use InputSanitizer for URL validation
+        const sanitizedUrl = InputSanitizer.validateAndSanitizeURL(value, allowedProtocols);
+        if (!sanitizedUrl) {
+            return { valid: false, message: 'Invalid or unsafe URL' };
+        }
+
         try {
             const urlObj = new URL(value);
-            
+
             // Check protocol
             if (!allowedProtocols.includes(urlObj.protocol)) {
                 return {
@@ -186,13 +200,13 @@ export class Validators {
                     message: `URL must use one of: ${allowedProtocols.join(', ')}`
                 };
             }
-            
+
             // Block dangerous protocols
             const dangerousProtocols = ['javascript:', 'data:', 'vbscript:', 'file:'];
             if (dangerousProtocols.includes(urlObj.protocol)) {
                 return { valid: false, message: 'URL protocol not allowed' };
             }
-            
+
             return { valid: true, url: urlObj };
         } catch (error) {
             return { valid: false, message: 'Invalid URL format' };
@@ -223,11 +237,11 @@ export class Validators {
         if (value === null || value === undefined || value === '') {
             return { valid: false, message: `${fieldName} is required` };
         }
-        
+
         if (typeof value === 'string' && value.trim() === '') {
             return { valid: false, message: `${fieldName} cannot be empty` };
         }
-        
+
         return { valid: true };
     }
 
@@ -288,112 +302,5 @@ export class Validators {
     }
 }
 
-/**
- * Form validator helper that validates multiple fields
- */
-export class FormValidator {
-    constructor(formElement) {
-        this.form = formElement;
-        this.errors = {};
-    }
-
-    /**
-     * Validates a single field
-     * @param {string} fieldName - Name of the field
-     * @param {Array<Function>} validators - Array of validator functions
-     * @returns {boolean} Whether the field is valid
-     */
-    validateField(fieldName, validators) {
-        const field = this.form.elements[fieldName];
-        if (!field) return false;
-
-        const value = field.value;
-        
-        for (const validator of validators) {
-            const result = validator(value);
-            if (!result.valid) {
-                this.errors[fieldName] = result.message;
-                this.showFieldError(field, result.message);
-                return false;
-            }
-        }
-        
-        this.clearFieldError(field);
-        delete this.errors[fieldName];
-        return true;
-    }
-
-    /**
-     * Shows error message for a field
-     * @param {HTMLElement} field - The form field element
-     * @param {string} message - Error message to display
-     */
-    showFieldError(field, message) {
-        const errorElement = field.parentElement.querySelector('.field-error') ||
-                           document.createElement('div');
-        errorElement.className = 'field-error';
-        errorElement.textContent = message;
-        errorElement.setAttribute('role', 'alert');
-        
-        if (!field.parentElement.contains(errorElement)) {
-            field.parentElement.appendChild(errorElement);
-        }
-        
-        field.setAttribute('aria-invalid', 'true');
-        field.setAttribute('aria-describedby', errorElement.id || 'error-' + field.name);
-    }
-
-    /**
-     * Clears error message for a field
-     * @param {HTMLElement} field - The form field element
-     */
-    clearFieldError(field) {
-        const errorElement = field.parentElement.querySelector('.field-error');
-        if (errorElement) {
-            errorElement.remove();
-        }
-        field.removeAttribute('aria-invalid');
-        field.removeAttribute('aria-describedby');
-    }
-
-    /**
-     * Validates entire form
-     * @param {Object} rules - Validation rules object {fieldName: [validators]}
-     * @returns {boolean} Whether the form is valid
-     */
-    validateForm(rules) {
-        this.errors = {};
-        let isValid = true;
-
-        for (const [fieldName, validators] of Object.entries(rules)) {
-            if (!this.validateField(fieldName, validators)) {
-                isValid = false;
-            }
-        }
-
-        return isValid;
-    }
-
-    /**
-     * Gets all validation errors
-     * @returns {Object} Object of field names to error messages
-     */
-    getErrors() {
-        return { ...this.errors };
-    }
-
-    /**
-     * Clears all errors
-     */
-    clearErrors() {
-        Object.keys(this.errors).forEach(fieldName => {
-            const field = this.form.elements[fieldName];
-            if (field) {
-                this.clearFieldError(field);
-            }
-        });
-        this.errors = {};
-    }
-}
-
 export default Validators;
+

@@ -20,10 +20,10 @@ async function initCaptchaForForm(containerId) {
     if (activeCaptchaContainer === containerId) {
         return;
     }
-    
+
     // Initialize CAPTCHA if not already done
     const isEnabled = await CaptchaManager.init();
-    
+
     if (isEnabled) {
         // Render captcha in the new container
         CaptchaManager.render(containerId, {
@@ -50,11 +50,11 @@ async function initCaptchaForForm(containerId) {
  */
 function showFormMessage(messageEl, message, type = 'error') {
     if (!messageEl) return;
-    
+
     messageEl.textContent = message;
     messageEl.className = `form-message ${type}`;
     messageEl.classList.remove('hidden');
-    
+
     // Auto-hide success messages
     if (type === 'success') {
         setTimeout(() => {
@@ -70,21 +70,26 @@ function showFormMessage(messageEl, message, type = 'error') {
  */
 async function handleFormSubmit(e, formType) {
     e.preventDefault();
-    
+
     const form = e.target;
     const submitButton = form.querySelector('button[type="submit"]');
     const messageEl = form.querySelector('[id^="form-message"]');
-    
+
     // Get form data
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
-    
+
+    // Disable submit button
     // Disable submit button
     if (submitButton) {
         submitButton.disabled = true;
-        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
+        submitButton.textContent = '';
+        const spinner = document.createElement('i');
+        spinner.className = 'fas fa-spinner fa-spin';
+        submitButton.appendChild(spinner);
+        submitButton.appendChild(document.createTextNode(' Creating account...'));
     }
-    
+
     try {
         // Get CAPTCHA token
         let captchaToken = '';
@@ -96,7 +101,7 @@ async function handleFormSubmit(e, formType) {
                 return;
             }
         }
-        
+
         // Prepare registration data
         const registrationData = {
             username: data.username,
@@ -107,7 +112,7 @@ async function handleFormSubmit(e, formType) {
             last_name: data.last_name || '',
             captcha_token: captchaToken,
         };
-        
+
         // Add professional-specific fields
         if (formType === 'professional') {
             registrationData.company_name = data.company_name;
@@ -117,7 +122,7 @@ async function handleFormSubmit(e, formType) {
             registrationData.billing_city = data.billing_city;
             registrationData.billing_postal = data.billing_postal;
             registrationData.billing_country = data.billing_country;
-            
+
             if (!data.same_as_billing) {
                 registrationData.shipping_address = data.shipping_address;
                 registrationData.shipping_city = data.shipping_city;
@@ -125,20 +130,20 @@ async function handleFormSubmit(e, formType) {
                 registrationData.shipping_country = data.shipping_country;
             }
         }
-        
+
         // Submit registration
         const result = await registerUser(registrationData);
-        
+
         showFormMessage(messageEl, 'Account created successfully! Redirecting to login...', 'success');
-        
+
         // Redirect to login page after success
         setTimeout(() => {
             window.location.href = 'login.html?registered=true';
         }, 2000);
-        
+
     } catch (error) {
         console.error('Registration error:', error);
-        
+
         // Handle CAPTCHA-specific errors
         if (error.code === 'CAPTCHA_FAILED') {
             showFormMessage(messageEl, 'CAPTCHA verification failed. Please try again.', 'error');
@@ -146,32 +151,35 @@ async function handleFormSubmit(e, formType) {
         } else {
             showFormMessage(messageEl, error.message || 'Registration failed. Please try again.', 'error');
         }
-        
+
         // Reset CAPTCHA on error
         if (CaptchaManager.isEnabled()) {
             CaptchaManager.reset();
         }
-        
+
     } finally {
+        // Re-enable submit button
         // Re-enable submit button
         if (submitButton) {
             submitButton.disabled = false;
-            submitButton.innerHTML = formType === 'individual' 
-                ? '<i class="fas fa-user-plus"></i> Create Individual Account'
-                : '<i class="fas fa-briefcase"></i> Create Professional Account';
+            submitButton.textContent = '';
+            const icon = document.createElement('i');
+            icon.className = formType === 'individual' ? 'fas fa-user-plus' : 'fas fa-briefcase';
+            submitButton.appendChild(icon);
+            submitButton.appendChild(document.createTextNode(formType === 'individual' ? ' Create Individual Account' : ' Create Professional Account'));
         }
     }
 }
 
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async function () {
     console.log('Register tabs script loaded');
-    
+
     // Get tab buttons and form containers
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
     const sameAsBillingCheckbox = document.getElementById('same-as-billing');
     const shippingAddressFields = document.getElementById('shipping-address-fields');
-    
+
     console.log('Tab buttons found:', tabButtons.length);
     console.log('Tab contents found:', tabContents.length);
 
@@ -180,25 +188,25 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Tab switching functionality
     tabButtons.forEach(button => {
-        button.addEventListener('click', async function() {
+        button.addEventListener('click', async function () {
             const targetTab = this.getAttribute('data-tab');
-            
+
             // Remove active class from all tabs and contents
             tabButtons.forEach(btn => btn.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
-            
+
             // Add active class to clicked tab
             this.classList.add('active');
-            
+
             // Show corresponding content
             const targetContent = document.querySelector(`[data-content="${targetTab}"]`);
             if (targetContent) {
                 targetContent.classList.add('active');
             }
-            
+
             // Re-render CAPTCHA in the new form
-            const captchaContainerId = targetTab === 'individual' 
-                ? 'captcha-container-ind' 
+            const captchaContainerId = targetTab === 'individual'
+                ? 'captcha-container-ind'
                 : 'captcha-container-pro';
             await initCaptchaForForm(captchaContainerId);
         });
@@ -206,21 +214,21 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Handle "Same as billing address" checkbox
     if (sameAsBillingCheckbox && shippingAddressFields) {
-        sameAsBillingCheckbox.addEventListener('change', function() {
+        sameAsBillingCheckbox.addEventListener('change', function () {
             const shippingInputs = shippingAddressFields.querySelectorAll('input');
-            
+
             if (this.checked) {
                 // Copy billing address to shipping address
                 const billingAddress = document.getElementById('billing-address-pro').value;
                 const billingCity = document.getElementById('billing-city-pro').value;
                 const billingPostal = document.getElementById('billing-postal-pro').value;
                 const billingCountry = document.getElementById('billing-country-pro').value;
-                
+
                 document.getElementById('shipping-address-pro').value = billingAddress;
                 document.getElementById('shipping-city-pro').value = billingCity;
                 document.getElementById('shipping-postal-pro').value = billingPostal;
                 document.getElementById('shipping-country-pro').value = billingCountry;
-                
+
                 // Disable shipping address fields
                 shippingInputs.forEach(input => {
                     input.disabled = true;
@@ -247,7 +255,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         billingInputs.forEach((input, index) => {
             if (input) {
-                input.addEventListener('input', function() {
+                input.addEventListener('input', function () {
                     if (sameAsBillingCheckbox.checked) {
                         const shippingInputIds = [
                             'shipping-address-pro',

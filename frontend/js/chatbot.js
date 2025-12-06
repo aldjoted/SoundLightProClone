@@ -24,7 +24,7 @@ const ChatbotModule = (() => {
         MAX_MESSAGE_LENGTH: 1000,
         MOBILE_BREAKPOINT: '--mobile-breakpoint',
         API_ENDPOINT: '/chatbot/',
-        
+
         SELECTORS: {
             toggler: '.chatbot-toggler',
             panel: '#chatbot-panel',
@@ -34,7 +34,7 @@ const ChatbotModule = (() => {
             sendBtn: '.chat-input button',
             liveRegion: '#chatbot-live-region'
         },
-        
+
         CLASSES: {
             chat: 'chat',
             outgoing: 'outgoing',
@@ -43,7 +43,7 @@ const ChatbotModule = (() => {
             error: 'error',
             showChatbot: 'show-chatbot'
         },
-        
+
         ARIA: {
             liveRegion: 'aria-live',
             label: 'aria-label',
@@ -53,33 +53,87 @@ const ChatbotModule = (() => {
         }
     };
 
-    const DEFAULT_CHATBOT_TEMPLATE = `
-        <header class="chatbot-header">
-            <h2 data-i18n="chatbot_title">Chat Support</h2>
-            <button class="close-btn" type="button" aria-label="Close chatbot">
-                <i class="fas fa-times"></i>
-            </button>
-        </header>
-        <ul class="chatbox" role="log" aria-label="Chat conversation" aria-live="polite">
-            <li class="chat incoming">
-                <span class="chat-icon" aria-hidden="true">
-                    <i class="fas fa-robot"></i>
-                </span>
-                <p class="message-content" data-i18n="chatbot_greeting">Hi there! 👋<br>How can I help you today?</p>
-            </li>
-        </ul>
-        <div class="chat-input">
-            <textarea data-i18n="chatbot_placeholder" placeholder="Type your message here..." aria-label="Type your message" rows="1"></textarea>
-            <button type="button" aria-label="Send message">
-                <i class="fas fa-paper-plane"></i>
-            </button>
-        </div>
-    `;
-
     // Module state
     let elements = {};
     let lastRequestTime = 0;
     let isInitialized = false;
+
+    function createChatbotStructure() {
+        const fragment = document.createDocumentFragment();
+
+        const header = document.createElement('header');
+        header.className = 'chatbot-header';
+
+        const h2 = document.createElement('h2');
+        h2.setAttribute('data-i18n', 'chatbot_title');
+        h2.textContent = 'Chat Support';
+
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'close-btn';
+        closeBtn.type = 'button';
+        closeBtn.setAttribute('aria-label', 'Close chatbot');
+
+        const closeIcon = document.createElement('i');
+        closeIcon.className = 'fas fa-times';
+        closeBtn.appendChild(closeIcon);
+
+        header.appendChild(h2);
+        header.appendChild(closeBtn);
+
+        const ul = document.createElement('ul');
+        ul.className = 'chatbox';
+        ul.setAttribute('role', 'log');
+        ul.setAttribute('aria-label', 'Chat conversation');
+        ul.setAttribute('aria-live', 'polite');
+
+        const li = document.createElement('li');
+        li.className = 'chat incoming';
+
+        const spanIcon = document.createElement('span');
+        spanIcon.className = 'chat-icon';
+        spanIcon.setAttribute('aria-hidden', 'true');
+
+        const robotIcon = document.createElement('i');
+        robotIcon.className = 'fas fa-robot';
+        spanIcon.appendChild(robotIcon);
+
+        const p = document.createElement('p');
+        p.className = 'message-content';
+        p.setAttribute('data-i18n', 'chatbot_greeting');
+        p.textContent = 'Hi there! 👋';
+        p.appendChild(document.createElement('br'));
+        p.appendChild(document.createTextNode('How can I help you today?'));
+
+        li.appendChild(spanIcon);
+        li.appendChild(p);
+        ul.appendChild(li);
+
+        const inputDiv = document.createElement('div');
+        inputDiv.className = 'chat-input';
+
+        const textarea = document.createElement('textarea');
+        textarea.setAttribute('data-i18n', 'chatbot_placeholder');
+        textarea.placeholder = 'Type your message here...';
+        textarea.setAttribute('aria-label', 'Type your message');
+        textarea.rows = 1;
+
+        const sendBtn = document.createElement('button');
+        sendBtn.type = 'button';
+        sendBtn.setAttribute('aria-label', 'Send message');
+
+        const sendIcon = document.createElement('i');
+        sendIcon.className = 'fas fa-paper-plane';
+        sendBtn.appendChild(sendIcon);
+
+        inputDiv.appendChild(textarea);
+        inputDiv.appendChild(sendBtn);
+
+        fragment.appendChild(header);
+        fragment.appendChild(ul);
+        fragment.appendChild(inputDiv);
+
+        return fragment;
+    }
 
     function ensureChatbotMarkup() {
         if (typeof document === 'undefined') return;
@@ -95,7 +149,11 @@ const ChatbotModule = (() => {
             toggler.setAttribute('aria-label', 'Open assistant');
             toggler.setAttribute('aria-controls', 'chatbot-panel');
             toggler.setAttribute('aria-expanded', 'false');
-            toggler.innerHTML = '<i class="fas fa-comment"></i>';
+
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-comment';
+            toggler.appendChild(icon);
+
             body.appendChild(toggler);
         } else {
             toggler.type = 'button';
@@ -105,8 +163,10 @@ const ChatbotModule = (() => {
             if (!toggler.getAttribute('aria-expanded')) {
                 toggler.setAttribute('aria-expanded', 'false');
             }
-            if (!toggler.innerHTML.trim()) {
-                toggler.innerHTML = '<i class="fas fa-comment"></i>';
+            if (!toggler.children.length) {
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-comment';
+                toggler.appendChild(icon);
             }
         }
 
@@ -116,7 +176,7 @@ const ChatbotModule = (() => {
             panel.id = 'chatbot-panel';
             panel.className = 'chatbot';
             panel.setAttribute('aria-label', 'Assistant');
-            panel.innerHTML = DEFAULT_CHATBOT_TEMPLATE;
+            panel.appendChild(createChatbotStructure());
             body.appendChild(panel);
         } else {
             if (!panel.id) {
@@ -126,7 +186,8 @@ const ChatbotModule = (() => {
                 panel.setAttribute('aria-label', 'Assistant');
             }
             if (!panel.querySelector(CONFIG.SELECTORS.chatbox)) {
-                panel.innerHTML = DEFAULT_CHATBOT_TEMPLATE;
+                panel.innerHTML = '';
+                panel.appendChild(createChatbotStructure());
             }
 
             const closeBtn = panel.querySelector(CONFIG.SELECTORS.closeBtn);
@@ -167,7 +228,7 @@ const ChatbotModule = (() => {
             const container = document.createDocumentFragment();
             // Enhanced regex for better markdown parsing
             const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
-            
+
             parts.forEach(part => {
                 if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
                     const strong = document.createElement('strong');
@@ -186,7 +247,7 @@ const ChatbotModule = (() => {
 
         lines.forEach(line => {
             const trimmedLine = line.trim();
-            
+
             if (trimmedLine.startsWith('- ')) {
                 if (!currentList) {
                     currentList = document.createElement('ul');
@@ -201,7 +262,7 @@ const ChatbotModule = (() => {
                     fragment.appendChild(currentList);
                     currentList = null;
                 }
-                
+
                 if (trimmedLine) {
                     const p = document.createElement('p');
                     p.appendChild(processInlineFormatting(trimmedLine));
@@ -226,14 +287,14 @@ const ChatbotModule = (() => {
         const typingDiv = document.createElement('div');
         typingDiv.className = CONFIG.CLASSES.typing;
         typingDiv.setAttribute(CONFIG.ARIA.label, 'Chatbot is typing');
-        
+
         // Create three animated dots
         for (let i = 0; i < 3; i++) {
             const span = document.createElement('span');
             span.setAttribute('aria-hidden', 'true');
             typingDiv.appendChild(span);
         }
-        
+
         container.appendChild(typingDiv);
         return container;
     }
@@ -248,7 +309,7 @@ const ChatbotModule = (() => {
         const chatLi = document.createElement('li');
         chatLi.classList.add(CONFIG.CLASSES.chat, className);
         chatLi.setAttribute('role', 'listitem');
-        
+
         if (className === CONFIG.CLASSES.outgoing) {
             chatLi.setAttribute(CONFIG.ARIA.label, 'Your message');
         } else {
@@ -266,17 +327,20 @@ const ChatbotModule = (() => {
             const icon = document.createElement('span');
             icon.className = 'chat-icon';
             icon.setAttribute('aria-hidden', 'true');
-            icon.innerHTML = '<i class="fas fa-robot"></i>';
-            
+
+            const i = document.createElement('i');
+            i.className = 'fas fa-robot';
+            icon.appendChild(i);
+
             const p = document.createElement('p');
             p.className = 'message-content';
-            
+
             if (typeof content === 'string') {
                 p.appendChild(createTypingIndicator());
             } else {
                 p.appendChild(content);
             }
-            
+
             messageContainer.appendChild(icon);
             messageContainer.appendChild(p);
         }
@@ -320,7 +384,7 @@ const ChatbotModule = (() => {
         if (!message || typeof message !== 'string') return false;
         if (message.length > CONFIG.MAX_MESSAGE_LENGTH) return false;
         if (message.trim().length === 0) return false;
-        
+
         // Basic XSS prevention
         const dangerousPatterns = [
             /<script/i,
@@ -328,7 +392,7 @@ const ChatbotModule = (() => {
             /on\w+\s*=/i,
             /<iframe/i
         ];
-        
+
         return !dangerousPatterns.some(pattern => pattern.test(message));
     }
 
@@ -376,7 +440,7 @@ const ChatbotModule = (() => {
             }
         } catch (error) {
             let userMessage;
-            
+
             // ✅ Granular error classification for better UX
             if (error.name === 'AbortError') {
                 // Silent for user-initiated cancellations
@@ -396,13 +460,13 @@ const ChatbotModule = (() => {
             } else {
                 userMessage = 'I apologize, but I\'m having trouble responding right now. Please try again.';
             }
-            
+
             messageElement.innerHTML = '';
             const errorP = document.createElement('p');
             errorP.textContent = userMessage;
             errorP.className = CONFIG.CLASSES.error;
             messageElement.appendChild(errorP);
-            
+
             announceToScreenReader(`Error: ${userMessage}`);
             console.error('Chatbot error:', error);
         } finally {
@@ -415,7 +479,7 @@ const ChatbotModule = (() => {
      */
     function handleChatSubmission() {
         const userMessage = elements.chatInput.value.trim();
-        
+
         if (!validateInput(userMessage)) {
             announceToScreenReader('Please enter a valid message');
             return;
@@ -463,7 +527,7 @@ const ChatbotModule = (() => {
      */
     function toggleChatbot() {
         const isVisible = document.body.classList.contains(CONFIG.CLASSES.showChatbot);
-        
+
         if (isVisible) {
             closeChatbot();
         } else {
@@ -484,14 +548,14 @@ const ChatbotModule = (() => {
             } else if (elements.panel) {
                 elements.panel.setAttribute('open', '');
             }
-        } catch {}
+        } catch { }
         elements.toggler.setAttribute(CONFIG.ARIA.expanded, 'true');
-        
+
         // Focus management
         setTimeout(() => {
             elements.chatInput.focus();
         }, 100);
-        
+
         announceToScreenReader('Chatbot opened');
     }
 
@@ -508,10 +572,10 @@ const ChatbotModule = (() => {
             } else if (elements.panel) {
                 elements.panel.removeAttribute('open');
             }
-        } catch {}
+        } catch { }
         elements.toggler.setAttribute(CONFIG.ARIA.expanded, 'false');
         elements.toggler.focus();
-        
+
         announceToScreenReader('Chatbot closed');
     }
 
@@ -659,7 +723,7 @@ const ChatbotModule = (() => {
             initializeLiveRegion();
             setupAccessibility();
             attachEventListeners();
-            
+
             isInitialized = true;
             // Initialization complete
             return true;

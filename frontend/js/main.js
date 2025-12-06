@@ -26,7 +26,7 @@ import {
     globalRequestManager,
     getCached,
     appState,
-    requestCache,
+    cache,
 } from './app-core.js';
 import { initHomePage } from './pages/home.js';
 import { initProductPage } from './pages/product.js';
@@ -47,7 +47,7 @@ function initAOS() {
         window.AOS.init({ duration: 800, once: true });
         return;
     }
-    
+
     // AOS is loaded via CDN, wait for it
     const checkAOS = setInterval(() => {
         if (window.AOS) {
@@ -55,7 +55,7 @@ function initAOS() {
             window.AOS.init({ duration: 800, once: true });
         }
     }, 50);
-    
+
     // Timeout after 5 seconds
     setTimeout(() => {
         clearInterval(checkAOS);
@@ -72,14 +72,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         runRoute();
     } catch (error) {
         console.error('App initialization failed:', error);
-        document.body.innerHTML = `
-            <div style="padding: 20px; text-align: center; font-family: Arial, sans-serif;">
-                <h2>Loading Error</h2>
-                <p>There was an error loading the application. Please refresh the page.</p>
-                <p><strong>Error:</strong> ${error.message}</p>
-                <button onclick="location.reload()" style="padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer;">Reload Page</button>
-            </div>
-        `;
+
+        // Clear body
+        document.body.textContent = '';
+
+        const container = document.createElement('div');
+        container.style.cssText = 'padding: 20px; text-align: center; font-family: Arial, sans-serif;';
+
+        const heading = document.createElement('h2');
+        heading.textContent = 'Loading Error';
+
+        const msg1 = document.createElement('p');
+        msg1.textContent = 'There was an error loading the application. Please refresh the page.';
+
+        const msg2 = document.createElement('p');
+        const strong = document.createElement('strong');
+        strong.textContent = 'Error: ';
+        msg2.appendChild(strong);
+        msg2.appendChild(document.createTextNode(error.message));
+
+        const btn = document.createElement('button');
+        btn.onclick = () => location.reload();
+        btn.style.cssText = 'padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer;';
+        btn.textContent = 'Reload Page';
+
+        container.appendChild(heading);
+        container.appendChild(msg1);
+        container.appendChild(msg2);
+        container.appendChild(btn);
+
+        document.body.appendChild(container);
     }
 });
 
@@ -145,7 +167,7 @@ async function initApp() {
         // Initialize security and performance optimizations
         initSecurity();
         initPerformanceOptimizations();
-        
+
         const cachedUser = auth.getCachedUser();
         if (cachedUser) {
             ui.updateUserAuthUI(cachedUser);
@@ -162,30 +184,33 @@ async function initApp() {
 
         // Initialize PWA features (now that user state is known)
         initPWAFeatures();
-        
+
         // Initialize analytics and monitoring
         initAnalytics();
-        
+
         // ✅ OPTIMIZED: Lazy load AOS only when needed
         initAOS();
 
         // Update UI elements that depend on user state
         ui.updateCartCount(cart.getCartItemCount());
         globalListenerManager.add(document, 'cartUpdated', () => ui.updateCartCount(cart.getCartItemCount()));
-        
+
         // --- Orchestration ---
         new AdvancedSearch();
         new MobileNavigation();
 
         setupGlobalEventListeners();
         enhanceFooterAddressLinks();
-        
+
         // Highlight the active page in navigation
         highlightActivePage();
 
+        // Initialize Hero Slider (if present)
+        ui.renderHeroSlider();
+
         // ✅ IMPROVED: Load categories with request deduplication
         // Single request shared across all components that need categories
-        return requestCache.get('categories', async () => {
+        return cache.get('categories', async () => {
             const categories = await getCached('categories', () => apiService.getCategories(), 'categories');
             appState.categories = categories;
             ui.renderMegaMenu(categories);
@@ -195,19 +220,19 @@ async function initApp() {
             console.error('Failed to load mega menu categories:', error);
             return []; // Return empty array on failure
         });
-        
+
     } catch (error) {
         console.error('Error in initApp:', error);
         // If auth fails, proceed gracefully
         ui.updateUserAuthUI(null);
-        
+
         // Still initialize PWA features and event listeners for logged-out users
         try {
             initPWAFeatures();
         } catch (pwaError) {
             console.error('Failed to initialize PWA features:', pwaError);
         }
-        
+
         setupGlobalEventListeners();
         return Promise.resolve([]); // Return empty array on failure
     }
@@ -219,20 +244,20 @@ async function initApp() {
 async function initPWAFeatures() {
     try {
         console.log('[PWA] Initializing PWA features...');
-        
+
         // Initialize offline indicator
         initOfflineIndicator();
         console.log('[PWA] Offline indicator initialized');
-        
+
         // Initialize sync manager (dynamic import to match other modules)
         const { initSyncManager } = await import('./sync-manager.js');
         initSyncManager();
         console.log('[PWA] Sync manager initialized');
-        
+
         // Initialize install prompt
         initInstallPrompt();
         console.log('[PWA] Install prompt initialized');
-        
+
         console.log('[PWA] All PWA features initialized successfully');
     } catch (error) {
         console.error('[PWA] Failed to initialize PWA features:', error);
@@ -246,7 +271,7 @@ async function initPWAFeatures() {
 function setupGlobalEventListeners() {
     globalListenerManager.add(document.body, 'click', (e) => {
         const target = e.target;
-        
+
         // User icon toggle (for auth dropdown)
         const userIconBtn = target.closest('#user-icon-toggle');
         if (userIconBtn) {
@@ -290,7 +315,7 @@ function setupGlobalEventListeners() {
             }
             return;
         }
-        
+
         // Close auth menu on outside click
         const openAuthToggle = document.querySelector('#user-icon-toggle[aria-expanded="true"]');
         if (openAuthToggle && !target.closest('.auth-menu-container')) {
@@ -333,12 +358,21 @@ async function handleProductGridActions(e) {
         if (product) {
             cart.addToCart(product, 1);
             ui.showToast(`${product.name} added to cart!`, 'success');
-            
+
             cartBtn.disabled = true;
-            cartBtn.innerHTML = `<i class="fas fa-check"></i> Added`;
+            cartBtn.textContent = '';
+            const checkIcon = document.createElement('i');
+            checkIcon.className = 'fas fa-check';
+            cartBtn.appendChild(checkIcon);
+            cartBtn.appendChild(document.createTextNode(' Added'));
+
             setTimeout(() => {
                 cartBtn.disabled = false;
-                cartBtn.innerHTML = `<i class="fas fa-shopping-cart"></i> Add`;
+                cartBtn.textContent = '';
+                const cartIcon = document.createElement('i');
+                cartIcon.className = 'fas fa-shopping-cart';
+                cartBtn.appendChild(cartIcon);
+                cartBtn.appendChild(document.createTextNode(' Add'));
             }, 1500);
 
             ui.renderMiniCart(cart.getCart());
@@ -366,7 +400,7 @@ async function handleProductGridActions(e) {
 function highlightActivePage() {
     // Get current page filename
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    
+
     // Map of page filenames to their corresponding navigation links
     const pageMap = {
         'index.html': 'index.html',
@@ -378,15 +412,15 @@ function highlightActivePage() {
         'search-results.html': 'index.html#products', // Search results links to products
         'cart.html': 'cart.html',
     };
-    
+
     // Get the link that should be active
     const targetPage = pageMap[currentPage] || currentPage;
-    
+
     // Remove active class from all nav links
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
     });
-    
+
     // Add active class to the current page link
     document.querySelectorAll('.nav-link').forEach(link => {
         const href = link.getAttribute('href');
@@ -394,7 +428,7 @@ function highlightActivePage() {
             link.classList.add('active');
         }
     });
-    
+
     // Special case: if we're on a page with #products in URL, highlight products
     if (window.location.hash === '#products' || currentPage === 'product.html' || currentPage === 'search-results.html') {
         const productsLink = document.querySelector('.nav-link[href*="products"]');
@@ -413,21 +447,21 @@ function setupI18n() {
         // Update cart messages and UI elements
         const cartCount = cart.getCartItemCount();
         ui.updateCartCount(cartCount);
-        
+
         // Re-render dynamic content if needed
         const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-        
+
         // Update toast messages if any are visible
         const toasts = document.querySelectorAll('.toast');
         toasts.forEach(toast => {
             // Toast messages will be in the new language for new toasts
             // Existing toasts will remain in their original language
         });
-        
+
         // Update any dynamic content that might need translation
         updateDynamicTranslations();
     });
-    
+
     // Initial translation of the page
     i18n.translatePage();
 }
@@ -439,17 +473,21 @@ function updateDynamicTranslations() {
     // Update cart button text
     const cartButtons = document.querySelectorAll('.add-to-cart-btn');
     cartButtons.forEach(btn => {
-        if (!btn.disabled && btn.innerHTML.includes('Add')) {
-            btn.innerHTML = `<i class="fas fa-shopping-cart"></i> ${i18n.t('btn_add_to_cart')}`;
+        if (!btn.disabled && btn.textContent.includes('Add')) {
+            btn.textContent = '';
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-shopping-cart';
+            btn.appendChild(icon);
+            btn.appendChild(document.createTextNode(' ' + i18n.t('btn_add_to_cart')));
         }
     });
-    
+
     // Update search placeholder
     const searchInputs = document.querySelectorAll('input[type="search"], .search-input');
     searchInputs.forEach(input => {
         input.placeholder = i18n.t('search_placeholder');
     });
-    
+
     // Update any other dynamic elements that need translation
     const elements = document.querySelectorAll('[data-i18n-dynamic]');
     elements.forEach(element => {
@@ -478,36 +516,62 @@ async function initWishlistPage(signal) {
 
     try {
         // Show loading state
-        container.innerHTML = `
-            <div class="loading-spinner">
-                <div class="spinner"></div>
-                <p>${i18n.t('loading_wishlist')}</p>
-            </div>
-        `;
-        
+        container.innerHTML = ''; // Clear container
+        const spinnerDiv = document.createElement('div');
+        spinnerDiv.className = 'loading-spinner';
+
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner';
+
+        const text = document.createElement('p');
+        text.textContent = i18n.t('loading_wishlist');
+
+        spinnerDiv.appendChild(spinner);
+        spinnerDiv.appendChild(text);
+        container.appendChild(spinnerDiv);
+
         // Dynamically import wishlist module
         const wishlist = await import('./wishlist.js');
-        
+
         // Initialize wishlist (syncs if authenticated)
         await wishlist.initWishlist();
-        
+
         // Get wishlist items
         const items = wishlist.getWishlist();
-        
+
         if (items.length === 0) {
-            container.innerHTML = `
-                <div class="empty-wishlist">
-                    <i class="far fa-heart"></i>
-                    <h2>${i18n.t('empty_wishlist')}</h2>
-                    <p>${i18n.t('empty_wishlist_message')}</p>
-                    <a href="index.html" class="btn btn-primary">
-                        <i class="fas fa-shopping-bag"></i> ${i18n.t('continue_shopping')}
-                    </a>
-                </div>
-            `;
+            container.innerHTML = '';
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'empty-wishlist';
+
+            const icon = document.createElement('i');
+            icon.className = 'far fa-heart';
+
+            const h2 = document.createElement('h2');
+            h2.textContent = i18n.t('empty_wishlist');
+
+            const p = document.createElement('p');
+            p.textContent = i18n.t('empty_wishlist_message');
+
+            const a = document.createElement('a');
+            a.href = 'index.html';
+            a.className = 'btn btn-primary';
+
+            const btnIcon = document.createElement('i');
+            btnIcon.className = 'fas fa-shopping-bag';
+
+            a.appendChild(btnIcon);
+            a.appendChild(document.createTextNode(' ' + i18n.t('continue_shopping')));
+
+            emptyDiv.appendChild(icon);
+            emptyDiv.appendChild(h2);
+            emptyDiv.appendChild(p);
+            emptyDiv.appendChild(a);
+
+            container.appendChild(emptyDiv);
             return;
         }
-        
+
         // Render wishlist items
         container.innerHTML = '';
         for (const item of items) {
@@ -520,7 +584,7 @@ async function initWishlistPage(signal) {
                 console.error(`Error loading wishlist item ${item.product_id}:`, error);
             }
         }
-        
+
         // Setup event listeners for wishlist actions
         pageListenerManager.add(container, 'click', async (e) => {
             // Remove from wishlist
@@ -530,26 +594,44 @@ async function initWishlistPage(signal) {
                 try {
                     await wishlist.removeFromWishlist(productId);
                     ui.showToast(i18n.t('removed_from_wishlist'), 'success');
-                    
+
                     // Remove the item element
                     const itemElement = removeBtn.closest('.wishlist-item');
                     if (itemElement) {
                         itemElement.style.opacity = '0';
                         setTimeout(() => {
                             itemElement.remove();
-                            
+
                             // Check if wishlist is now empty
                             if (container.children.length === 0) {
-                                container.innerHTML = `
-                                    <div class="empty-wishlist">
-                                        <i class="far fa-heart"></i>
-                                        <h2>${i18n.t('empty_wishlist')}</h2>
-                                        <p>${i18n.t('empty_wishlist_message')}</p>
-                                        <a href="index.html" class="btn btn-primary">
-                                            <i class="fas fa-shopping-bag"></i> ${i18n.t('continue_shopping')}
-                                        </a>
-                                    </div>
-                                `;
+                                const emptyDiv = document.createElement('div');
+                                emptyDiv.className = 'empty-wishlist';
+
+                                const icon = document.createElement('i');
+                                icon.className = 'far fa-heart';
+
+                                const h2 = document.createElement('h2');
+                                h2.textContent = i18n.t('empty_wishlist');
+
+                                const p = document.createElement('p');
+                                p.textContent = i18n.t('empty_wishlist_message');
+
+                                const a = document.createElement('a');
+                                a.href = 'index.html';
+                                a.className = 'btn btn-primary';
+
+                                const btnIcon = document.createElement('i');
+                                btnIcon.className = 'fas fa-shopping-bag';
+
+                                a.appendChild(btnIcon);
+                                a.appendChild(document.createTextNode(' ' + i18n.t('continue_shopping')));
+
+                                emptyDiv.appendChild(icon);
+                                emptyDiv.appendChild(h2);
+                                emptyDiv.appendChild(p);
+                                emptyDiv.appendChild(a);
+
+                                container.appendChild(emptyDiv);
                             }
                         }, 300);
                     }
@@ -558,7 +640,7 @@ async function initWishlistPage(signal) {
                 }
                 return;
             }
-            
+
             // Move to cart
             const moveToCartBtn = e.target.closest('.move-to-cart-btn');
             if (moveToCartBtn) {
@@ -567,28 +649,46 @@ async function initWishlistPage(signal) {
                     const product = await apiService.getProductById(productId);
                     cart.addToCart(product, 1);
                     ui.showToast(i18n.t('moved_to_cart'), 'success');
-                    
+
                     // Optionally remove from wishlist after moving to cart
                     await wishlist.removeFromWishlist(productId);
-                    
+
                     // Remove the item element
                     const itemElement = moveToCartBtn.closest('.wishlist-item');
                     if (itemElement) {
                         itemElement.style.opacity = '0';
                         setTimeout(() => {
                             itemElement.remove();
-                            
+
                             if (container.children.length === 0) {
-                                container.innerHTML = `
-                                    <div class="empty-wishlist">
-                                        <i class="far fa-heart"></i>
-                                        <h2>${i18n.t('empty_wishlist')}</h2>
-                                        <p>${i18n.t('empty_wishlist_message')}</p>
-                                        <a href="index.html" class="btn btn-primary">
-                                            <i class="fas fa-shopping-bag"></i> ${i18n.t('continue_shopping')}
-                                        </a>
-                                    </div>
-                                `;
+                                const emptyDiv = document.createElement('div');
+                                emptyDiv.className = 'empty-wishlist';
+
+                                const icon = document.createElement('i');
+                                icon.className = 'far fa-heart';
+
+                                const h2 = document.createElement('h2');
+                                h2.textContent = i18n.t('empty_wishlist');
+
+                                const p = document.createElement('p');
+                                p.textContent = i18n.t('empty_wishlist_message');
+
+                                const a = document.createElement('a');
+                                a.href = 'index.html';
+                                a.className = 'btn btn-primary';
+
+                                const btnIcon = document.createElement('i');
+                                btnIcon.className = 'fas fa-shopping-bag';
+
+                                a.appendChild(btnIcon);
+                                a.appendChild(document.createTextNode(' ' + i18n.t('continue_shopping')));
+
+                                emptyDiv.appendChild(icon);
+                                emptyDiv.appendChild(h2);
+                                emptyDiv.appendChild(p);
+                                emptyDiv.appendChild(a);
+
+                                container.appendChild(emptyDiv);
                             }
                         }, 300);
                     }
@@ -598,18 +698,24 @@ async function initWishlistPage(signal) {
                 return;
             }
         });
-        
+
         // Update wishlist count in header
         ui.updateWishlistCount(items.length);
-        
+
     } catch (error) {
         console.error('Error initializing wishlist page:', error);
-        container.innerHTML = `
-            <p class="error-message">
-                ${i18n.t('error_loading_wishlist')} 
-                <button onclick="location.reload()" class="btn btn-primary">${i18n.t('retry')}</button>
-            </p>
-        `;
+        container.innerHTML = '';
+        const p = document.createElement('p');
+        p.className = 'error-message';
+        p.textContent = i18n.t('error_loading_wishlist') + ' ';
+
+        const btn = document.createElement('button');
+        btn.onclick = () => location.reload();
+        btn.className = 'btn btn-primary';
+        btn.textContent = i18n.t('retry');
+
+        p.appendChild(btn);
+        container.appendChild(p);
     }
 
     // Cleanup function for when leaving the page
@@ -634,32 +740,50 @@ function initLoginPage() {
     // Add form submission handler
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         // Get submit button and store original text
         const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
+        const originalText = submitBtn.textContent;
+        const originalChildren = Array.from(submitBtn.childNodes); // Store children to restore icon
         let redirectScheduled = false;
-        
+
         // Clear any previous error messages
         if (formMessage) {
             formMessage.className = 'hidden';
             formMessage.textContent = '';
         }
-        
+
         // Set loading state
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span data-i18n="loading">Loading...</span>';
-        
+        submitBtn.textContent = '';
+        const spinner = document.createElement('i');
+        spinner.className = 'fas fa-spinner fa-spin';
+        submitBtn.appendChild(spinner);
+
+        const span = document.createElement('span');
+        span.setAttribute('data-i18n', 'loading');
+        span.textContent = 'Loading...';
+        submitBtn.appendChild(document.createTextNode(' '));
+        submitBtn.appendChild(span);
+
         try {
             const identifier = form.username.value.trim();
             const response = await apiService.initiateLogin(identifier, form.password.value);
-            
+
             if (response?.requires_verification) {
                 const emailForVerification = response.email || identifier;
                 sessionStorage.setItem('slp_verification_email', emailForVerification);
-                
+
                 ui.showToast('Verification code sent to your email!', 'success');
-                submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>Redirecting to verification...</span>';
+                submitBtn.textContent = '';
+                const check = document.createElement('i');
+                check.className = 'fas fa-check';
+                submitBtn.appendChild(check);
+
+                const span = document.createElement('span');
+                span.textContent = 'Redirecting to verification...';
+                submitBtn.appendChild(document.createTextNode(' '));
+                submitBtn.appendChild(span);
 
                 redirectScheduled = true;
                 setTimeout(() => {
@@ -680,12 +804,12 @@ function initLoginPage() {
             // Restore button state if still on page
             if (!redirectScheduled && !window.location.href.includes('verify-login.html') && !window.location.href.includes('index.html')) {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
+                submitBtn.textContent = '';
+                originalChildren.forEach(child => submitBtn.appendChild(child.cloneNode(true)));
             }
         }
     });
 
-    // Cleanup function for when leaving the page
     window.addEventListener('beforeunload', () => {
         pageListenerManager.removeAll();
     });
@@ -695,119 +819,127 @@ function initLoginPage() {
  * Initializes the Register Page.
  */
 function initRegisterPage() {
-    auth.initRegisterPageValidation();
-    const forms = document.querySelectorAll('form.auth-form[data-content]');
-    if (!forms.length) {
-        return;
-    }
+    const form = document.querySelector('#register-form');
+    if (!form) return;
 
+    const formMessage = document.getElementById('form-message');
     const pageListenerManager = new ListenerManager();
 
-    forms.forEach((form) => {
-        const formMessage = form.querySelector('[id^="form-message"]');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-        pageListenerManager.add(form, 'submit', async (e) => {
-            e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn ? submitBtn.innerHTML : '';
 
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const originalText = submitBtn ? submitBtn.innerHTML : '';
+        const usernameInput = form.querySelector('[name="username"]');
+        const emailInput = form.querySelector('[name="email"]');
+        const firstNameInput = form.querySelector('[name="first_name"]');
+        const lastNameInput = form.querySelector('[name="last_name"]');
+        const passwordInput = form.querySelector('[name="password"]');
+        const password2Input = form.querySelector('[name="password2"]');
 
+        const data = {
+            username: usernameInput ? usernameInput.value.trim() : '',
+            email: emailInput ? emailInput.value.trim() : '',
+            first_name: firstNameInput ? firstNameInput.value.trim() : '',
+            last_name: lastNameInput ? lastNameInput.value.trim() : '',
+            password: passwordInput ? passwordInput.value : '',
+            password2: password2Input ? password2Input.value : '',
+        };
+
+        if (data.password !== data.password2) {
             if (formMessage) {
-                formMessage.className = 'hidden';
-                formMessage.textContent = '';
+                formMessage.textContent = 'Passwords do not match.';
+                formMessage.className = 'alert alert-error';
             }
+            ui.showToast('Passwords do not match.', 'error');
+            return;
+        }
 
-            const usernameInput = form.querySelector('[name="username"]');
-            const emailInput = form.querySelector('[name="email"]');
-            const firstNameInput = form.querySelector('[name="first_name"]');
-            const lastNameInput = form.querySelector('[name="last_name"]');
-            const passwordInput = form.querySelector('[name="password"]');
-            const password2Input = form.querySelector('[name="password2"]');
-
-            const data = {
-                username: usernameInput ? usernameInput.value.trim() : '',
-                email: emailInput ? emailInput.value.trim() : '',
-                first_name: firstNameInput ? firstNameInput.value.trim() : '',
-                last_name: lastNameInput ? lastNameInput.value.trim() : '',
-                password: passwordInput ? passwordInput.value : '',
-                password2: password2Input ? password2Input.value : '',
-            };
-
-            if (data.password !== data.password2) {
-                if (formMessage) {
-                    formMessage.textContent = 'Passwords do not match.';
-                    formMessage.className = 'alert alert-error';
-                }
-                ui.showToast('Passwords do not match.', 'error');
-                return;
+        if (!data.username || !data.email || !data.first_name || !data.last_name || !data.password) {
+            if (formMessage) {
+                formMessage.textContent = 'Please fill in all required fields.';
+                formMessage.className = 'alert alert-error';
             }
+            ui.showToast('Please fill in all required fields.', 'error');
+            return;
+        }
 
-            if (!data.username || !data.email || !data.first_name || !data.last_name || !data.password) {
-                if (formMessage) {
-                    formMessage.textContent = 'Please fill in all required fields.';
-                    formMessage.className = 'alert alert-error';
-                }
-                ui.showToast('Please fill in all required fields.', 'error');
-                return;
-            }
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = '';
+            const spinner = document.createElement('i');
+            spinner.className = 'fas fa-spinner fa-spin';
+            submitBtn.appendChild(spinner);
+
+            const span = document.createElement('span');
+            span.setAttribute('data-i18n', 'creating_account');
+            span.textContent = 'Creating account...';
+            submitBtn.appendChild(document.createTextNode(' '));
+            submitBtn.appendChild(span);
+        }
+
+        try {
+            await apiService.registerUser(data);
 
             if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span data-i18n="creating_account">Creating account...</span>';
+                submitBtn.textContent = '';
+                const check = document.createElement('i');
+                check.className = 'fas fa-check';
+                submitBtn.appendChild(check);
+
+                const span = document.createElement('span');
+                span.setAttribute('data-i18n', 'registration_success');
+                span.textContent = 'Success! Redirecting...';
+                submitBtn.appendChild(document.createTextNode(' '));
+                submitBtn.appendChild(span);
             }
 
-            try {
-                await apiService.registerUser(data);
-
-                if (submitBtn) {
-                    submitBtn.innerHTML = '<i class="fas fa-check"></i> <span data-i18n="registration_success">Success! Redirecting...</span>';
-                }
-
-                if (formMessage) {
-                    formMessage.textContent = 'Account created successfully! Redirecting to login...';
-                    formMessage.className = 'alert alert-success';
-                }
-
-                ui.showToast('Registration successful!', 'success');
-                window.location.href = 'login.html?registered=true';
-            } catch (err) {
-                let errorMessage = 'Registration failed. Please check your information.';
-
-                if (err.response && typeof err.response === 'object') {
-                    const errors = [];
-                    for (const [field, messages] of Object.entries(err.response)) {
-                        if (Array.isArray(messages)) {
-                            errors.push(`${field}: ${messages.join(', ')}`);
-                        } else {
-                            errors.push(`${field}: ${messages}`);
-                        }
-                    }
-                    if (errors.length > 0) {
-                        errorMessage = errors.join('; ');
-                    }
-                } else if (err.message) {
-                    errorMessage = err.message;
-                }
-
-                if (formMessage) {
-                    formMessage.textContent = errorMessage;
-                    formMessage.className = 'alert alert-error';
-                }
-
-                ui.showToast(`Registration failed: ${errorMessage}`, 'error');
-            } finally {
-                if (submitBtn && !window.location.href.includes('login.html')) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalText;
-                }
+            if (formMessage) {
+                formMessage.textContent = 'Account created successfully! Redirecting to login...';
+                formMessage.className = 'alert alert-success';
             }
-        });
+
+            ui.showToast('Registration successful!', 'success');
+            window.location.href = 'login.html?registered=true';
+        } catch (err) {
+            let errorMessage = 'Registration failed. Please check your information.';
+
+            if (err.response && typeof err.response === 'object') {
+                const errors = [];
+                for (const [field, messages] of Object.entries(err.response)) {
+                    if (Array.isArray(messages)) {
+                        errors.push(`${field}: ${messages.join(', ')}`);
+                    } else {
+                        errors.push(`${field}: ${messages}`);
+                    }
+                }
+                if (errors.length > 0) {
+                    errorMessage = errors.join('; ');
+                }
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+
+            if (formMessage) {
+                formMessage.textContent = errorMessage;
+                formMessage.className = 'alert alert-error';
+            }
+
+            ui.showToast(`Registration failed: ${errorMessage}`, 'error');
+        } finally {
+            if (submitBtn && !window.location.href.includes('login.html')) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
     });
 
     window.addEventListener('beforeunload', () => {
         pageListenerManager.removeAll();
     });
 }
+
 
 /**
  * Initializes the Search Results Page (lightweight as page has its own module).
@@ -825,9 +957,9 @@ function initSearchResultsPage() {
 function setupMegaMenuClickToggle() {
     const productsLink = document.querySelector('.nav-item.mega-menu-container > .nav-link');
     const megaMenu = document.getElementById('products-mega-menu');
-    
+
     if (!productsLink || !megaMenu) return;
-    
+
     // FIXED: Click toggle handler with window width check
     globalListenerManager.add(productsLink, 'click', (e) => {
         // Only activate click toggle on screens ≤1024px (mobile/tablet)
@@ -838,7 +970,7 @@ function setupMegaMenuClickToggle() {
         }
         // On desktop (>1024px), allow default link behavior and rely on CSS hover
     });
-    
+
     // FIXED: Close mega menu when clicking outside (mobile only)
     globalListenerManager.add(document, 'click', (e) => {
         // Only apply click-outside on mobile/tablet (≤1024px)
@@ -849,7 +981,7 @@ function setupMegaMenuClickToggle() {
             }
         }
     });
-    
+
     // FIXED: Add Escape key handler to close mega menu
     globalListenerManager.add(document, 'keydown', (e) => {
         if (e.key === 'Escape' && megaMenu.classList.contains('active')) {
@@ -860,7 +992,7 @@ function setupMegaMenuClickToggle() {
             }
         }
     });
-    
+
     // FIXED: Handle window resize to close menu if switching from mobile to desktop
     let resizeTimer;
     globalListenerManager.add(window, 'resize', () => {

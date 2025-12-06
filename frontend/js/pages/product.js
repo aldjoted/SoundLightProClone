@@ -12,7 +12,16 @@ export async function initProductPage(signal) {
     const productId = urlParams.get('id');
 
     if (!productId) {
-        container.innerHTML = `<p class="error-message">No product specified. <a href="index.html">Return to products</a>.</p>`;
+        container.innerHTML = '';
+        const p = document.createElement('p');
+        p.className = 'error-message';
+        p.textContent = 'No product specified. ';
+        const a = document.createElement('a');
+        a.href = 'index.html';
+        a.textContent = 'Return to products';
+        p.appendChild(a);
+        p.appendChild(document.createTextNode('.'));
+        container.appendChild(p);
         return;
     }
 
@@ -25,7 +34,16 @@ export async function initProductPage(signal) {
         await loadRelatedProducts(productId);
     } catch (error) {
         console.error('Error fetching product details:', error);
-        container.innerHTML = `<p class="error-message">Could not load product. It may not exist. <a href="index.html">Return to products</a>.</p>`;
+        container.innerHTML = '';
+        const p = document.createElement('p');
+        p.className = 'error-message';
+        p.textContent = 'Could not load product. It may not exist. ';
+        const a = document.createElement('a');
+        a.href = 'index.html';
+        a.textContent = 'Return to products';
+        p.appendChild(a);
+        p.appendChild(document.createTextNode('.'));
+        container.appendChild(p);
     }
 }
 
@@ -61,20 +79,30 @@ async function loadProductReviews(productId) {
         const reviews = await reviewManager.loadReviews(productId);
         // Clear the loading spinner before rendering reviews
         listContainer.innerHTML = '';
-        
+
         if (reviews && reviews.length > 0) {
             reviews.forEach((review) => {
                 const reviewCard = ui.renderReviewCard(review);
                 listContainer.appendChild(reviewCard);
             });
         } else {
-            listContainer.innerHTML = `
-                <div class="no-reviews">
-                    <i class="far fa-comment-alt"></i>
-                    <h3>${i18n.t('no_reviews', 'No customer stories yet')}</h3>
-                    <p>${i18n.t('be_first_review', 'Be the first to share how this gear performs and inspire fellow creatives!')}</p>
-                </div>
-            `;
+            listContainer.innerHTML = '';
+            const noReviewsDiv = document.createElement('div');
+            noReviewsDiv.className = 'no-reviews';
+
+            const icon = document.createElement('i');
+            icon.className = 'far fa-comment-alt';
+
+            const h3 = document.createElement('h3');
+            h3.textContent = i18n.t('no_reviews', 'No customer stories yet');
+
+            const p = document.createElement('p');
+            p.textContent = i18n.t('be_first_review', 'Be the first to share how this gear performs and inspire fellow creatives!');
+
+            noReviewsDiv.appendChild(icon);
+            noReviewsDiv.appendChild(h3);
+            noReviewsDiv.appendChild(p);
+            listContainer.appendChild(noReviewsDiv);
         }
 
         const writeReviewBtn = document.getElementById('write-review-btn');
@@ -100,7 +128,13 @@ async function loadProductReviews(productId) {
                                 ui.showToast(i18n.t('review_submitted'), 'success');
                                 formContainer.classList.add('hidden');
 
-                                listContainer.innerHTML = '<div class="reviews-loading"><div class="spinner"></div></div>';
+                                listContainer.innerHTML = '';
+                                const loadingDiv = document.createElement('div');
+                                loadingDiv.className = 'reviews-loading';
+                                const spinner = document.createElement('div');
+                                spinner.className = 'spinner';
+                                loadingDiv.appendChild(spinner);
+                                listContainer.appendChild(loadingDiv);
                                 const updatedReviews = await reviewManager.loadReviews(productId);
                                 listContainer.innerHTML = '';
                                 updatedReviews.forEach((review) => {
@@ -131,7 +165,13 @@ async function loadProductReviews(productId) {
         const sortSelect = document.getElementById('review-sort-select');
         if (sortSelect) {
             sortSelect.addEventListener('change', async (e) => {
-                listContainer.innerHTML = '<div class="reviews-loading"><div class="spinner"></div></div>';
+                listContainer.innerHTML = '';
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'reviews-loading';
+                const spinner = document.createElement('div');
+                spinner.className = 'spinner';
+                loadingDiv.appendChild(spinner);
+                listContainer.appendChild(loadingDiv);
                 const sortedReviews = await reviewManager.loadReviews(productId, e.target.value);
                 listContainer.innerHTML = '';
                 sortedReviews.forEach((review) => {
@@ -143,7 +183,11 @@ async function loadProductReviews(productId) {
     } catch (error) {
         console.error('Error loading product reviews:', error);
         if (listContainer) {
-            listContainer.innerHTML = `<p class="error-message">${i18n.t('error_loading_reviews')}</p>`;
+            listContainer.innerHTML = '';
+            const p = document.createElement('p');
+            p.className = 'error-message';
+            p.textContent = i18n.t('error_loading_reviews');
+            listContainer.appendChild(p);
         }
     }
 }
@@ -156,29 +200,50 @@ async function loadRelatedProducts(productId) {
     }
 
     try {
-        relatedSection.innerHTML = `
-            <div class="related-products-loading">
-                <div class="spinner"></div>
-                <p>${i18n.t('loading_related_products')}</p>
-            </div>
-        `;
+        relatedSection.innerHTML = '';
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'related-products-loading';
+
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner';
+
+        const p = document.createElement('p');
+        p.textContent = i18n.t('loading_related_products');
+
+        loadingDiv.appendChild(spinner);
+        loadingDiv.appendChild(p);
+        relatedSection.appendChild(loadingDiv);
 
         const relatedProducts = await apiService.getRelatedProducts(productId);
 
         if (relatedProducts && relatedProducts.length > 0) {
             ui.renderRelatedProducts(relatedProducts, relatedSection);
         } else {
-            relatedSection.innerHTML = `
-                <div class="no-related-products">
-                    <i class="fas fa-boxes"></i>
-                    <h3>${i18n.t('no_related_products')}</h3>
-                    <p>${i18n.t('check_back_later')}</p>
-                </div>
-            `;
+            relatedSection.innerHTML = '';
+            const noRelatedDiv = document.createElement('div');
+            noRelatedDiv.className = 'no-related-products';
+
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-boxes';
+
+            const h3 = document.createElement('h3');
+            h3.textContent = i18n.t('no_related_products');
+
+            const p = document.createElement('p');
+            p.textContent = i18n.t('check_back_later');
+
+            noRelatedDiv.appendChild(icon);
+            noRelatedDiv.appendChild(h3);
+            noRelatedDiv.appendChild(p);
+            relatedSection.appendChild(noRelatedDiv);
         }
     } catch (error) {
         console.error('Error loading related products:', error);
-        relatedSection.innerHTML = `<p class="error-message">${i18n.t('error_loading_related')}</p>`;
+        relatedSection.innerHTML = '';
+        const p = document.createElement('p');
+        p.className = 'error-message';
+        p.textContent = i18n.t('error_loading_related');
+        relatedSection.appendChild(p);
     }
 }
 
@@ -328,11 +393,27 @@ async function setupProductDetailPageEventListeners(product) {
                 if (inWishlist) {
                     wishlistBtn.classList.add('in-wishlist');
                     wishlistBtn.setAttribute('aria-pressed', 'true');
-                    wishlistBtn.innerHTML = `<i class="fas fa-heart"></i> <span class="btn-text">${i18n.t('in_wishlist')}</span>`;
+                    wishlistBtn.innerHTML = '';
+                    const icon = document.createElement('i');
+                    icon.className = 'fas fa-heart';
+                    const span = document.createElement('span');
+                    span.className = 'btn-text';
+                    span.textContent = i18n.t('in_wishlist');
+                    wishlistBtn.appendChild(icon);
+                    wishlistBtn.appendChild(document.createTextNode(' '));
+                    wishlistBtn.appendChild(span);
                 } else {
                     wishlistBtn.classList.remove('in-wishlist');
                     wishlistBtn.setAttribute('aria-pressed', 'false');
-                    wishlistBtn.innerHTML = `<i class="far fa-heart"></i> <span class="btn-text">${i18n.t('add_to_wishlist')}</span>`;
+                    wishlistBtn.innerHTML = '';
+                    const icon = document.createElement('i');
+                    icon.className = 'far fa-heart';
+                    const span = document.createElement('span');
+                    span.className = 'btn-text';
+                    span.textContent = i18n.t('add_to_wishlist');
+                    wishlistBtn.appendChild(icon);
+                    wishlistBtn.appendChild(document.createTextNode(' '));
+                    wishlistBtn.appendChild(span);
                 }
             };
 

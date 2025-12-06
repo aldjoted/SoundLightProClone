@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
         event.preventDefault();
 
         const submitButton = form.querySelector('button[type="submit"]');
-        const originalButtonContent = submitButton ? submitButton.innerHTML : '';
+        const originalButtonContent = submitButton ? submitButton.textContent : '';
         let redirectScheduled = false;
 
         if (formMessage) {
@@ -37,7 +37,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (submitButton) {
             submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+            submitButton.textContent = '';
+            const spinner = document.createElement('i');
+            spinner.className = 'fas fa-spinner fa-spin';
+            submitButton.appendChild(spinner);
+            submitButton.appendChild(document.createTextNode(' Logging in...'));
         }
 
         try {
@@ -50,7 +54,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 ui.showToast('Verification code sent to your email.', 'success');
 
                 if (submitButton) {
-                    submitButton.innerHTML = '<i class="fas fa-check"></i> Redirecting...';
+                    submitButton.textContent = '';
+                    const check = document.createElement('i');
+                    check.className = 'fas fa-check';
+                    submitButton.appendChild(check);
+                    submitButton.appendChild(document.createTextNode(' Redirecting...'));
                 }
 
                 redirectScheduled = true;
@@ -76,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             if (submitButton && !redirectScheduled) {
                 submitButton.disabled = false;
-                submitButton.innerHTML = originalButtonContent;
+                submitButton.textContent = originalButtonContent;
             }
         }
     });

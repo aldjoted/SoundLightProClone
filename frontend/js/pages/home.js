@@ -124,7 +124,18 @@ export function initHomePage(signal) {
         } catch (error) {
             if (error.name !== 'AbortError') {
                 console.error('Error initializing homepage:', error);
-                productGrid.innerHTML = `<p class="error-message">Failed to load products. <button onclick="location.reload()" class="btn btn--primary">Retry</button></p>`;
+                productGrid.innerHTML = '';
+                const p = document.createElement('p');
+                p.className = 'error-message';
+                p.textContent = 'Failed to load products. ';
+
+                const btn = document.createElement('button');
+                btn.onclick = () => location.reload();
+                btn.className = 'btn btn--primary';
+                btn.textContent = 'Retry';
+
+                p.appendChild(btn);
+                productGrid.appendChild(p);
             }
         }
     }, 'Initializing home page');

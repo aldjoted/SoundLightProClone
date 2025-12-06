@@ -49,7 +49,7 @@ export class LazyLoader {
       img.src = img.dataset.src;
       img.removeAttribute('data-src');
     }
-    
+
     if (img.dataset.srcset) {
       img.srcset = img.dataset.srcset;
       img.removeAttribute('data-srcset');
@@ -66,7 +66,7 @@ export class LazyLoader {
   // Method to observe new images added dynamically
   observeNewImages(container) {
     if (!this.imageObserver) return;
-    
+
     const newImages = container.querySelectorAll('img[data-src]');
     newImages.forEach(img => {
       this.imageObserver.observe(img);
@@ -154,7 +154,7 @@ export class PerformanceMonitor {
       this.observeWebVitals();
       this.observeResources();
     }
-    
+
     // Initialize connectivity monitoring
     this.initConnectivityMonitoring();
   }
@@ -168,18 +168,18 @@ export class PerformanceMonitor {
     if (!this.metrics[category]) {
       this.metrics[category] = [];
     }
-    
+
     const metric = {
       ...data,
       timestamp: Date.now(),
       url: window.location.pathname
     };
-    
+
     this.metrics[category].push(metric);
-    
+
     // Check thresholds
     this.checkThresholds(category, metric);
-    
+
     // Limit storage size (keep last 100, then trim to 50)
     if (this.metrics[category].length > 100) {
       this.metrics[category] = this.metrics[category].slice(-50);
@@ -194,8 +194,8 @@ export class PerformanceMonitor {
   checkThresholds(category, metric) {
     let threshold;
     let value;
-    
-    switch(category) {
+
+    switch (category) {
       case 'pageLoads':
         threshold = this.thresholds.lcp;
         value = metric.lcp;
@@ -207,14 +207,14 @@ export class PerformanceMonitor {
       default:
         return;
     }
-    
+
     if (value > threshold) {
       console.warn(`Performance threshold exceeded for ${category}:`, {
         value,
         threshold,
         metric
       });
-      
+
       // Send to analytics if in production
       if (IS_PRODUCTION && window.gtag) {
         window.gtag('event', 'performance_issue', {
@@ -232,10 +232,10 @@ export class PerformanceMonitor {
    */
   getReport() {
     const report = {};
-    
+
     Object.entries(this.metrics).forEach(([category, metrics]) => {
       if (metrics.length === 0) return;
-      
+
       const values = metrics.map(m => m.value || m.duration || 0);
       report[category] = {
         count: metrics.length,
@@ -245,7 +245,7 @@ export class PerformanceMonitor {
         p95: this.calculatePercentile(values, 95)
       };
     });
-    
+
     return report;
   }
 
@@ -337,7 +337,7 @@ export class PerformanceMonitor {
   getMetrics() {
     return this.metrics;
   }
-  
+
   /**
    * Initialize connectivity monitoring
    * Tracks online/offline events for PWA performance analysis
@@ -349,16 +349,16 @@ export class PerformanceMonitor {
       online: navigator.onLine,
       timestamp: Date.now()
     });
-    
+
     // Listen for online event
     window.addEventListener('online', () => {
       const metric = {
         event: 'online',
         timestamp: Date.now()
       };
-      
+
       this.recordMetric('connectivity', metric);
-      
+
       // Send to analytics
       if (window.gtag) {
         window.gtag('event', 'connection_restored', {
@@ -367,19 +367,19 @@ export class PerformanceMonitor {
           non_interaction: true
         });
       }
-      
+
       console.log('[Performance] Connection restored');
     });
-    
+
     // Listen for offline event
     window.addEventListener('offline', () => {
       const metric = {
         event: 'offline',
         timestamp: Date.now()
       };
-      
+
       this.recordMetric('connectivity', metric);
-      
+
       // Send to analytics
       if (window.gtag) {
         window.gtag('event', 'connection_lost', {
@@ -388,14 +388,14 @@ export class PerformanceMonitor {
           non_interaction: true
         });
       }
-      
+
       console.log('[Performance] Connection lost');
     });
-    
+
     // Monitor connection quality (if Network Information API is available)
     if ('connection' in navigator) {
       const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-      
+
       if (connection) {
         // Track initial connection type
         this.recordMetric('connectivity', {
@@ -405,7 +405,7 @@ export class PerformanceMonitor {
           rtt: connection.rtt,
           saveData: connection.saveData
         });
-        
+
         // Listen for connection changes
         connection.addEventListener('change', () => {
           this.recordMetric('connectivity', {
@@ -416,20 +416,20 @@ export class PerformanceMonitor {
             saveData: connection.saveData,
             timestamp: Date.now()
           });
-          
+
           console.log('[Performance] Connection changed:', connection.effectiveType);
         });
       }
     }
   }
-  
+
   /**
    * Get connectivity statistics
    * @returns {Object} Connectivity stats
    */
   getConnectivityStats() {
     const events = this.metrics.connectivity || [];
-    
+
     if (events.length === 0) {
       return {
         online: navigator.onLine,
@@ -438,10 +438,10 @@ export class PerformanceMonitor {
         onlineCount: 0
       };
     }
-    
+
     const offlineEvents = events.filter(e => e.event === 'offline');
     const onlineEvents = events.filter(e => e.event === 'online');
-    
+
     return {
       online: navigator.onLine,
       totalEvents: events.length,
@@ -504,38 +504,50 @@ export class ServiceWorkerManager {
     }
   }
 
+  /**
+   * Show update prompt to user
+   */
   static showUpdatePrompt() {
     const updateBanner = document.createElement('div');
     updateBanner.className = 'update-banner';
-    updateBanner.innerHTML = `
-      <div class="update-content">
-        <span>A new version is available!</span>
-        <button onclick="location.reload()">Update</button>
-        <button onclick="this.parentElement.parentElement.remove()">Dismiss</button>
-      </div>
-    `;
+    updateBanner.setAttribute('role', 'alert');
+
+    const message = document.createElement('span');
+    message.textContent = 'A new version is available!';
+
+    const refreshBtn = document.createElement('button');
+    refreshBtn.textContent = 'Refresh';
+    refreshBtn.className = 'btn btn--primary btn--sm';
+    refreshBtn.addEventListener('click', () => {
+      window.location.reload();
+    });
+
+    updateBanner.appendChild(message);
+    updateBanner.appendChild(refreshBtn);
     document.body.appendChild(updateBanner);
   }
 }
 
-// Initialize performance optimizations
-export const initPerformanceOptimizations = () => {
+/**
+ * Initialize all performance optimizations
+ */
+export function initPerformanceOptimizations() {
   // Initialize lazy loading
   new LazyLoader();
-  
+
   // Set up resource hints
   ResourceHints.preconnectToOrigins();
-  
+
   // Initialize performance monitoring
   if (IS_PRODUCTION) {
     new PerformanceMonitor();
   }
-  
+
   // Register service worker
   // Ensure we don't keep stale SW when previewing on LAN
   ServiceWorkerManager.unregisterIfNeeded();
   ServiceWorkerManager.register();
-};
+}
 
 export default {
   LazyLoader,

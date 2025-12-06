@@ -155,6 +155,15 @@ const DIRECT_PRODUCT_IMAGE_KEYS = [
 
 ];
 
+/**
+ * Normalizes an object key for case-insensitive and flexible matching.
+ * Converts to lowercase and removes hyphens, underscores, and whitespace.
+ * Used internally for matching image variant keys across different API response formats.
+ * 
+ * @param {string} key - The object key to normalize
+ * @returns {string} The normalized key, or empty string if input is not a string
+ * @private
+ */
 function normalizeKey(key) {
 
     return typeof key === 'string' ? key.toLowerCase().replace(/[-_\s]+/g, '') : '';
@@ -314,19 +323,13 @@ function resolveProductPrimaryImage(product) {
 
 
 /**
-
- * Creates a DOM element with given attributes and children.
-
- * @param {string} tag - The HTML tag for the element.
-
- * @param {object} [attributes={}] - An object of attributes to set on the element.
-
- * @param {(string|Node)[]} [children=[]] - An array of child nodes or strings to append.
-
- * @returns {HTMLElement} The created element.
-
+ * Validates whether a URL uses a safe protocol for use in href/src attributes.
+ * Prevents XSS attacks by blocking dangerous protocols like javascript: or vbscript:.
+ * 
+ * @param {string} url - The URL to validate
+ * @returns {boolean} True if the URL uses http:, https:, or data: protocol
+ * @private
  */
-
 function isSafeUrl(url) {
 
     try {
@@ -338,6 +341,15 @@ function isSafeUrl(url) {
     } catch { return false; }
 
 }
+
+/**
+ * Creates a DOM element with given attributes and children.
+ *
+ * @param {string} tag - The HTML tag for the element.
+ * @param {object} [attributes={}] - An object of attributes to set on the element.
+ * @param {(string|Node)[]} [children=[]] - An array of child nodes or strings to append.
+ * @returns {HTMLElement} The created element.
+ */
 
 
 
@@ -443,12 +455,84 @@ export function showToast(message, type = 'info') {
 
     ]);
 
-    
-    
+
+
     toastContainer.appendChild(toast);
 
     setTimeout(() => toast.remove(), 5000);
 
+}
+
+/**
+ * Renders search suggestions dropdown
+ * @param {Array<Object>} products - Array of product objects
+ * @param {HTMLElement} container - The container element for suggestions
+ */
+export function renderSearchSuggestions(products, container) {
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (!products || products.length === 0) {
+        const noResults = document.createElement('div');
+        noResults.className = 'search-no-results';
+
+        const icon = document.createElement('i');
+        icon.className = 'far fa-search';
+
+        const p = document.createElement('p');
+        p.textContent = 'No products found';
+
+        noResults.appendChild(icon);
+        noResults.appendChild(p);
+        container.appendChild(noResults);
+        return;
+    }
+
+    const list = document.createElement('ul');
+    list.className = 'search-results-list';
+    list.setAttribute('role', 'listbox');
+
+    products.slice(0, 8).forEach((product, index) => {
+        const li = document.createElement('li');
+        li.className = 'search-result-item';
+        li.setAttribute('role', 'option');
+        li.id = `search-result-${index}`;
+
+        const link = document.createElement('a');
+        link.className = 'result-link';
+        link.href = `product.html?id=${product.id}`;
+
+        const imgWrapper = document.createElement('div');
+        imgWrapper.className = 'result-image';
+
+        const img = document.createElement('img');
+        img.src = product.image || product.thumbnail || '/images/placeholder.jpg';
+        img.alt = product.name || product.title || '';
+        img.loading = 'lazy';
+        imgWrapper.appendChild(img);
+
+        const info = document.createElement('div');
+        info.className = 'result-info';
+
+        const name = document.createElement('span');
+        name.className = 'result-name';
+        name.textContent = product.name || product.title || 'Unknown Product';
+
+        const price = document.createElement('span');
+        price.className = 'result-price';
+        price.textContent = product.price ? `$${parseFloat(product.price).toFixed(2)}` : '';
+
+        info.appendChild(name);
+        info.appendChild(price);
+
+        link.appendChild(imgWrapper);
+        link.appendChild(info);
+        li.appendChild(link);
+        list.appendChild(li);
+    });
+
+    container.appendChild(list);
 }
 
 
@@ -513,7 +597,7 @@ export function renderHeroSlider(_unused = []) {
         // Otherwise, make it relative to current document
         return new URL(p, window.location.href).toString();
     };
-    
+
     // Hero slide content with images, titles, descriptions, and CTAs
     const slides = [
         {
@@ -576,11 +660,11 @@ export function renderHeroSlider(_unused = []) {
 
     swiperWrapper.innerHTML = '';
     const frag = document.createDocumentFragment();
-    
+
     slides.forEach((slideData, index) => {
         const slide = document.createElement('div');
         slide.className = 'swiper-slide';
-        
+
         const img = document.createElement('img');
         img.className = 'slide-bg';
         img.alt = slideData.title;
@@ -588,28 +672,42 @@ export function renderHeroSlider(_unused = []) {
         img.width = 1920;
         img.height = 822;
         if (index > 0) img.loading = 'lazy';
-        
-        const overlay = document.createElement('div');
-        overlay.className = 'slide-overlay';
-        
-        // Create hero content
-        const heroContent = document.createElement('div');
-        heroContent.className = 'hero-content';
-        heroContent.innerHTML = `
-            <h2 class="hero-title">${escapeHtml(slideData.title)}</h2>
-            <p class="hero-subtitle">${escapeHtml(slideData.subtitle)}</p>
-            <a href="${slideData.ctaLink}" class="btn btn--primary hero-cta">
-                ${escapeHtml(slideData.cta)}
-                <i class="fas fa-arrow-right"></i>
-            </a>
-        `;
-        
         slide.appendChild(img);
-        slide.appendChild(overlay);
-        slide.appendChild(heroContent);
+
+        const content = document.createElement('div');
+        content.className = 'slide-content container';
+
+        const textWrapper = document.createElement('div');
+        textWrapper.className = 'slide-text';
+
+        const title = document.createElement('h2');
+        title.className = 'slide-title';
+        title.textContent = slideData.title;
+        title.setAttribute('data-aos', 'fade-up');
+        title.setAttribute('data-aos-delay', '100');
+
+        const subtitle = document.createElement('p');
+        subtitle.className = 'slide-subtitle';
+        subtitle.textContent = slideData.subtitle;
+        subtitle.setAttribute('data-aos', 'fade-up');
+        subtitle.setAttribute('data-aos-delay', '200');
+
+        const cta = document.createElement('a');
+        cta.className = 'btn btn--primary slide-cta';
+        cta.href = slideData.ctaLink;
+        cta.textContent = slideData.cta;
+        cta.setAttribute('data-aos', 'fade-up');
+        cta.setAttribute('data-aos-delay', '300');
+
+        textWrapper.appendChild(title);
+        textWrapper.appendChild(subtitle);
+        textWrapper.appendChild(cta);
+        content.appendChild(textWrapper);
+        slide.appendChild(content);
+
         frag.appendChild(slide);
     });
-    
+
     swiperWrapper.appendChild(frag);
 }
 
@@ -648,7 +746,7 @@ export function renderMegaMenu(categories) {
     megaMenuContainer._tabSwitchingInitialized = false;
 
     megaMenuContainer.innerHTML = '';
-    
+
     // Store signature of rendered categories
     megaMenuContainer._renderedCategories = JSON.stringify(categories.map(c => c.id));
 
@@ -722,7 +820,7 @@ export function renderMegaMenu(categories) {
 
             col.appendChild(link);
 
-            
+
 
             // Add grandchildren (sub-subcategories) if they exist
 
@@ -734,9 +832,9 @@ export function renderMegaMenu(categories) {
 
                     const item = createElement('li');
 
-                    const sublink = createElement('a', { 
+                    const sublink = createElement('a', {
 
-                        href: `search-results.html?category=${encodeURIComponent(grandchild.slug)}` 
+                        href: `search-results.html?category=${encodeURIComponent(grandchild.slug)}`
 
                     }, [grandchild.name]);
 
@@ -750,7 +848,7 @@ export function renderMegaMenu(categories) {
 
             }
 
-            
+
 
             pane.appendChild(col);
 
@@ -800,18 +898,18 @@ function setupMegaMenuTabSwitching(megaMenuContainer) {
 
     }
 
-    
+
 
     const tabButtons = megaMenuContainer.querySelectorAll('.mega-menu-tab-btn');
 
     const tabPanes = megaMenuContainer.querySelectorAll('.mega-menu-pane');
 
-    
+
 
     console.log('Setting up mega menu tab switching:', tabButtons.length, 'buttons,', tabPanes.length, 'panes');
 
-    
-    
+
+
     tabButtons.forEach((button, index) => {
 
         // Use direct event listener instead of ListenerManager for reliability
@@ -821,28 +919,28 @@ function setupMegaMenuTabSwitching(megaMenuContainer) {
 
             e.stopPropagation();
 
-            
+
 
             const targetId = button.dataset.target;
 
             console.log('Tab clicked:', button.textContent, 'target:', targetId);
 
-            
-            
+
+
             // Remove active class from all buttons and panes
 
             tabButtons.forEach(btn => btn.classList.remove('active'));
 
             tabPanes.forEach(pane => pane.classList.remove('active'));
 
-            
-            
+
+
             // Add active class to clicked button
 
             button.classList.add('active');
 
-            
-            
+
+
             // Show the corresponding pane
 
             const targetPane = megaMenuContainer.querySelector(`#${targetId}`);
@@ -863,7 +961,7 @@ function setupMegaMenuTabSwitching(megaMenuContainer) {
 
     });
 
-    
+
 
     // FIXED: Mark as initialized to prevent duplicate setup
 
@@ -889,23 +987,34 @@ export function renderFeaturedGrid(products) {
 
 
 
-    grid.innerHTML = products.map(product => `
+    grid.innerHTML = '';
+    const frag = document.createDocumentFragment();
 
-        <a href="product.html?id=${product.id}" class="focus-card">
+    products.forEach(product => {
+        const a = createElement('a', { href: `product.html?id=${product.id}`, class: 'focus-card' });
 
-            <img src="${getProductImage(product)}" alt="${escapeHtml(product.name)}" loading="lazy" width="400" height="250">
+        const img = createElement('img', {
+            src: getProductImage(product),
+            alt: product.name,
+            loading: 'lazy',
+            width: '400',
+            height: '250'
+        });
 
-            <div class="focus-card-content">
+        const content = createElement('div', { class: 'focus-card-content' });
 
-                <h3>${escapeHtml(product.name)}</h3>
+        const h3 = createElement('h3', {}, [product.name]);
+        const p = createElement('p', {}, [product.category]);
 
-                <p>${escapeHtml(product.category)}</p>
+        content.appendChild(h3);
+        content.appendChild(p);
 
-            </div>
+        a.appendChild(img);
+        a.appendChild(content);
+        frag.appendChild(a);
+    });
 
-        </a>
-
-    `).join('');
+    grid.appendChild(frag);
 
 }
 
@@ -925,7 +1034,7 @@ export function renderCategoryFilters(categories) {
 
     const filterContainer = document.querySelector('.filter-controls');
 
-    if(!filterContainer) return;
+    if (!filterContainer) return;
 
     filterContainer.innerHTML = '';
 
@@ -977,8 +1086,8 @@ export function renderProductGrid(products, container) {
 
     }
 
-    
-    
+
+
     const fragment = document.createDocumentFragment();
 
     products.forEach(product => {
@@ -998,7 +1107,7 @@ export function renderProductGrid(products, container) {
                 createElement('img', { src: getProductImage(product), alt: product.name, loading: 'lazy', width: '400', height: '250' })
 
             ]),
-            
+
             // Modern Action Bar
             createElement('div', { class: 'product-card-actions' }, [
                 createElement('button', { class: 'btn-card-action quick-view-btn', 'data-product-id': product.id, 'aria-label': i18n.t('btn_quick_view') }, [
@@ -1053,79 +1162,65 @@ export function renderProductGrid(products, container) {
  */
 
 export function renderQuickViewModal(product) {
-
     let desc = 'No description available.';
-
     if (product.description) {
-
-        if (product.description.length > 150) {
-
-            desc = product.description.substring(0, 150) + '...';
-
-        } else {
-
-            desc = product.description;
-
-        }
-
+        desc = product.description.length > 150 ? product.description.substring(0, 150) + '...' : product.description;
     }
 
-    const productNameEsc = escapeHtml(product.name || '');
+    const overlay = createElement('div', { class: 'modal-overlay', id: 'quick-view-overlay' });
 
-    const productImage = getProductImage(product);
+    const modalContent = createElement('div', {
+        class: 'modal-content',
+        id: 'quick-view-content',
+        role: 'dialog',
+        'aria-modal': 'true',
+        'aria-labelledby': 'modal-title'
+    });
 
-    const modalHTML = `
+    const closeBtn = createElement('button', { class: 'modal-close-btn', 'aria-label': 'Close quick view' }, ['\u00d7']); // \u00d7 is times symbol
+    modalContent.appendChild(closeBtn);
 
-        <div class="modal-overlay" id="quick-view-overlay">
+    const layout = createElement('div', { class: 'product-detail-layout' });
 
-            <div class="modal-content" id="quick-view-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    // Gallery
+    const gallery = createElement('div', { class: 'product-gallery' });
+    const img = createElement('img', {
+        src: getProductImage(product),
+        alt: product.name || '',
+        loading: 'lazy'
+    });
+    gallery.appendChild(img);
+    layout.appendChild(gallery);
 
-                <button class="modal-close-btn" aria-label="Close quick view">&times;</button>
+    // Info
+    const info = createElement('div', { class: 'product-detail-info' });
+    info.appendChild(createElement('h2', { id: 'modal-title' }, [product.name || '']));
+    info.appendChild(createElement('p', { class: 'price' }, [`$${parseFloat(product.price).toFixed(2)}`]));
+    info.appendChild(createElement('p', {}, [desc]));
 
-                <div class="product-detail-layout">
+    const addBtn = createElement('button', {
+        class: 'btn btn--primary add-to-cart-modal-btn',
+        'data-product-id': product.id,
+        'aria-label': `Add ${product.name} to cart`
+    });
+    addBtn.appendChild(createElement('i', { class: 'fas fa-shopping-cart' }));
+    addBtn.appendChild(document.createTextNode(' Add to Cart'));
+    info.appendChild(addBtn);
 
-                    <div class="product-gallery">
+    const viewLink = createElement('a', { href: `product.html?id=${product.id}`, class: 'view-full-details' });
+    viewLink.appendChild(document.createTextNode('View full details '));
+    viewLink.appendChild(document.createTextNode('\u2192')); // Right arrow
+    info.appendChild(viewLink);
 
-                        <img src="${productImage}" alt="${productNameEsc}" loading="lazy">
+    layout.appendChild(info);
+    modalContent.appendChild(layout);
+    overlay.appendChild(modalContent);
 
-                    </div>
-
-                    <div class="product-detail-info">
-
-                        <h2 id="modal-title">${productNameEsc}</h2>
-
-                        <p class="price">$${parseFloat(product.price).toFixed(2)}</p>
-
-                        <p>${escapeHtml(desc)}</p>
-
-                        <button class="btn btn--primary add-to-cart-modal-btn" data-product-id="${product.id}" aria-label="Add ${productNameEsc} to cart">
-
-                            <i class="fas fa-shopping-cart"></i> Add to Cart
-
-                        </button>
-
-                        <a href="product.html?id=${product.id}" class="view-full-details">View full details &rarr;</a>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-
+    document.body.appendChild(overlay);
     document.body.classList.add('no-scroll');
 
-
-
     // Set up event listeners for the modal
-
     setupQuickViewEventListeners(product);
-
 }
 
 
@@ -1210,13 +1305,17 @@ function setupQuickViewEventListeners(product) {
 
             addToCartBtn.disabled = true;
 
-            addToCartBtn.innerHTML = `<i class="fas fa-check"></i> Added`;
+            addToCartBtn.innerHTML = '';
+            addToCartBtn.appendChild(createElement('i', { class: 'fas fa-check' }));
+            addToCartBtn.appendChild(document.createTextNode(' Added'));
 
             setTimeout(() => {
 
                 addToCartBtn.disabled = false;
 
-                addToCartBtn.innerHTML = `<i class="fas fa-shopping-cart"></i> Add to Cart`;
+                addToCartBtn.innerHTML = '';
+                addToCartBtn.appendChild(createElement('i', { class: 'fas fa-shopping-cart' }));
+                addToCartBtn.appendChild(document.createTextNode(' Add to Cart'));
 
             }, 1500);
 
@@ -1335,30 +1434,29 @@ export function renderProductDetail(product, container) {
             ? `Only ${stockCount} left in stock`
             : `${stockCount} units available`;
 
-    let thumbnailsHTML = '';
+    const thumbnailsFrag = document.createDocumentFragment();
     if (Array.isArray(product.images) && product.images.length > 1) {
-        thumbnailsHTML = `
-            <div class="product-thumbnails">
-                ${product.images.map((img, index) => {
-                    const sources = resolveGalleryImageSources(img);
-                    const thumbSrc = sources.thumb || DEFAULT_PRODUCT_PLACEHOLDER;
-                    const fullSrc = sources.full || thumbSrc;
-                    const alt = sources.alt || product.name || '';
-                    return `
-                    <img
-                        src="${escapeHtml(thumbSrc)}"
-                        data-full-src="${escapeHtml(fullSrc)}"
-                        data-thumb-src="${escapeHtml(thumbSrc)}"
-                        data-alt="${escapeHtml(alt)}"
-                        alt="${escapeHtml(alt)}"
-                        class="thumbnail-img ${index === 0 ? 'active' : ''}"
-                        width="100"
-                        height="100"
-                        loading="lazy"
-                    />
-                `; }).join('')}
-            </div>
-        `;
+        const thumbContainer = createElement('div', { class: 'product-thumbnails' });
+        product.images.forEach((img, index) => {
+            const sources = resolveGalleryImageSources(img);
+            const thumbSrc = sources.thumb || DEFAULT_PRODUCT_PLACEHOLDER;
+            const fullSrc = sources.full || thumbSrc;
+            const alt = sources.alt || product.name || '';
+
+            const thumbImg = createElement('img', {
+                src: thumbSrc,
+                'data-full-src': fullSrc,
+                'data-thumb-src': thumbSrc,
+                'data-alt': alt,
+                alt: alt,
+                class: `thumbnail-img ${index === 0 ? 'active' : ''}`,
+                width: '100',
+                height: '100',
+                loading: 'lazy'
+            });
+            thumbContainer.appendChild(thumbImg);
+        });
+        thumbnailsFrag.appendChild(thumbContainer);
     }
 
     const categoryName = product.category ? escapeHtml(product.category) : 'N/A';
@@ -1369,90 +1467,123 @@ export function renderProductDetail(product, container) {
 
     const priceLabel = i18n.formatCurrency ? i18n.formatCurrency(product.price) : `$${parseFloat(product.price).toFixed(2)}`;
 
-    const productHTML = `
-        <div class="product-detail-layout">
-            <div class="product-gallery">
-                <div class="main-image-container">
-                    <img
-                        id="main-product-image"
-                        src="${escapeHtml(mainImageSrc)}"
-                        alt="${escapeHtml(mainImageAlt)}"
-                        width="600"
-                        height="400"
-                        loading="eager"
-                        decoding="async"
-                        data-full-src="${escapeHtml(mainImageSrc)}"
-                        ${mainImageThumb ? `data-thumb-src="${escapeHtml(mainImageThumb)}"` : ''}
-                    />
-                </div>
-                ${thumbnailsHTML}
-            </div>
-            <div class="product-detail-info">
-                <div class="product-info-header">
-                    <div class="product-pill-group">
-                        ${product.category ? `<span class="product-pill">${categoryName}</span>` : ''}
-                        <span class="product-pill ${stockBadgeStatus}">${escapeHtml(stockBadgeLabel)}</span>
-                    </div>
-                    <h1>${escapeHtml(product.name)}</h1>
-                </div>
-                <div class="product-price-block">
-                    <p class="price">${escapeHtml(priceLabel)}</p>
-                </div>
-                <ul class="product-meta">
-                    <li>
-                        <span class="label">Category</span>
-                        <span class="value">${categoryName}</span>
-                    </li>
-                    <li>
-                        <span class="label">Brand</span>
-                        <span class="value">${brandName}</span>
-                    </li>
-                </ul>
-                <div class="description">
-                    <h2 class="product-section-title">Description</h2>
-                    <p>${descriptionText}</p>
-                </div>
+    const layout = createElement('div', { class: 'product-detail-layout' });
 
-                ${renderProductMediaSection(product)}
+    // Gallery
+    const gallery = createElement('div', { class: 'product-gallery' });
+    const mainImgContainer = createElement('div', { class: 'main-image-container' });
+    const mainImg = createElement('img', {
+        id: 'main-product-image',
+        src: mainImageSrc,
+        alt: mainImageAlt,
+        width: '600',
+        height: '400',
+        loading: 'eager',
+        decoding: 'async',
+        'data-full-src': mainImageSrc
+    });
+    if (mainImageThumb) mainImg.setAttribute('data-thumb-src', mainImageThumb);
+    mainImgContainer.appendChild(mainImg);
+    gallery.appendChild(mainImgContainer);
+    gallery.appendChild(thumbnailsFrag);
+    layout.appendChild(gallery);
 
-                <div class="product-actions">
-                    <form id="add-to-cart-form" class="add-to-cart-form">
-                        <div class="quantity-control">
-                            <label for="quantity">Quantity:</label>
-                            <input
-                                type="number"
-                                id="quantity"
-                                value="${quantityValue}"
-                                min="${quantityMin}"
-                                max="${quantityMax}"
-                                ${quantityDisabledAttr}
-                            />
-                        </div>
-                        <button type="submit" class="btn btn--primary" ${addBtnDisabledAttr}>
-                            <i class="fas fa-shopping-cart"></i>
-                            ${escapeHtml(addBtnLabel)}
-                        </button>
-                    </form>
-                    <div id="notify-me-container" class="hidden">
-                        <p data-i18n="out_of_stock_notify">This product is out of stock. Enter your email to be notified when it's back.</p>
-                        <form id="notify-me-form">
-                            <input type="email" id="notify-email" placeholder="Enter your email" required>
-                            <button type="submit" class="btn btn-secondary" data-i18n="notify_me">Notify Me</button>
-                        </form>
-                    </div>
-                    <div class="product-secondary-actions">
-                        <button type="button" class="wishlist-btn" aria-label="${escapeHtml(wishlistLabel)}">
-                            <i class="far fa-heart"></i>
-                            <span class="btn-text">${escapeHtml(wishlistLabel)}</span>
-                        </button>
-                    </div>
-                </div>
-                <p class="stock-info ${stockInfoClass}">${escapeHtml(stockInfoText)}</p>
-            </div>
-        </div>
-    `;
+    // Info
+    const info = createElement('div', { class: 'product-detail-info' });
 
-    container.innerHTML = productHTML;
+    // Header
+    const header = createElement('div', { class: 'product-info-header' });
+    const pillGroup = createElement('div', { class: 'product-pill-group' });
+    if (product.category) {
+        pillGroup.appendChild(createElement('span', { class: 'product-pill' }, [categoryName]));
+    }
+    pillGroup.appendChild(createElement('span', { class: `product-pill ${stockBadgeStatus}` }, [stockBadgeLabel]));
+    header.appendChild(pillGroup);
+    header.appendChild(createElement('h1', {}, [product.name]));
+    info.appendChild(header);
+
+    // Price
+    const priceBlock = createElement('div', { class: 'product-price-block' });
+    priceBlock.appendChild(createElement('p', { class: 'price' }, [priceLabel]));
+    info.appendChild(priceBlock);
+
+    // Meta
+    const meta = createElement('ul', { class: 'product-meta' });
+    const catLi = createElement('li');
+    catLi.appendChild(createElement('span', { class: 'label' }, ['Category']));
+    catLi.appendChild(createElement('span', { class: 'value' }, [categoryName]));
+    meta.appendChild(catLi);
+
+    const brandLi = createElement('li');
+    brandLi.appendChild(createElement('span', { class: 'label' }, ['Brand']));
+    brandLi.appendChild(createElement('span', { class: 'value' }, [brandName]));
+    meta.appendChild(brandLi);
+    info.appendChild(meta);
+
+    // Description
+    const descDiv = createElement('div', { class: 'description' });
+    descDiv.appendChild(createElement('h2', { class: 'product-section-title' }, ['Description']));
+    descDiv.appendChild(createElement('p', {}, [descriptionText]));
+    info.appendChild(descDiv);
+
+    // Media Section (Assuming renderProductMediaSection returns HTML string, we might need to handle it)
+    // renderProductMediaSection(product) returns a string.
+    // We should ideally refactor renderProductMediaSection too, but for now let's use a wrapper or innerHTML for just that part if necessary.
+    // Or check if renderProductMediaSection is simple.
+    // It's not in the view.
+    // Let's assume it returns HTML string.
+    const mediaElement = renderProductMediaSection(product);
+    if (mediaElement) {
+        info.appendChild(mediaElement);
+    }
+
+    // Actions
+    const actions = createElement('div', { class: 'product-actions' });
+    const form = createElement('form', { id: 'add-to-cart-form', class: 'add-to-cart-form' });
+    const qtyControl = createElement('div', { class: 'quantity-control' });
+    qtyControl.appendChild(createElement('label', { for: 'quantity' }, ['Quantity:']));
+    const qtyInput = createElement('input', {
+        type: 'number',
+        id: 'quantity',
+        value: quantityValue.toString(),
+        min: quantityMin.toString(),
+        max: quantityMax.toString()
+    });
+    if (quantityDisabledAttr) qtyInput.disabled = true;
+    qtyControl.appendChild(qtyInput);
+    form.appendChild(qtyControl);
+
+    const submitBtn = createElement('button', { type: 'submit', class: 'btn btn--primary' });
+    if (addBtnDisabledAttr) submitBtn.disabled = true;
+    submitBtn.appendChild(createElement('i', { class: 'fas fa-shopping-cart' }));
+    submitBtn.appendChild(document.createTextNode(' ' + addBtnLabel));
+    form.appendChild(submitBtn);
+    actions.appendChild(form);
+
+    const notifyContainer = createElement('div', { id: 'notify-me-container', class: 'hidden' });
+    notifyContainer.appendChild(createElement('p', { 'data-i18n': 'out_of_stock_notify' }, ["This product is out of stock. Enter your email to be notified when it's back."]));
+    const notifyForm = createElement('form', { id: 'notify-me-form' });
+    notifyForm.appendChild(createElement('input', { type: 'email', id: 'notify-email', placeholder: 'Enter your email', required: 'true' }));
+    notifyForm.appendChild(createElement('button', { type: 'submit', class: 'btn btn-secondary', 'data-i18n': 'notify_me' }, ['Notify Me']));
+    notifyContainer.appendChild(notifyForm);
+    actions.appendChild(notifyContainer);
+
+    const secondaryActions = createElement('div', { class: 'product-secondary-actions' });
+    const wishlistBtn = createElement('button', { type: 'button', class: 'wishlist-btn', 'aria-label': wishlistLabel });
+    wishlistBtn.appendChild(createElement('i', { class: 'far fa-heart' }));
+    wishlistBtn.appendChild(createElement('span', { class: 'btn-text' }, [wishlistLabel]));
+    secondaryActions.appendChild(wishlistBtn);
+    actions.appendChild(secondaryActions);
+
+    info.appendChild(actions);
+
+    // Stock Info
+    info.appendChild(createElement('p', { class: `stock-info ${stockInfoClass}` }, [stockInfoText]));
+
+    layout.appendChild(info);
+
+    container.innerHTML = '';
+    container.appendChild(layout);
 
     // Remove existing sticky CTA if present
     const existingSticky = document.getElementById('sticky-cta');
@@ -1464,21 +1595,32 @@ export function renderProductDetail(product, container) {
     const sticky = document.createElement('div');
     sticky.className = 'sticky-cta';
     sticky.id = 'sticky-cta';
-    sticky.innerHTML = `
-        <p class="price">${escapeHtml(priceLabel)}</p>
-        <input
-            type="number"
-            class="qty"
-            id="sticky-qty"
-            value="${quantityValue}"
-            min="${quantityMin}"
-            max="${quantityMax}"
-            ${quantityDisabledAttr}
-        />
-        <button class="btn btn--primary" id="sticky-add" ${addBtnDisabledAttr}>
-            <i class="fas fa-shopping-cart"></i> ${escapeHtml(addBtnLabel)}
-        </button>
-    `;
+    sticky.innerHTML = '';
+
+    const priceP = createElement('p', { class: 'price' }, [priceLabel]);
+
+    const stickyQtyInput = createElement('input', {
+        type: 'number',
+        class: 'qty',
+        id: 'sticky-qty',
+        value: quantityValue.toString(),
+        min: quantityMin.toString(),
+        max: quantityMax.toString()
+    });
+    if (quantityDisabledAttr) stickyQtyInput.disabled = true;
+
+    const addBtn = createElement('button', {
+        class: 'btn btn--primary',
+        id: 'sticky-add'
+    });
+    if (addBtnDisabledAttr) addBtn.disabled = true;
+
+    addBtn.appendChild(createElement('i', { class: 'fas fa-shopping-cart' }));
+    addBtn.appendChild(document.createTextNode(' ' + addBtnLabel));
+
+    sticky.appendChild(priceP);
+    sticky.appendChild(stickyQtyInput);
+    sticky.appendChild(addBtn);
     document.body.appendChild(sticky);
 }
 
@@ -1508,35 +1650,35 @@ export function renderMiniCart(items = []) {
 
         ? [createElement('div', { class: 'mini-cart-empty' }, [
 
-              createElement('i', { class: 'fas fa-shopping-cart', style: 'font-size:2rem;' }),
+            createElement('i', { class: 'fas fa-shopping-cart', style: 'font-size:2rem;' }),
 
-              createElement('p', {}, ['Your cart is empty.'])
+            createElement('p', {}, ['Your cart is empty.'])
 
-          ])]
+        ])]
 
         : items.map(i =>
 
-              createElement('div', { class: 'mini-cart-item', 'data-id': i.id }, [
+            createElement('div', { class: 'mini-cart-item', 'data-id': i.id }, [
 
-                  createElement('img', { class: 'mini-cart-thumb', src: i.image || 'https://via.placeholder.com/64', alt: i.name, loading: 'lazy' }),
+                createElement('img', { class: 'mini-cart-thumb', src: i.image || 'https://via.placeholder.com/64', alt: i.name, loading: 'lazy' }),
 
-                  createElement('div', {}, [
+                createElement('div', {}, [
 
-                      createElement('p', { class: 'mini-cart-name' }, [i.name]),
+                    createElement('p', { class: 'mini-cart-name' }, [i.name]),
 
-                      createElement('p', { class: 'mini-cart-meta' }, [`$${i.price.toFixed(2)} • Qty: ${i.quantity}`]),
+                    createElement('p', { class: 'mini-cart-meta' }, [`$${i.price.toFixed(2)} • Qty: ${i.quantity}`]),
 
-                  ]),
+                ]),
 
-                  createElement('button', { class: 'mini-cart-remove', title: 'Remove' }, [
+                createElement('button', { class: 'mini-cart-remove', title: 'Remove' }, [
 
-                      createElement('i', { class: 'fas fa-trash' })
+                    createElement('i', { class: 'fas fa-trash' })
 
-                  ])
+                ])
 
-              ])
+            ])
 
-          );
+        );
 
 
 
@@ -1582,8 +1724,8 @@ export function renderMiniCart(items = []) {
 
     ]);
 
-    
-    
+
+
     document.body.appendChild(overlay);
 
     document.body.classList.add('no-scroll');
@@ -1697,21 +1839,21 @@ export function updateUserAuthUI(user) {
             userInfo.classList.remove('hidden');
 
             if (usernameDisplay) {
-            usernameDisplay.textContent = user.username;
+                usernameDisplay.textContent = user.username;
 
             }
 
             if (userDropdownMenu) {
-                userDropdownMenu.innerHTML = `
-                    <a href="dashboard.html" class="user-dropdown-link">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span>Dashboard</span>
-                    </a>
-                    <button id="logout-button" class="logout-btn">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span data-i18n="nav_logout">Logout</span>
-                    </button>
-                `;
+                userDropdownMenu.innerHTML = '';
+                const dashboardLink = createElement('a', { href: 'dashboard.html', class: 'user-dropdown-link' });
+                dashboardLink.appendChild(createElement('i', { class: 'fas fa-tachometer-alt' }));
+                dashboardLink.appendChild(createElement('span', {}, ['Dashboard']));
+                userDropdownMenu.appendChild(dashboardLink);
+
+                const logoutBtn = createElement('button', { id: 'logout-button', class: 'logout-btn' });
+                logoutBtn.appendChild(createElement('i', { class: 'fas fa-sign-out-alt' }));
+                logoutBtn.appendChild(createElement('span', { 'data-i18n': 'nav_logout' }, ['Logout']));
+                userDropdownMenu.appendChild(logoutBtn);
             }
 
         } else {
@@ -1720,16 +1862,16 @@ export function updateUserAuthUI(user) {
             userInfo.classList.add('hidden');
 
             if (userDropdownMenu) {
-                userDropdownMenu.innerHTML = `
-                    <a href="login.html" class="user-dropdown-link">
-                        <i class="fas fa-sign-in-alt"></i>
-                        <span data-i18n="nav_login">Login</span>
-                    </a>
-                    <a href="register.html" class="user-dropdown-link">
-                        <i class="fas fa-user-plus"></i>
-                        <span data-i18n="nav_register">Register</span>
-                    </a>
-                `;
+                userDropdownMenu.innerHTML = '';
+                const loginLink = createElement('a', { href: 'login.html', class: 'user-dropdown-link' });
+                loginLink.appendChild(createElement('i', { class: 'fas fa-sign-in-alt' }));
+                loginLink.appendChild(createElement('span', { 'data-i18n': 'nav_login' }, ['Login']));
+                userDropdownMenu.appendChild(loginLink);
+
+                const registerLink = createElement('a', { href: 'register.html', class: 'user-dropdown-link' });
+                registerLink.appendChild(createElement('i', { class: 'fas fa-user-plus' }));
+                registerLink.appendChild(createElement('span', { 'data-i18n': 'nav_register' }, ['Register']));
+                userDropdownMenu.appendChild(registerLink);
             }
 
         }
@@ -2240,149 +2382,41 @@ export function renderRelatedProducts(products, container) {
 
  * @param {Array<Object>} products - Array of matching products.
 
- * @param {HTMLElement} container - The container to render suggestions into.
 
+
+/**
+ * Creates an empty cart placeholder element
+ * @returns {HTMLElement}
  */
+export function createEmptyCartElement() {
+    const emptyCart = document.createElement('div');
+    emptyCart.className = 'empty-cart';
 
-export function renderSearchSuggestions(products, container) {
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-shopping-cart';
 
-    if (!container) return;
+    const h3 = document.createElement('h3');
+    h3.textContent = 'Your cart is empty';
 
-    container.classList.add('search-suggestions-container');
+    const p = document.createElement('p');
+    p.textContent = 'Looks like you haven\'t added any items to your cart yet.';
 
-    if (products.length === 0) {
+    const link = document.createElement('a');
+    link.href = 'index.html';
+    link.className = 'btn btn-primary';
+    link.textContent = 'Continue Shopping';
 
-        container.innerHTML = `<div class="search-no-results"><i class="far fa-frown"></i><p>No products found.</p></div>`;
+    emptyCart.appendChild(icon);
+    emptyCart.appendChild(h3);
+    emptyCart.appendChild(p);
+    emptyCart.appendChild(link);
 
-        container.classList.remove('hidden');
-
-        return;
-
-    }
-
-    const count = Math.min(products.length, 8);
-
-    const q = (document.getElementById('search-input')?.value || '').trim();
-
-    const viewAllHref = q ? `search-results.html?${new URLSearchParams({ q }).toString()}` : 'search-results.html';
-
-    container.innerHTML = `
-
-        <div class="suggestions-header">
-
-            <span class="header-title">Products</span>
-
-            <span class="header-count">${count}${products.length > 8 ? '+' : ''}</span>
-
-        </div>
-
-        <ul role="listbox" aria-label="Product search suggestions">
-
-            ${products.slice(0, 8).map((p, idx) => `
-
-                <li class="search-result-item ${idx===0?'highlighted':''}" role="option" data-index="${idx}">
-
-                    <a class="result-link" href="product.html?id=${p.id}">
-
-                        <img class="search-thumb" src="${getProductImage(p, 'thumb')}" alt="${escapeHtml(p.name)}" loading="lazy" width="36" height="36">
-
-                        <div class="result-details">
-
-                            <span class="search-name">${escapeHtml(p.name)}</span>
-
-                            <span class="search-price">$${parseFloat(p.price).toFixed(2)}</span>
-
-                        </div>
-
-                    </a>
-
-                    <div class="result-actions">
-
-                        <button class="quick-add-btn"
-
-                            aria-label="Quick add ${escapeHtml(p.name)}"
-
-                            data-id="${p.id}"
-
-                            data-name="${escapeHtml(p.name)}"
-
-                            data-price="${parseFloat(p.price)}"
-
-                            data-image="${getProductImage(p)}">
-
-                            <i class="fas fa-plus"></i>
-
-                        </button>
-
-                    </div>
-
-                </li>
-
-            `).join('')}
-
-        </ul>
-
-        <div class="suggestions-footer">
-
-            <a class="view-all-results" href="${viewAllHref}">
-
-                <i class="fas fa-search"></i>
-
-                View all results
-
-            </a>
-
-        </div>
-
-    `;
-
-    container.classList.remove('hidden');
-
+    return emptyCart;
 }
-
-
-
-// ============= Cart Page UI Helpers =============
-
-
 
 /**
 
  * Returns HTML string for an empty cart state. Used with container.innerHTML.
-
- * Static content only (no untrusted interpolation).
-
- */
-
-export function getEmptyCartHTML() {
-
-    const title = i18n.t ? i18n.t('cart_empty_title', 'Your cart is empty') : 'Your cart is empty';
-
-    const subtitle = i18n.t ? i18n.t('cart_empty_sub', 'Looks like you haven\'t added anything yet.') : "Looks like you haven't added anything yet.";
-
-    const cta = i18n.t ? i18n.t('cart_continue_shopping', 'Continue shopping') : 'Continue shopping';
-
-    return `
-
-        <div class="cart-empty card-base">
-
-            <div class="cart-empty-icon"><i class="fas fa-shopping-cart"></i></div>
-
-            <h3>${title}</h3>
-
-            <p>${subtitle}</p>
-
-            <a class="btn btn--primary" href="index.html">${cta}</a>
-
-        </div>
-
-    `;
-
-}
-
-
-
-/**
 
  * Builds and returns DOM nodes for the cart layout and the summary panel.
 
@@ -2627,66 +2661,65 @@ function renderProductMediaSection(product) {
     const attachments = product.attachments || [];
 
     if (videos.length === 0 && attachments.length === 0) {
-        return '';
+        return null;
     }
 
-    let html = '<div class="product-media-section">';
-    
+    const container = createElement('div', { class: 'product-media-section' });
+
     if (videos.length > 0) {
-        html += '<h3 class="product-section-title">Product Videos</h3><div class="video-grid">';
+        const videoSection = createElement('div', { class: 'media-group' });
+        videoSection.appendChild(createElement('h3', {}, ['Videos']));
+        const videoGrid = createElement('div', { class: 'video-grid' });
+
         videos.forEach(video => {
-            html += '<div class="video-item">';
-            if (video.youtube_url) {
-                // Extract video ID from YouTube URL
-                const videoId = getYouTubeId(video.youtube_url);
-                if (videoId) {
-                    html += `
-                        <div class="video-wrapper">
-                            <iframe 
-                                src="https://www.youtube.com/embed/${videoId}" 
-                                title="${escapeHtml(video.title || 'Product Video')}"
-                                frameborder="0" 
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                allowfullscreen>
-                            </iframe>
-                        </div>
-                    `;
-                }
+            const videoItem = createElement('div', { class: 'video-item' });
+            const videoWrapper = createElement('div', { class: 'video-wrapper' });
+
+            if (video.youtube_id) {
+                const iframe = createElement('iframe', {
+                    src: `https://www.youtube.com/embed/${video.youtube_id}`,
+                    frameborder: '0',
+                    allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
+                    allowfullscreen: 'true'
+                });
+                videoWrapper.appendChild(iframe);
             } else if (video.video_file) {
-                html += `
-                    <div class="video-wrapper">
-                        <video controls preload="metadata">
-                            <source src="${escapeHtml(video.video_file)}" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                    </div>
-                `;
+                const videoTag = createElement('video', { controls: 'true' });
+                videoTag.appendChild(createElement('source', { src: video.video_file, type: 'video/mp4' }));
+                videoTag.appendChild(document.createTextNode('Your browser does not support the video tag.'));
+                videoWrapper.appendChild(videoTag);
             }
+
+            videoItem.appendChild(videoWrapper);
             if (video.title) {
-                html += `<p class="video-title">${escapeHtml(video.title)}</p>`;
+                videoItem.appendChild(createElement('p', { class: 'video-title' }, [video.title]));
             }
-            html += '</div>';
+            videoGrid.appendChild(videoItem);
         });
-        html += '</div>';
+
+        videoSection.appendChild(videoGrid);
+        container.appendChild(videoSection);
     }
 
     if (attachments.length > 0) {
-        html += '<h3 class="product-section-title">Downloads & Manuals</h3><ul class="attachment-list">';
+        const attSection = createElement('div', { class: 'media-group' });
+        attSection.appendChild(createElement('h3', {}, ['Downloads']));
+        const attList = createElement('ul', { class: 'attachment-list' });
+
         attachments.forEach(att => {
-            html += `
-                <li>
-                    <a href="${escapeHtml(att.file)}" target="_blank" class="attachment-link">
-                        <i class="fas fa-file-pdf"></i>
-                        <span>${escapeHtml(att.label || 'Download')}</span>
-                    </a>
-                </li>
-            `;
+            const li = createElement('li');
+            const link = createElement('a', { href: att.file, target: '_blank', class: 'attachment-link' });
+            link.appendChild(createElement('i', { class: 'fas fa-file-pdf' }));
+            link.appendChild(createElement('span', {}, [att.label || 'Download']));
+            li.appendChild(link);
+            attList.appendChild(li);
         });
-        html += '</ul>';
+
+        attSection.appendChild(attList);
+        container.appendChild(attSection);
     }
 
-    html += '</div>';
-    return html;
+    return container;
 }
 
 function getYouTubeId(url) {
@@ -2717,39 +2750,58 @@ export function updateWishlistCount(count) {
  * @returns {HTMLElement} The wishlist item element.
  */
 export function renderWishlistItem(product) {
-    const item = document.createElement('div');
-    item.className = 'wishlist-item';
-    item.dataset.productId = product.id;
-    
-    const imageUrl = product.main_image || product.image || '/images/placeholder.jpg';
-    const price = typeof product.price === 'number' ? product.price.toFixed(2) : product.price;
-    
-    item.innerHTML = `
-        <div class="wishlist-item-image">
-            <a href="product.html?id=${product.id}">
-                <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(product.name)}" loading="lazy">
-            </a>
-        </div>
-        <div class="wishlist-item-details">
-            <h3 class="wishlist-item-name">
-                <a href="product.html?id=${product.id}">${escapeHtml(product.name)}</a>
-            </h3>
-            ${product.brand_name ? `<p class="wishlist-item-brand">${escapeHtml(product.brand_name)}</p>` : ''}
-            <p class="wishlist-item-price">$${escapeHtml(price)}</p>
-            ${product.stock_quantity > 0 
-                ? '<span class="stock-status in-stock"><i class="fas fa-check"></i> In Stock</span>'
-                : '<span class="stock-status out-of-stock"><i class="fas fa-times"></i> Out of Stock</span>'
-            }
-        </div>
-        <div class="wishlist-item-actions">
-            <button class="btn btn-primary add-to-cart-btn" data-product-id="${product.id}" ${product.stock_quantity <= 0 ? 'disabled' : ''}>
-                <i class="fas fa-shopping-cart"></i> Add to Cart
-            </button>
-            <button class="btn btn-outline remove-from-wishlist-btn" data-product-id="${product.id}" aria-label="Remove from wishlist">
-                <i class="fas fa-trash"></i>
-            </button>
-        </div>
-    `;
-    
+    const imageUrl = getProductImage(product, 'thumb');
+    const price = i18n.formatCurrency ? i18n.formatCurrency(product.price) : parseFloat(product.price).toFixed(2);
+
+    const item = createElement('div', { class: 'wishlist-item', 'data-product-id': product.id });
+
+    // Image container
+    const imgContainer = createElement('div', { class: 'wishlist-item-image' });
+    const imgLink = createElement('a', { href: `product.html?id=${product.id}` });
+    imgLink.appendChild(createElement('img', { src: imageUrl, alt: product.name, loading: 'lazy' }));
+    imgContainer.appendChild(imgLink);
+    item.appendChild(imgContainer);
+
+    // Details
+    const details = createElement('div', { class: 'wishlist-item-details' });
+    const nameH3 = createElement('h3', { class: 'wishlist-item-name' });
+    nameH3.appendChild(createElement('a', { href: `product.html?id=${product.id}` }, [product.name]));
+    details.appendChild(nameH3);
+
+    if (product.brand_name) {
+        details.appendChild(createElement('p', { class: 'wishlist-item-brand' }, [product.brand_name]));
+    }
+
+    details.appendChild(createElement('p', { class: 'wishlist-item-price' }, [price]));
+
+    const stockStatus = product.stock_quantity > 0
+        ? createElement('span', { class: 'stock-status in-stock' })
+        : createElement('span', { class: 'stock-status out-of-stock' });
+
+    if (product.stock_quantity > 0) {
+        stockStatus.appendChild(createElement('i', { class: 'fas fa-check' }));
+        stockStatus.appendChild(document.createTextNode(' In Stock'));
+    } else {
+        stockStatus.appendChild(createElement('i', { class: 'fas fa-times' }));
+        stockStatus.appendChild(document.createTextNode(' Out of Stock'));
+    }
+    details.appendChild(stockStatus);
+    item.appendChild(details);
+
+    // Actions
+    const actions = createElement('div', { class: 'wishlist-item-actions' });
+
+    const addToCartBtn = createElement('button', { class: 'btn btn-primary add-to-cart-btn', 'data-product-id': product.id });
+    if (product.stock_quantity <= 0) addToCartBtn.disabled = true;
+    addToCartBtn.appendChild(createElement('i', { class: 'fas fa-shopping-cart' }));
+    addToCartBtn.appendChild(document.createTextNode(' Add to Cart'));
+    actions.appendChild(addToCartBtn);
+
+    const removeBtn = createElement('button', { class: 'btn btn-outline remove-from-wishlist-btn', 'data-product-id': product.id, 'aria-label': 'Remove from wishlist' });
+    removeBtn.appendChild(createElement('i', { class: 'fas fa-trash' }));
+    actions.appendChild(removeBtn);
+
+    item.appendChild(actions);
+
     return item;
 }

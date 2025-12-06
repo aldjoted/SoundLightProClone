@@ -50,12 +50,12 @@ function loadScript(src, options = {}) {
       resolve();
       return;
     }
-    
+
     const script = document.createElement('script');
     script.src = src;
     script.async = true;
     script.defer = true;
-    
+
     if (options.onload) {
       script.onload = () => {
         options.onload();
@@ -64,9 +64,9 @@ function loadScript(src, options = {}) {
     } else {
       script.onload = resolve;
     }
-    
+
     script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-    
+
     document.head.appendChild(script);
   });
 }
@@ -79,18 +79,18 @@ async function fetchConfig() {
   if (captchaConfig) {
     return captchaConfig;
   }
-  
+
   try {
     const response = await fetch(`${API_BASE_URL}/captcha-config/`, {
       credentials: 'include',
     });
-    
+
     if (!response.ok) {
       console.warn('[CAPTCHA] Failed to fetch config, CAPTCHA disabled');
       captchaConfig = { enabled: false };
       return captchaConfig;
     }
-    
+
     captchaConfig = await response.json();
     return captchaConfig;
   } catch (error) {
@@ -112,35 +112,35 @@ export const CaptchaManager = {
     if (isInitialized) {
       return captchaConfig?.enabled || false;
     }
-    
+
     const config = await fetchConfig();
-    
+
     if (!config.enabled) {
       console.log('[CAPTCHA] Not enabled, skipping initialization');
       isInitialized = true;
       return false;
     }
-    
+
     try {
       switch (config.provider) {
         case 'hcaptcha':
           await loadScript(SCRIPT_URLS.hcaptcha);
           break;
-        
+
         case 'recaptcha_v2':
           await loadScript(SCRIPT_URLS.recaptcha_v2);
           break;
-        
+
         case 'recaptcha_v3':
           const v3Url = `https://www.google.com/recaptcha/api.js?render=${config.site_key}`;
           await loadScript(v3Url);
           break;
-        
+
         default:
           console.warn(`[CAPTCHA] Unknown provider: ${config.provider}`);
           return false;
       }
-      
+
       isInitialized = true;
       console.log(`[CAPTCHA] Initialized with provider: ${config.provider}`);
       return true;
@@ -149,7 +149,7 @@ export const CaptchaManager = {
       return false;
     }
   },
-  
+
   /**
    * Check if CAPTCHA is enabled
    * @returns {boolean}
@@ -157,7 +157,7 @@ export const CaptchaManager = {
   isEnabled() {
     return captchaConfig?.enabled || false;
   },
-  
+
   /**
    * Get the current provider name
    * @returns {string|null}
@@ -165,7 +165,7 @@ export const CaptchaManager = {
   getProvider() {
     return captchaConfig?.provider || null;
   },
-  
+
   /**
    * Render CAPTCHA widget in a container element
    * Only needed for hCaptcha and reCAPTCHA v2 (v3 is invisible)
@@ -177,21 +177,21 @@ export const CaptchaManager = {
     if (!captchaConfig?.enabled) {
       return null;
     }
-    
-    const containerEl = typeof container === 'string' 
-      ? document.getElementById(container) 
+
+    const containerEl = typeof container === 'string'
+      ? document.getElementById(container)
       : container;
-    
+
     if (!containerEl) {
       console.error('[CAPTCHA] Container not found:', container);
       return null;
     }
-    
+
     // Clear any existing widget
     containerEl.innerHTML = '';
-    
+
     const { site_key, provider } = captchaConfig;
-    
+
     switch (provider) {
       case 'hcaptcha':
         if (typeof hcaptcha !== 'undefined') {
@@ -206,7 +206,7 @@ export const CaptchaManager = {
           return widgetId;
         }
         break;
-      
+
       case 'recaptcha_v2':
         if (typeof grecaptcha !== 'undefined') {
           widgetId = grecaptcha.render(containerEl, {
@@ -220,21 +220,25 @@ export const CaptchaManager = {
           return widgetId;
         }
         break;
-      
+
       case 'recaptcha_v3':
         // v3 is invisible, no widget to render
         // Show a badge notice instead
-        containerEl.innerHTML = `
-          <div class="recaptcha-v3-notice">
-            <small>Protected by reCAPTCHA</small>
-          </div>
-        `;
+        // v3 is invisible, no widget to render
+        // Show a badge notice instead
+        containerEl.innerHTML = '';
+        const noticeDiv = document.createElement('div');
+        noticeDiv.className = 'recaptcha-v3-notice';
+        const small = document.createElement('small');
+        small.textContent = 'Protected by reCAPTCHA';
+        noticeDiv.appendChild(small);
+        containerEl.appendChild(noticeDiv);
         return null;
     }
-    
+
     return null;
   },
-  
+
   /**
    * Get CAPTCHA response token
    * For v2/hCaptcha: returns the widget response
@@ -246,9 +250,9 @@ export const CaptchaManager = {
     if (!captchaConfig?.enabled) {
       return '';
     }
-    
+
     const { provider, site_key } = captchaConfig;
-    
+
     switch (provider) {
       case 'hcaptcha':
         if (typeof hcaptcha !== 'undefined') {
@@ -259,7 +263,7 @@ export const CaptchaManager = {
           return response;
         }
         break;
-      
+
       case 'recaptcha_v2':
         if (typeof grecaptcha !== 'undefined') {
           const response = grecaptcha.getResponse(widgetId);
@@ -269,7 +273,7 @@ export const CaptchaManager = {
           return response;
         }
         break;
-      
+
       case 'recaptcha_v3':
         if (typeof grecaptcha !== 'undefined') {
           return new Promise((resolve, reject) => {
@@ -282,10 +286,10 @@ export const CaptchaManager = {
         }
         break;
     }
-    
+
     return '';
   },
-  
+
   /**
    * Reset the CAPTCHA widget
    */
@@ -293,36 +297,36 @@ export const CaptchaManager = {
     if (!captchaConfig?.enabled || widgetId === null) {
       return;
     }
-    
+
     const { provider } = captchaConfig;
-    
+
     switch (provider) {
       case 'hcaptcha':
         if (typeof hcaptcha !== 'undefined') {
           hcaptcha.reset(widgetId);
         }
         break;
-      
+
       case 'recaptcha_v2':
         if (typeof grecaptcha !== 'undefined') {
           grecaptcha.reset(widgetId);
         }
         break;
-      
+
       // v3 doesn't need reset
     }
   },
-  
+
   /**
-   * Create HTML for CAPTCHA container
-   * @returns {string} HTML string
+   * Create DOM element for CAPTCHA container
+   * @returns {HTMLElement} Container element
    */
-  getContainerHTML() {
-    return `
-      <div id="captcha-container" class="captcha-container" aria-label="CAPTCHA verification">
-        <!-- CAPTCHA widget will be rendered here -->
-      </div>
-    `;
+  createContainerElement() {
+    const div = document.createElement('div');
+    div.id = 'captcha-container';
+    div.className = 'captcha-container';
+    div.setAttribute('aria-label', 'CAPTCHA verification');
+    return div;
   },
 };
 

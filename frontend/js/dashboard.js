@@ -42,7 +42,7 @@ const dashboardState = {
 export async function initDashboard() {
     // Initialize i18n first
     i18n.translatePage();
-    
+
     // Ensure there is a valid session (will attempt cookie-based refresh)
     const accessToken = await apiService.ensureAccessToken();
     if (!accessToken) {
@@ -295,25 +295,56 @@ function renderRecentOrders(orders) {
     const container = document.getElementById('recent-orders-list');
     if (!container) return;
 
+    container.innerHTML = ''; // Clear container
+
     if (orders.length === 0) {
-        container.innerHTML = '<p class="empty-state">No orders yet. Start shopping!</p>';
+        const p = document.createElement('p');
+        p.className = 'empty-state';
+        p.textContent = 'No orders yet. Start shopping!';
+        container.appendChild(p);
         return;
     }
 
-    container.innerHTML = orders.map(order => `
-        <div class="order-item-summary">
-            <div class="order-info">
-                <h4>Order #${order.id}</h4>
-                <span class="order-date">${formatDate(order.created_at)}</span>
-            </div>
-            <div class="order-status">
-                <span class="status-badge ${order.status_class}">${order.status_display}</span>
-            </div>
-            <div class="order-amount">
-                <strong>$${order.total_paid}</strong>
-            </div>
-        </div>
-    `).join('');
+    orders.forEach(order => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'order-item-summary';
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'order-info';
+
+        const h4 = document.createElement('h4');
+        h4.textContent = `Order #${order.id}`;
+
+        const dateSpan = document.createElement('span');
+        dateSpan.className = 'order-date';
+        dateSpan.textContent = formatDate(order.created_at);
+
+        infoDiv.appendChild(h4);
+        infoDiv.appendChild(dateSpan);
+
+        const statusDiv = document.createElement('div');
+        statusDiv.className = 'order-status';
+
+        const statusBadge = document.createElement('span');
+        statusBadge.className = `status-badge ${order.status_class}`;
+        statusBadge.textContent = order.status_display;
+
+        statusDiv.appendChild(statusBadge);
+
+        const amountDiv = document.createElement('div');
+        amountDiv.className = 'order-amount';
+
+        const strong = document.createElement('strong');
+        strong.textContent = `$${order.total_paid}`;
+
+        amountDiv.appendChild(strong);
+
+        itemDiv.appendChild(infoDiv);
+        itemDiv.appendChild(statusDiv);
+        itemDiv.appendChild(amountDiv);
+
+        container.appendChild(itemDiv);
+    });
 }
 
 // ==================== PROFILE SECTION ====================
@@ -412,7 +443,7 @@ function setupOrderFilters() {
     };
 
     statusFilter?.addEventListener('change', applyFilters);
-    
+
     searchInput?.addEventListener('input', () => {
         clearTimeout(filterTimeout);
         filterTimeout = setTimeout(applyFilters, 500);
@@ -426,58 +457,147 @@ function renderOrders(orders) {
     const container = document.getElementById('orders-container');
     if (!container) return;
 
+    container.innerHTML = ''; // Clear container
+
     if (orders.length === 0) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-box"></i><p>No orders found.</p></div>';
+        const emptyState = document.createElement('div');
+        emptyState.className = 'empty-state';
+
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-box';
+
+        const p = document.createElement('p');
+        p.textContent = 'No orders found.';
+
+        emptyState.appendChild(icon);
+        emptyState.appendChild(p);
+        container.appendChild(emptyState);
         return;
     }
 
-    container.innerHTML = orders.map(order => `
-        <div class="order-card" data-order-id="${order.id}">
-            <div class="order-header">
-                <div class="order-number">
-                    <h3>Order #${order.id}</h3>
-                    <span class="order-date">${formatDate(order.created_at)}</span>
-                </div>
-                <span class="status-badge ${order.status_class}">${order.status_display}</span>
-            </div>
-            
-            <div class="order-body">
-                <div class="order-items">
-                    ${order.items.slice(0, 2).map(item => `
-                        <div class="order-item-mini">
-                            ${item.product_image ? `<img src="${item.product_image}" alt="${item.product_name}">` : '<div class="no-image"></div>'}
-                            <span>${item.product_name} (x${item.quantity})</span>
-                        </div>
-                    `).join('')}
-                    ${order.items.length > 2 ? `<span class="more-items">+${order.items.length - 2} more</span>` : ''}
-                </div>
-                
-                <div class="order-summary">
-                    <div class="order-total">
-                        <span>Total:</span>
-                        <strong>$${order.total_paid}</strong>
-                    </div>
-                    ${order.tracking_number ? `
-                        <div class="tracking-info">
-                            <i class="fas fa-truck"></i>
-                            <span>Tracking: ${order.tracking_number}</span>
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-            
-            <div class="order-actions">
-                <button class="btn btn-secondary btn-sm" onclick="dashboard.viewOrderDetails(${order.id})">
-                    View Details
-                </button>
-                ${order.can_cancel ? `
-                    <button class="btn btn-danger btn-sm" onclick="dashboard.cancelOrder(${order.id})">
-                        Cancel Order
-                    </button>
-                ` : ''}
-            </div>
-        </div>
-    `).join('');
+    orders.forEach(order => {
+        const card = document.createElement('div');
+        card.className = 'order-card';
+        card.dataset.orderId = order.id;
+
+        // Header
+        const header = document.createElement('div');
+        header.className = 'order-header';
+
+        const numberDiv = document.createElement('div');
+        numberDiv.className = 'order-number';
+
+        const h3 = document.createElement('h3');
+        h3.textContent = `Order #${order.id}`;
+
+        const dateSpan = document.createElement('span');
+        dateSpan.className = 'order-date';
+        dateSpan.textContent = formatDate(order.created_at);
+
+        numberDiv.appendChild(h3);
+        numberDiv.appendChild(dateSpan);
+
+        const statusBadge = document.createElement('span');
+        statusBadge.className = `status-badge ${order.status_class}`;
+        statusBadge.textContent = order.status_display;
+
+        header.appendChild(numberDiv);
+        header.appendChild(statusBadge);
+
+        // Body
+        const body = document.createElement('div');
+        body.className = 'order-body';
+
+        const itemsDiv = document.createElement('div');
+        itemsDiv.className = 'order-items';
+
+        order.items.slice(0, 2).forEach(item => {
+            const itemMini = document.createElement('div');
+            itemMini.className = 'order-item-mini';
+
+            if (item.product_image) {
+                const img = document.createElement('img');
+                img.src = item.product_image;
+                img.alt = item.product_name;
+                itemMini.appendChild(img);
+            } else {
+                const noImage = document.createElement('div');
+                noImage.className = 'no-image';
+                itemMini.appendChild(noImage);
+            }
+
+            const span = document.createElement('span');
+            span.textContent = `${item.product_name} (x${item.quantity})`;
+            itemMini.appendChild(span);
+
+            itemsDiv.appendChild(itemMini);
+        });
+
+        if (order.items.length > 2) {
+            const moreItems = document.createElement('span');
+            moreItems.className = 'more-items';
+            moreItems.textContent = `+${order.items.length - 2} more`;
+            itemsDiv.appendChild(moreItems);
+        }
+
+        const summaryDiv = document.createElement('div');
+        summaryDiv.className = 'order-summary';
+
+        const totalDiv = document.createElement('div');
+        totalDiv.className = 'order-total';
+
+        const totalLabel = document.createElement('span');
+        totalLabel.textContent = 'Total:';
+
+        const totalValue = document.createElement('strong');
+        totalValue.textContent = `$${order.total_paid}`;
+
+        totalDiv.appendChild(totalLabel);
+        totalDiv.appendChild(totalValue);
+        summaryDiv.appendChild(totalDiv);
+
+        if (order.tracking_number) {
+            const trackingDiv = document.createElement('div');
+            trackingDiv.className = 'tracking-info';
+
+            const truckIcon = document.createElement('i');
+            truckIcon.className = 'fas fa-truck';
+
+            const trackingSpan = document.createElement('span');
+            trackingSpan.textContent = `Tracking: ${order.tracking_number}`;
+
+            trackingDiv.appendChild(truckIcon);
+            trackingDiv.appendChild(trackingSpan);
+            summaryDiv.appendChild(trackingDiv);
+        }
+
+        body.appendChild(itemsDiv);
+        body.appendChild(summaryDiv);
+
+        // Actions
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'order-actions';
+
+        const viewBtn = document.createElement('button');
+        viewBtn.className = 'btn btn-secondary btn-sm';
+        viewBtn.textContent = 'View Details';
+        viewBtn.addEventListener('click', () => viewOrderDetails(order.id));
+        actionsDiv.appendChild(viewBtn);
+
+        if (order.can_cancel) {
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn btn-danger btn-sm';
+            cancelBtn.textContent = 'Cancel Order';
+            cancelBtn.addEventListener('click', () => cancelOrder(order.id));
+            actionsDiv.appendChild(cancelBtn);
+        }
+
+        card.appendChild(header);
+        card.appendChild(body);
+        card.appendChild(actionsDiv);
+
+        container.appendChild(card);
+    });
 }
 
 /**
@@ -488,65 +608,146 @@ export async function viewOrderDetails(orderId) {
         const order = await apiService.getOrderDetails(orderId);
         const modal = document.getElementById('order-details-modal');
         const content = document.getElementById('order-details-content');
-        
+
         if (!modal || !content) return;
 
-        content.innerHTML = `
-            <div class="order-details">
-                <div class="order-info-section">
-                    <h3>Order Information</h3>
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <label>Order Number:</label>
-                            <span>#${order.id}</span>
-                        </div>
-                        <div class="info-item">
-                            <label>Date:</label>
-                            <span>${formatDate(order.created_at)}</span>
-                        </div>
-                        <div class="info-item">
-                            <label>Status:</label>
-                            <span class="status-badge ${order.status_class}">${order.status_display}</span>
-                        </div>
-                        <div class="info-item">
-                            <label>Total:</label>
-                            <strong>$${order.total_paid}</strong>
-                        </div>
-                        ${order.tracking_number ? `
-                            <div class="info-item">
-                                <label>Tracking Number:</label>
-                                <span>${order.tracking_number}</span>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
+        content.innerHTML = ''; // Clear content
 
-                <div class="order-items-section">
-                    <h3>Order Items</h3>
-                    ${order.items.map(item => `
-                        <div class="order-item-detail">
-                            ${item.product_image ? `<img src="${item.product_image}" alt="${item.product_name}">` : '<div class="no-image"></div>'}
-                            <div class="item-info">
-                                <h4>${item.product_name}</h4>
-                                <p>Quantity: ${item.quantity}</p>
-                                <p class="item-price">$${item.price} each</p>
-                            </div>
-                            <div class="item-total">
-                                <strong>$${(item.price * item.quantity).toFixed(2)}</strong>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'order-details';
 
-                <div class="shipping-info-section">
-                    <h3>Shipping Information</h3>
-                    <p>${order.first_name} ${order.last_name}</p>
-                    <p>${order.address}</p>
-                    <p>${order.city}, ${order.postal_code}</p>
-                    <p>${order.email}</p>
-                </div>
-            </div>
-        `;
+        // Order Info Section
+        const infoSection = document.createElement('div');
+        infoSection.className = 'order-info-section';
+
+        const h3Info = document.createElement('h3');
+        h3Info.textContent = 'Order Information';
+        infoSection.appendChild(h3Info);
+
+        const infoGrid = document.createElement('div');
+        infoGrid.className = 'info-grid';
+
+        const createInfoItem = (label, value, isStrong = false, badgeClass = null) => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'info-item';
+
+            const labelEl = document.createElement('label');
+            labelEl.textContent = label;
+
+            let valueEl;
+            if (isStrong) {
+                valueEl = document.createElement('strong');
+                valueEl.textContent = value;
+            } else if (badgeClass) {
+                valueEl = document.createElement('span');
+                valueEl.className = `status-badge ${badgeClass}`;
+                valueEl.textContent = value;
+            } else {
+                valueEl = document.createElement('span');
+                valueEl.textContent = value;
+            }
+
+            itemDiv.appendChild(labelEl);
+            itemDiv.appendChild(valueEl);
+            return itemDiv;
+        };
+
+        infoGrid.appendChild(createInfoItem('Order Number:', `#${order.id}`));
+        infoGrid.appendChild(createInfoItem('Date:', formatDate(order.created_at)));
+        infoGrid.appendChild(createInfoItem('Status:', order.status_display, false, order.status_class));
+        infoGrid.appendChild(createInfoItem('Total:', `$${order.total_paid}`, true));
+
+        if (order.tracking_number) {
+            infoGrid.appendChild(createInfoItem('Tracking Number:', order.tracking_number));
+        }
+
+        infoSection.appendChild(infoGrid);
+        detailsDiv.appendChild(infoSection);
+
+        // Order Items Section
+        const itemsSection = document.createElement('div');
+        itemsSection.className = 'order-items-section';
+
+        const h3Items = document.createElement('h3');
+        h3Items.textContent = 'Order Items';
+        itemsSection.appendChild(h3Items);
+
+        order.items.forEach(item => {
+            const itemDetail = document.createElement('div');
+            itemDetail.className = 'order-item-detail';
+
+            if (item.product_image) {
+                const img = document.createElement('img');
+                img.src = item.product_image;
+                img.alt = item.product_name;
+                itemDetail.appendChild(img);
+            } else {
+                const noImage = document.createElement('div');
+                noImage.className = 'no-image';
+                itemDetail.appendChild(noImage);
+            }
+
+            const itemInfo = document.createElement('div');
+            itemInfo.className = 'item-info';
+
+            const h4 = document.createElement('h4');
+            h4.textContent = item.product_name;
+
+            const pQty = document.createElement('p');
+            pQty.textContent = `Quantity: ${item.quantity}`;
+
+            const pPrice = document.createElement('p');
+            pPrice.className = 'item-price';
+            pPrice.textContent = `$${item.price} each`;
+
+            itemInfo.appendChild(h4);
+            itemInfo.appendChild(pQty);
+            itemInfo.appendChild(pPrice);
+
+            const itemTotal = document.createElement('div');
+            itemTotal.className = 'item-total';
+
+            const strongTotal = document.createElement('strong');
+            strongTotal.textContent = `$${(item.price * item.quantity).toFixed(2)}`;
+
+            itemTotal.appendChild(strongTotal);
+
+            itemDetail.appendChild(itemInfo);
+            itemDetail.appendChild(itemTotal);
+
+            itemsSection.appendChild(itemDetail);
+        });
+
+        detailsDiv.appendChild(itemsSection);
+
+        // Shipping Info Section
+        const shippingSection = document.createElement('div');
+        shippingSection.className = 'shipping-info-section';
+
+        const h3Shipping = document.createElement('h3');
+        h3Shipping.textContent = 'Shipping Information';
+        shippingSection.appendChild(h3Shipping);
+
+        const pName = document.createElement('p');
+        pName.textContent = `${order.first_name} ${order.last_name}`;
+
+        const pAddress = document.createElement('p');
+        pAddress.textContent = order.address;
+
+        const pCity = document.createElement('p');
+        pCity.textContent = `${order.city}, ${order.postal_code}`;
+
+        const pEmail = document.createElement('p');
+        pEmail.textContent = order.email;
+
+        shippingSection.appendChild(pName);
+        shippingSection.appendChild(pAddress);
+        shippingSection.appendChild(pCity);
+        shippingSection.appendChild(pEmail);
+
+        detailsDiv.appendChild(shippingSection);
+
+        content.appendChild(detailsDiv);
 
         openModal('order-details-modal');
     } catch (error) {
@@ -594,47 +795,334 @@ function renderReviews(reviews) {
     const container = document.getElementById('reviews-container');
     if (!container) return;
 
+    container.innerHTML = ''; // Clear container
+
     if (reviews.length === 0) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-star"></i><p>You haven\'t written any reviews yet.</p></div>';
+        const emptyState = document.createElement('div');
+        emptyState.className = 'empty-state';
+
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-star';
+
+        const p = document.createElement('p');
+        p.textContent = "You haven't written any reviews yet.";
+
+        emptyState.appendChild(icon);
+        emptyState.appendChild(p);
+        container.appendChild(emptyState);
         return;
     }
 
-    container.innerHTML = reviews.map(review => `
-        <div class="review-card">
-            <div class="review-header">
-                <div class="product-info">
-                    <h4>${review.product?.name || 'Product'}</h4>
-                    <span class="review-date">${formatDate(review.created_at)}</span>
-                </div>
-                <div class="review-rating">
-                    ${renderStars(review.rating)}
-                </div>
-            </div>
-            
-            <div class="review-body">
-                ${review.title ? `<h5>${review.title}</h5>` : ''}
-                <p>${review.comment}</p>
-                ${review.is_verified_purchase ? '<span class="verified-badge"><i class="fas fa-check-circle"></i> Verified Purchase</span>' : ''}
-            </div>
-            
-            <div class="review-actions">
-                <button class="btn btn-secondary btn-sm" onclick="dashboard.editReview(${review.id})">
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                <button class="btn btn-danger btn-sm" onclick="dashboard.deleteReview(${review.id})">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
-            </div>
-        </div>
-    `).join('');
+    reviews.forEach(review => {
+        const card = document.createElement('div');
+        card.className = 'review-card';
+
+        // Header
+        const header = document.createElement('div');
+        header.className = 'review-header';
+
+        const productInfo = document.createElement('div');
+        productInfo.className = 'product-info';
+
+        const h4 = document.createElement('h4');
+        h4.textContent = review.product?.name || 'Product';
+
+        const dateSpan = document.createElement('span');
+        dateSpan.className = 'review-date';
+        dateSpan.textContent = formatDate(review.created_at);
+
+        productInfo.appendChild(h4);
+        productInfo.appendChild(dateSpan);
+
+        const starsDiv = createStarsElement(review.rating);
+
+        header.appendChild(productInfo);
+        header.appendChild(starsDiv);
+
+        // Body
+        const body = document.createElement('div');
+        body.className = 'review-body';
+
+        if (review.title) {
+            const h5 = document.createElement('h5');
+            h5.textContent = review.title;
+            body.appendChild(h5);
+        }
+
+        const pComment = document.createElement('p');
+        pComment.textContent = review.comment;
+        body.appendChild(pComment);
+
+        if (review.is_verified_purchase) {
+            const verifiedBadge = document.createElement('span');
+            verifiedBadge.className = 'verified-badge';
+
+            const checkIcon = document.createElement('i');
+            checkIcon.className = 'fas fa-check-circle';
+
+            verifiedBadge.appendChild(checkIcon);
+            verifiedBadge.appendChild(document.createTextNode(' Verified Purchase'));
+            body.appendChild(verifiedBadge);
+        }
+
+        // Actions
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'review-actions';
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-secondary btn-sm';
+
+        const editIcon = document.createElement('i');
+        editIcon.className = 'fas fa-edit';
+        editBtn.appendChild(editIcon);
+        editBtn.appendChild(document.createTextNode(' Edit'));
+
+        editBtn.addEventListener('click', () => editReview(review.id));
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn-danger btn-sm';
+
+        const deleteIcon = document.createElement('i');
+        deleteIcon.className = 'fas fa-trash';
+        deleteBtn.appendChild(deleteIcon);
+        deleteBtn.appendChild(document.createTextNode(' Delete'));
+
+        deleteBtn.addEventListener('click', () => deleteReview(review.id));
+
+        actionsDiv.appendChild(editBtn);
+        actionsDiv.appendChild(deleteBtn);
+
+        card.appendChild(header);
+        card.appendChild(body);
+        card.appendChild(actionsDiv);
+
+        container.appendChild(card);
+    });
 }
 
 /**
- * Edit review (placeholder - would need a modal)
+ * Edit review
+ * Opens a modal to edit an existing review
+ * @param {number} reviewId - The ID of the review to edit
  */
-export function editReview(reviewId) {
-    showToast('Edit review feature coming soon!', 'info');
+export async function editReview(reviewId) {
+    try {
+        // Find the review in the current state
+        const review = dashboardState.reviews.find(r => r.id === reviewId);
+        if (!review) {
+            showToast('Review not found.', 'error');
+            return;
+        }
+
+        // Create modal if it doesn't exist
+        let modal = document.getElementById('edit-review-modal');
+        if (!modal) {
+            modal = createEditReviewModal();
+            document.body.appendChild(modal);
+        }
+
+        // Populate form with review data
+        const form = document.getElementById('edit-review-form');
+        if (form) {
+            form.querySelector('#edit_review_id').value = review.id;
+            form.querySelector('#edit_review_rating').value = review.rating;
+            form.querySelector('#edit_review_title').value = review.title || '';
+            form.querySelector('#edit_review_comment').value = review.comment;
+
+            // Update star display
+            updateStarRating(review.rating);
+        }
+
+        // Open the modal
+        openModal('edit-review-modal');
+    } catch (error) {
+        console.error('Failed to open edit review modal:', error);
+        showToast('Failed to open review editor.', 'error');
+    }
 }
+
+/**
+ * Create edit review modal
+ * @returns {HTMLElement} The modal element
+ */
+function createEditReviewModal() {
+    const modal = document.createElement('div');
+    modal.id = 'edit-review-modal';
+    modal.className = 'modal';
+
+    const modalContent = document.createElement('div');
+    modalContent.className = 'modal-content';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'modal-close';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.onclick = () => closeModal('edit-review-modal');
+
+    const h3 = document.createElement('h3');
+    h3.textContent = 'Edit Review';
+
+    const form = document.createElement('form');
+    form.id = 'edit-review-form';
+    form.className = 'review-form';
+
+    // Hidden review ID field
+    const reviewIdInput = document.createElement('input');
+    reviewIdInput.type = 'hidden';
+    reviewIdInput.id = 'edit_review_id';
+    reviewIdInput.name = 'review_id';
+
+    // Rating field
+    const ratingGroup = document.createElement('div');
+    ratingGroup.className = 'form-group';
+    const ratingLabel = document.createElement('label');
+    ratingLabel.textContent = 'Rating';
+    const ratingStars = createStarInput();
+    ratingGroup.appendChild(ratingLabel);
+    ratingGroup.appendChild(ratingStars);
+
+    // Title field
+    const titleGroup = document.createElement('div');
+    titleGroup.className = 'form-group';
+    const titleLabel = document.createElement('label');
+    titleLabel.textContent = 'Review Title';
+    titleLabel.setAttribute('for', 'edit_review_title');
+    const titleInput = document.createElement('input');
+    titleInput.type = 'text';
+    titleInput.id = 'edit_review_title';
+    titleInput.name = 'title';
+    titleInput.placeholder = 'Summarize your experience';
+    titleGroup.appendChild(titleLabel);
+    titleGroup.appendChild(titleInput);
+
+    // Comment field
+    const commentGroup = document.createElement('div');
+    commentGroup.className = 'form-group';
+    const commentLabel = document.createElement('label');
+    commentLabel.textContent = 'Your Review';
+    commentLabel.setAttribute('for', 'edit_review_comment');
+    const commentTextarea = document.createElement('textarea');
+    commentTextarea.id = 'edit_review_comment';
+    commentTextarea.name = 'comment';
+    commentTextarea.rows = 5;
+    commentTextarea.required = true;
+    commentTextarea.placeholder = 'Share your thoughts about this product...';
+    commentGroup.appendChild(commentLabel);
+    commentGroup.appendChild(commentTextarea);
+
+    // Submit button
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'submit';
+    submitBtn.className = 'btn btn-primary';
+    submitBtn.textContent = 'Update Review';
+
+    // Cancel button
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn btn-secondary';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.onclick = () => closeModal('edit-review-modal');
+
+    const btnGroup = document.createElement('div');
+    btnGroup.className = 'button-group';
+    btnGroup.appendChild(submitBtn);
+    btnGroup.appendChild(cancelBtn);
+
+    // Assemble form
+    form.appendChild(reviewIdInput);
+    form.appendChild(ratingGroup);
+    form.appendChild(titleGroup);
+    form.appendChild(commentGroup);
+    form.appendChild(btnGroup);
+
+    // Handle form submission
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        await handleEditReviewSubmit(form);
+    };
+
+    // Assemble modal
+    modalContent.appendChild(closeBtn);
+    modalContent.appendChild(h3);
+    modalContent.appendChild(form);
+    modal.appendChild(modalContent);
+
+    return modal;
+}
+
+/**
+ * Create star input for rating
+ * @returns {HTMLElement} Star input container
+ */
+function createStarInput() {
+    const container = document.createElement('div');
+    container.className = 'star-rating-input';
+
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.id = 'edit_review_rating';
+    hiddenInput.name = 'rating';
+    hiddenInput.value = '5';
+
+    const starsContainer = document.createElement('div');
+    starsContainer.className = 'stars';
+
+    for (let i = 1; i <= 5; i++) {
+        const star = document.createElement('i');
+        star.className = 'fas fa-star';
+        star.dataset.rating = i;
+        star.onclick = function () {
+            const rating = parseInt(this.dataset.rating, 10);
+            hiddenInput.value = rating;
+            updateStarRating(rating);
+        };
+        starsContainer.appendChild(star);
+    }
+
+    container.appendChild(hiddenInput);
+    container.appendChild(starsContainer);
+
+    return container;
+}
+
+/**
+ * Update star rating display
+ * @param {number} rating - Rating value (1-5)
+ */
+function updateStarRating(rating) {
+    const stars = document.querySelectorAll('.star-rating-input .stars i');
+    stars.forEach((star, index) => {
+        if (index < rating) {
+            star.classList.add('active');
+        } else {
+            star.classList.remove('active');
+        }
+    });
+}
+
+/**
+ * Handle edit review form submission
+ * @param {HTMLFormElement} form - The form element
+ */
+async function handleEditReviewSubmit(form) {
+    try {
+        const formData = new FormData(form);
+        const reviewId = formData.get('review_id');
+        const reviewData = {
+            rating: parseInt(formData.get('rating'), 10),
+            title: formData.get('title'),
+            comment: formData.get('comment')
+        };
+
+        await apiService.updateReview(reviewId, reviewData);
+        showToast('Review updated successfully!', 'success');
+        closeModal('edit-review-modal');
+        await loadReviews(); // Reload reviews to show updated data
+    } catch (error) {
+        console.error('Failed to update review:', error);
+        showToast('Failed to update review. Please try again.', 'error');
+    }
+}
+
 
 /**
  * Delete review
@@ -658,181 +1146,201 @@ export async function deleteReview(reviewId) {
  * Load wishlist section
  */
 async function loadWishlist() {
-    const container = document.getElementById('wishlist-container');
-    if (!container) return;
-
     try {
-        // Show loading state
-        container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>Loading wishlist...</p></div>';
-
-        const wishlistData = getWishlistData();
-        
-        // Handle different return formats
-        let items = [];
-        
-        if (Array.isArray(wishlistData)) {
-            // Guest user - wishlistData is array of product IDs
-            // Fetch product details for each ID
-            for (const productId of wishlistData) {
-                try {
-                    const product = await apiService.getProductById(productId);
-                    items.push({ product });
-                } catch (error) {
-                    console.error(`Failed to load product ${productId}:`, error);
-                }
-            }
-        } else if (wishlistData && wishlistData.items) {
-            // Authenticated user - wishlistData has items array
-            items = wishlistData.items;
-        }
-
-        renderWishlist({ items });
-
-        // Setup wishlist actions
+        const wishlistData = await apiService.getWishlist();
+        renderWishlist(wishlistData);
         setupWishlistActions();
+        setupWishlistItemActions();
     } catch (error) {
         console.error('Failed to load wishlist:', error);
-        if (container) {
-            container.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><p>Failed to load wishlist.</p></div>';
+        // Don't show toast on 404 (empty wishlist for new user)
+        if (error.status !== 404) {
+            showToast('Failed to load wishlist.', 'error');
+        } else {
+            renderWishlist({ items: [] });
         }
     }
-}
 
-/**
- * Setup wishlist actions
- */
-function setupWishlistActions() {
-    document.getElementById('clear-wishlist-btn')?.addEventListener('click', handleClearWishlist);
-    document.getElementById('move-all-to-cart-btn')?.addEventListener('click', handleMoveAllToCart);
-}
-
-/**
- * Setup wishlist item actions (remove, move to cart)
- */
-function setupWishlistItemActions() {
-    const container = document.getElementById('wishlist-container');
-    if (!container) return;
-
-    // Remove existing listeners by cloning
-    const newContainer = container.cloneNode(true);
-    container.parentNode.replaceChild(newContainer, container);
-
-    // Add event delegation for remove buttons
-    newContainer.addEventListener('click', async (e) => {
-        const removeBtn = e.target.closest('.remove-btn');
-        const moveBtn = e.target.closest('.move-to-cart-btn');
-
-        if (removeBtn) {
-            const productId = parseInt(removeBtn.dataset.productId, 10);
-            await removeFromWishlistDashboard(productId);
-        } else if (moveBtn) {
-            const productId = parseInt(moveBtn.dataset.productId, 10);
-            await moveItemToCart(productId);
-        }
-    });
-}
-
-/**
- * Handle clear wishlist
- */
-async function handleClearWishlist() {
-    if (!confirm('Are you sure you want to clear your entire wishlist?')) return;
-
-    try {
-        const { clearWishlist } = await import('./wishlist.js');
-        await clearWishlist();
-        showToast('Wishlist cleared.', 'success');
-        await loadWishlist();
-    } catch (error) {
-        console.error('Failed to clear wishlist:', error);
-        showToast('Failed to clear wishlist.', 'error');
+    /**
+     * Setup wishlist actions
+     */
+    function setupWishlistActions() {
+        document.getElementById('clear-wishlist-btn')?.addEventListener('click', handleClearWishlist);
+        document.getElementById('move-all-to-cart-btn')?.addEventListener('click', handleMoveAllToCart);
     }
-}
 
-/**
- * Handle move all to cart
- */
-async function handleMoveAllToCart() {
-    try {
-        const wishlistData = getWishlistData();
-        let productIds = [];
-        
-        if (Array.isArray(wishlistData)) {
-            // Guest user - array of IDs
-            productIds = wishlistData;
-        } else if (wishlistData && wishlistData.items) {
-            // Authenticated user - extract IDs from items
-            productIds = wishlistData.items.map(item => item.product.id);
+    /**
+     * Setup wishlist item actions (remove, move to cart)
+     */
+    function setupWishlistItemActions() {
+        const container = document.getElementById('wishlist-container');
+        if (!container) return;
+
+        // Remove existing listeners by cloning
+        const newContainer = container.cloneNode(true);
+        container.parentNode.replaceChild(newContainer, container);
+
+        // Add event delegation for remove buttons
+        newContainer.addEventListener('click', async (e) => {
+            const removeBtn = e.target.closest('.remove-btn');
+            const moveBtn = e.target.closest('.move-to-cart-btn');
+
+            if (removeBtn) {
+                const productId = parseInt(removeBtn.dataset.productId, 10);
+                await removeFromWishlistDashboard(productId);
+            } else if (moveBtn) {
+                const productId = parseInt(moveBtn.dataset.productId, 10);
+                await moveItemToCart(productId);
+            }
+        });
+    }
+
+    /**
+     * Handle clear wishlist
+     */
+    async function handleClearWishlist() {
+        if (!confirm('Are you sure you want to clear your entire wishlist?')) return;
+
+        try {
+            const { clearWishlist } = await import('./wishlist.js');
+            await clearWishlist();
+            showToast('Wishlist cleared.', 'success');
+            await loadWishlist();
+        } catch (error) {
+            console.error('Failed to clear wishlist:', error);
+            showToast('Failed to clear wishlist.', 'error');
         }
-        
-        if (productIds.length === 0) {
-            showToast('Wishlist is empty.', 'info');
+    }
+
+    /**
+     * Handle move all to cart
+     */
+    async function handleMoveAllToCart() {
+        try {
+            const wishlistData = getWishlistData();
+            let productIds = [];
+
+            if (Array.isArray(wishlistData)) {
+                // Guest user - array of IDs
+                productIds = wishlistData;
+            } else if (wishlistData && wishlistData.items) {
+                // Authenticated user - extract IDs from items
+                productIds = wishlistData.items.map(item => item.product.id);
+            }
+
+            if (productIds.length === 0) {
+                showToast('Wishlist is empty.', 'info');
+                return;
+            }
+
+            let successCount = 0;
+            for (const productId of productIds) {
+                try {
+                    const product = await apiService.getProductById(productId);
+                    await moveToCart(productId, product);
+                    successCount++;
+                } catch (error) {
+                    console.error(`Failed to move product ${productId}:`, error);
+                }
+            }
+
+            if (successCount > 0) {
+                showToast(`${successCount} item(s) moved to cart!`, 'success');
+                await loadWishlist();
+                await loadOverview(); // Update stats
+            } else {
+                showToast('Failed to move items to cart.', 'error');
+            }
+        } catch (error) {
+            console.error('Failed to move items to cart:', error);
+            showToast('Failed to move items to cart.', 'error');
+        }
+    }
+
+    /**
+     * Render wishlist
+     */
+    function renderWishlist(wishlistData) {
+        const container = document.getElementById('wishlist-container');
+        if (!container) return;
+
+        container.innerHTML = ''; // Clear container
+
+        const items = wishlistData?.items || [];
+
+        if (items.length === 0) {
+            const emptyState = document.createElement('div');
+            emptyState.className = 'empty-state';
+
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-heart';
+
+            const p = document.createElement('p');
+            p.textContent = 'Your wishlist is empty.';
+
+            emptyState.appendChild(icon);
+            emptyState.appendChild(p);
+            container.appendChild(emptyState);
             return;
         }
 
-        let successCount = 0;
-        for (const productId of productIds) {
-            try {
-                const product = await apiService.getProductById(productId);
-                await moveToCart(productId, product);
-                successCount++;
-            } catch (error) {
-                console.error(`Failed to move product ${productId}:`, error);
+        items.forEach(item => {
+            const product = item.product;
+            if (!product) return;
+
+            const image = product.images?.[0]?.image || '';
+            const productName = product.name || 'Unknown Product';
+            const productPrice = product.price ? parseFloat(product.price).toFixed(2) : '0.00';
+
+            const card = document.createElement('div');
+            card.className = 'wishlist-item-card';
+            card.dataset.productId = product.id;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn';
+            removeBtn.dataset.productId = product.id;
+            removeBtn.setAttribute('aria-label', 'Remove from wishlist');
+
+            const removeIcon = document.createElement('i');
+            removeIcon.className = 'fas fa-times';
+            removeBtn.appendChild(removeIcon);
+
+            card.appendChild(removeBtn);
+
+            if (image) {
+                const img = document.createElement('img');
+                img.src = image;
+                img.alt = productName;
+                img.loading = 'lazy';
+                card.appendChild(img);
+            } else {
+                const noImage = document.createElement('div');
+                noImage.className = 'no-image';
+                card.appendChild(noImage);
             }
-        }
 
-        if (successCount > 0) {
-            showToast(`${successCount} item(s) moved to cart!`, 'success');
-            await loadWishlist();
-            await loadOverview(); // Update stats
-        } else {
-            showToast('Failed to move items to cart.', 'error');
-        }
-    } catch (error) {
-        console.error('Failed to move items to cart:', error);
-        showToast('Failed to move items to cart.', 'error');
+            const h4 = document.createElement('h4');
+            h4.textContent = productName;
+            card.appendChild(h4);
+
+            const pPrice = document.createElement('p');
+            pPrice.className = 'price';
+            pPrice.textContent = `$${productPrice}`;
+            card.appendChild(pPrice);
+
+            const moveBtn = document.createElement('button');
+            moveBtn.className = 'btn btn-primary btn-sm move-to-cart-btn';
+            moveBtn.dataset.productId = product.id;
+            moveBtn.textContent = 'Add to Cart';
+
+            card.appendChild(moveBtn);
+
+            container.appendChild(card);
+        });
+
+        // Setup event listeners after rendering
+        setupWishlistItemActions();
     }
-}
-
-/**
- * Render wishlist
- */
-function renderWishlist(wishlistData) {
-    const container = document.getElementById('wishlist-container');
-    if (!container) return;
-
-    const items = wishlistData?.items || [];
-
-    if (items.length === 0) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-heart"></i><p>Your wishlist is empty.</p></div>';
-        return;
-    }
-
-    container.innerHTML = items.map(item => {
-        const product = item.product;
-        if (!product) return '';
-        
-        const image = product.images?.[0]?.image || '';
-        const productName = product.name || 'Unknown Product';
-        const productPrice = product.price ? parseFloat(product.price).toFixed(2) : '0.00';
-        
-        return `
-            <div class="wishlist-item-card" data-product-id="${product.id}">
-                <button class="remove-btn" data-product-id="${product.id}" aria-label="Remove from wishlist">
-                    <i class="fas fa-times"></i>
-                </button>
-                ${image ? `<img src="${image}" alt="${productName}" loading="lazy">` : '<div class="no-image"></div>'}
-                <h4>${productName}</h4>
-                <p class="price">$${productPrice}</p>
-                <button class="btn btn-primary btn-sm move-to-cart-btn" data-product-id="${product.id}">
-                    Add to Cart
-                </button>
-            </div>
-        `;
-    }).filter(html => html).join('');
-    
-    // Setup event listeners after rendering
-    setupWishlistItemActions();
 }
 
 /**
@@ -857,7 +1365,7 @@ export async function moveItemToCart(productId) {
     try {
         // Fetch product details
         const product = await apiService.getProductById(productId);
-        
+
         if (product) {
             await moveToCart(productId, product);
             showToast('Item moved to cart!', 'success');
@@ -893,53 +1401,146 @@ async function loadAddresses() {
 
 /**
  * Render addresses
+ * @param {Array} addresses - Array of address objects
  */
 function renderAddresses(addresses) {
     const container = document.getElementById('addresses-container');
     if (!container) return;
 
-    if (addresses.length === 0) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-map-marker-alt"></i><p>No saved addresses.</p></div>';
+    container.innerHTML = ''; // Clear container
+
+    if (!addresses || addresses.length === 0) {
+        const emptyState = document.createElement('div');
+        emptyState.className = 'empty-state';
+
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-map-marker-alt';
+
+        const p = document.createElement('p');
+        p.textContent = "You haven't added any addresses yet.";
+
+        emptyState.appendChild(icon);
+        emptyState.appendChild(p);
+        container.appendChild(emptyState);
         return;
     }
 
-    container.innerHTML = addresses.map(address => `
-        <div class="address-card ${address.is_default ? 'default' : ''}">
-            ${address.is_default ? '<span class="default-badge">Default</span>' : ''}
-            <h4>${address.label}</h4>
-            <p><strong>${address.first_name} ${address.last_name}</strong></p>
-            ${address.company ? `<p>${address.company}</p>` : ''}
-            <p>${address.address_line1}</p>
-            ${address.address_line2 ? `<p>${address.address_line2}</p>` : ''}
-            <p>${address.city}, ${address.state || ''} ${address.postal_code}</p>
-            <p>${address.country}</p>
-            <p><i class="fas fa-phone"></i> ${address.phone}</p>
-            
-            <div class="address-actions">
-                <button class="btn btn-secondary btn-sm" onclick="dashboard.editAddress(${address.id})">
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                <button class="btn btn-danger btn-sm" onclick="dashboard.deleteAddress(${address.id})">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
-                ${!address.is_default ? `
-                    <button class="btn btn-primary btn-sm" onclick="dashboard.setDefaultAddress(${address.id})">
-                        Set as Default
-                    </button>
-                ` : ''}
-            </div>
-        </div>
-    `).join('');
+    addresses.forEach(address => {
+        const card = document.createElement('div');
+        card.className = 'address-card';
+        if (address.is_default) {
+            card.classList.add('default');
+        }
+
+        // Address header
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'address-header';
+
+        const labelSpan = document.createElement('span');
+        labelSpan.className = 'address-label';
+        labelSpan.textContent = address.label || 'Address';
+
+        headerDiv.appendChild(labelSpan);
+
+        if (address.is_default) {
+            const defaultBadge = document.createElement('span');
+            defaultBadge.className = 'default-badge';
+            defaultBadge.textContent = 'Default';
+            headerDiv.appendChild(defaultBadge);
+        }
+
+        // Address details
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'address-details';
+
+        const nameLine = document.createElement('p');
+        nameLine.className = 'address-name';
+        nameLine.textContent = `${address.first_name} ${address.last_name}`;
+        detailsDiv.appendChild(nameLine);
+
+        if (address.company) {
+            const companyLine = document.createElement('p');
+            companyLine.textContent = address.company;
+            detailsDiv.appendChild(companyLine);
+        }
+
+        const streetLine = document.createElement('p');
+        streetLine.textContent = address.address_line1;
+        detailsDiv.appendChild(streetLine);
+
+        if (address.address_line2) {
+            const street2Line = document.createElement('p');
+            street2Line.textContent = address.address_line2;
+            detailsDiv.appendChild(street2Line);
+        }
+
+        const cityLine = document.createElement('p');
+        const cityParts = [address.city];
+        if (address.state) cityParts.push(address.state);
+        if (address.postal_code) cityParts.push(address.postal_code);
+        cityLine.textContent = cityParts.join(', ');
+        detailsDiv.appendChild(cityLine);
+
+        const countryLine = document.createElement('p');
+        countryLine.textContent = address.country;
+        detailsDiv.appendChild(countryLine);
+
+        if (address.phone) {
+            const phoneLine = document.createElement('p');
+            phoneLine.className = 'address-phone';
+            phoneLine.textContent = address.phone;
+            detailsDiv.appendChild(phoneLine);
+        }
+
+        // Actions
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'address-actions';
+
+        if (!address.is_default) {
+            const setDefaultBtn = document.createElement('button');
+            setDefaultBtn.className = 'btn btn-secondary btn-sm';
+            setDefaultBtn.textContent = 'Set as Default';
+            setDefaultBtn.addEventListener('click', () => setDefaultAddress(address.id));
+            actionsDiv.appendChild(setDefaultBtn);
+        }
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-secondary btn-sm';
+
+        const editIcon = document.createElement('i');
+        editIcon.className = 'fas fa-edit';
+        editBtn.appendChild(editIcon);
+        editBtn.appendChild(document.createTextNode(' Edit'));
+        editBtn.addEventListener('click', () => editAddress(address.id));
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn-danger btn-sm';
+
+        const deleteIcon = document.createElement('i');
+        deleteIcon.className = 'fas fa-trash';
+        deleteBtn.appendChild(deleteIcon);
+        deleteBtn.appendChild(document.createTextNode(' Delete'));
+        deleteBtn.addEventListener('click', () => deleteAddress(address.id));
+
+        actionsDiv.appendChild(editBtn);
+        actionsDiv.appendChild(deleteBtn);
+
+        card.appendChild(headerDiv);
+        card.appendChild(detailsDiv);
+        card.appendChild(actionsDiv);
+        container.appendChild(card);
+    });
 }
 
 /**
- * Open address modal for adding/editing
+ * Open address modal
+ * @param {Object} address - Address to edit (optional)
  */
 function openAddressModal(address = null) {
     const modal = document.getElementById('address-modal');
     const form = document.getElementById('address-form');
     const title = document.getElementById('address-modal-title');
-    
+
     if (!modal || !form) return;
 
     // Reset form
@@ -983,7 +1584,7 @@ async function handleAddressSubmit(form) {
     try {
         const formData = new FormData(form);
         const addressId = formData.get('address_id');
-        
+
         const data = {
             label: formData.get('label'),
             first_name: formData.get('first_name'),
@@ -1086,43 +1687,105 @@ async function loadPaymentMethods() {
 
 /**
  * Render payment methods
+ * @param {Array} paymentMethods - Array of payment method objects
  */
 function renderPaymentMethods(paymentMethods) {
     const container = document.getElementById('payment-methods-container');
     if (!container) return;
 
-    if (paymentMethods.length === 0) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-credit-card"></i><p>No saved payment methods.</p></div>';
+    container.innerHTML = ''; // Clear container
+
+    if (!paymentMethods || paymentMethods.length === 0) {
+        const emptyState = document.createElement('div');
+        emptyState.className = 'empty-state';
+
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-credit-card';
+
+        const p = document.createElement('p');
+        p.textContent = "You haven't added any payment methods yet.";
+
+        emptyState.appendChild(icon);
+        emptyState.appendChild(p);
+        container.appendChild(emptyState);
         return;
     }
 
-    container.innerHTML = paymentMethods.map(pm => `
-        <div class="payment-method-card ${pm.is_default ? 'default' : ''}">
-            ${pm.is_default ? '<span class="default-badge">Default</span>' : ''}
-            ${pm.is_expired ? '<span class="expired-badge">Expired</span>' : ''}
-            
-            <div class="pm-icon">
-                <i class="fas fa-${pm.payment_type === 'card' ? 'credit-card' : 'university'}"></i>
-            </div>
-            
-            <div class="pm-info">
-                <h4>${pm.display_name}</h4>
-                ${pm.payment_type === 'card' && pm.card_exp_month && pm.card_exp_year ? 
-                    `<p>Expires: ${pm.card_exp_month}/${pm.card_exp_year}</p>` : ''}
-            </div>
-            
-            <div class="pm-actions">
-                ${!pm.is_default && !pm.is_expired ? `
-                    <button class="btn btn-primary btn-sm" onclick="dashboard.setDefaultPaymentMethod(${pm.id})">
-                        Set as Default
-                    </button>
-                ` : ''}
-                <button class="btn btn-danger btn-sm" onclick="dashboard.deletePaymentMethod(${pm.id})">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
-            </div>
-        </div>
-    `).join('');
+    paymentMethods.forEach(pm => {
+        const card = document.createElement('div');
+        card.className = 'payment-method-card';
+        if (pm.is_default) {
+            card.classList.add('default');
+        }
+
+        // Card info section
+        const cardInfo = document.createElement('div');
+        cardInfo.className = 'payment-method-info';
+
+        // Card icon based on brand
+        const cardIcon = document.createElement('i');
+        const brandIcons = {
+            'visa': 'fab fa-cc-visa',
+            'mastercard': 'fab fa-cc-mastercard',
+            'amex': 'fab fa-cc-amex',
+            'discover': 'fab fa-cc-discover',
+            'default': 'fas fa-credit-card'
+        };
+        cardIcon.className = brandIcons[pm.brand?.toLowerCase()] || brandIcons.default;
+
+        // Card details
+        const cardDetails = document.createElement('div');
+        cardDetails.className = 'card-details';
+
+        const cardNumber = document.createElement('span');
+        cardNumber.className = 'card-number';
+        cardNumber.textContent = `•••• •••• •••• ${pm.last4 || '****'}`;
+
+        const cardExpiry = document.createElement('span');
+        cardExpiry.className = 'card-expiry';
+        cardExpiry.textContent = `Expires ${pm.exp_month || '--'}/${pm.exp_year || '--'}`;
+
+        cardDetails.appendChild(cardNumber);
+        cardDetails.appendChild(cardExpiry);
+
+        cardInfo.appendChild(cardIcon);
+        cardInfo.appendChild(cardDetails);
+
+        // Default badge
+        if (pm.is_default) {
+            const defaultBadge = document.createElement('span');
+            defaultBadge.className = 'default-badge';
+            defaultBadge.textContent = 'Default';
+            cardInfo.appendChild(defaultBadge);
+        }
+
+        // Actions
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'payment-method-actions';
+
+        if (!pm.is_default) {
+            const setDefaultBtn = document.createElement('button');
+            setDefaultBtn.className = 'btn btn-secondary btn-sm';
+            setDefaultBtn.textContent = 'Set as Default';
+            setDefaultBtn.addEventListener('click', () => setDefaultPaymentMethod(pm.id));
+            actionsDiv.appendChild(setDefaultBtn);
+        }
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn-danger btn-sm';
+
+        const deleteIcon = document.createElement('i');
+        deleteIcon.className = 'fas fa-trash';
+        deleteBtn.appendChild(deleteIcon);
+        deleteBtn.appendChild(document.createTextNode(' Delete'));
+        deleteBtn.addEventListener('click', () => deletePaymentMethod(pm.id));
+
+        actionsDiv.appendChild(deleteBtn);
+
+        card.appendChild(cardInfo);
+        card.appendChild(actionsDiv);
+        container.appendChild(card);
+    });
 }
 
 /**
@@ -1173,7 +1836,7 @@ function initSecuritySection() {
     // Setup password validation (reuse from auth.js)
     const newPasswordInput = form.querySelector('#new_password');
     const confirmPasswordInput = form.querySelector('#confirm_password');
-    
+
     if (newPasswordInput && confirmPasswordInput) {
         newPasswordInput.addEventListener('input', () => {
             updatePasswordStrength(newPasswordInput.value);
@@ -1268,7 +1931,7 @@ function validatePasswordsMatch(password, confirmPassword) {
  */
 function handleLogout(e) {
     e.preventDefault();
-    
+
     if (confirm('Are you sure you want to logout?')) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -1345,12 +2008,15 @@ function formatDate(dateString) {
 /**
  * Render star rating
  */
-function renderStars(rating) {
-    let stars = '';
+function createStarsElement(rating) {
+    const starsDiv = document.createElement('div');
+    starsDiv.className = 'stars';
     for (let i = 1; i <= 5; i++) {
-        stars += `<i class="fas fa-star ${i <= rating ? 'filled' : ''}"></i>`;
+        const icon = document.createElement('i');
+        icon.className = `fas fa-star ${i <= rating ? 'filled' : ''}`;
+        starsDiv.appendChild(icon);
     }
-    return `<div class="stars">${stars}</div>`;
+    return starsDiv;
 }
 
 // Export dashboard functions for global access

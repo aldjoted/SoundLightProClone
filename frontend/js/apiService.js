@@ -8,6 +8,7 @@
 
 import { API_BASE_URL } from './config.js';
 import { APIError, RetryManager } from './utils.js';
+import { RateLimiter } from './security.js';
 
 // Initialize global retry manager with sensible defaults
 const retryManager = new RetryManager({
@@ -17,6 +18,9 @@ const retryManager = new RetryManager({
     exponentialBase: 2,
     jitterFactor: 0.1
 });
+
+// Initialize rate limiter for API calls
+const apiRateLimiter = new RateLimiter();
 
 function resolveLoginUrl() {
     try {
@@ -258,6 +262,12 @@ async function ensureAccessToken() {
  * @returns {Promise<any>} The JSON response from the API.
  */
 async function apiFetch(url, options = {}) {
+    // Check rate limit before making request
+    const rateLimitKey = `api:${url.split('?')[0]}`; // Use base URL without query params
+    if (!apiRateLimiter.checkLimit(rateLimitKey, 60, 60000)) { // 60 requests per minute per endpoint
+        throw new APIError('Too many requests. Please wait a moment.', 429, 'RATE_LIMIT_EXCEEDED');
+    }
+
     const isFormData = options.body instanceof FormData;
     options.headers = {
         ...(isFormData ? {} : { 'Content-Type': 'application/json' }),

@@ -6,6 +6,7 @@
  */
 
 import { StateManager, debounce } from './utils.js';
+import { GoogleAnalytics } from './analytics.js';
 
 const CART_KEY = 'shoppingCart';
 const PERSIST_DEBOUNCE_MS = 500;
@@ -135,6 +136,14 @@ export function addToCart(product, quantity) {
             addedAt: new Date().toISOString()
         };
         inMemoryCart.set(productKey, newItem);
+
+        // Track add to cart event
+        GoogleAnalytics.trackAddToCart(
+            product.id,
+            product.name,
+            product.category?.name || 'Uncategorized',
+            priceNumber * quantity
+        );
     }
 
     dispatchUpdateEvent(oldCart);
@@ -193,6 +202,16 @@ export function clearCart() {
     cartStateManager.clear({ items: {}, lastPersistedAt: Date.now() });
 }
 
+/**
+ * Removes temporary metadata fields (addedAt, updatedAt) from cart items.
+ * This function is exported for potential external API usage for cart cleanup operations.
+ * Typically called before serializing cart data for storage or API transmission.
+ * 
+ * @example
+ * // Clean metadata before sending cart to API
+ * cleanupCartMetadata();
+ * const cleanCart = getCart();
+ */
 export function cleanupCartMetadata() {
     if (inMemoryCart.size === 0) {
         persistCartToStorage();
@@ -215,6 +234,7 @@ export function cleanupCartMetadata() {
     dispatchUpdateEvent(oldCart);
     persistCartToStorage();
 }
+
 
 export function getCartItemCount() {
     let total = 0;

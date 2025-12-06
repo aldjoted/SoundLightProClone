@@ -35,13 +35,13 @@ export function initCartPage() {
                 }
             }
         });
-        
+
         const cardElementContainer = document.getElementById('card-element');
         if (cardElementContainer) {
             card.mount('#card-element');
-            
+
             // Handle real-time validation errors from the card Element.
-            card.on('change', function(event) {
+            card.on('change', function (event) {
                 const displayError = document.getElementById('card-errors');
                 if (event.error) {
                     displayError.textContent = event.error.message;
@@ -57,7 +57,7 @@ export function initCartPage() {
         container.innerHTML = '';
 
         if (items.length === 0) {
-            container.innerHTML = ui.getEmptyCartHTML();
+            container.appendChild(ui.createEmptyCartElement());
             checkoutSection?.classList.add('hidden');
             return;
         }
@@ -121,9 +121,13 @@ export function initCartPage() {
             }
 
             const submitBtn = document.getElementById('submit-payment-btn');
-            const originalBtnText = submitBtn.innerHTML;
+            const originalBtnText = submitBtn.textContent;
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            submitBtn.textContent = '';
+            const spinner = document.createElement('i');
+            spinner.className = 'fas fa-spinner fa-spin';
+            submitBtn.appendChild(spinner);
+            submitBtn.appendChild(document.createTextNode(' Processing...'));
 
             try {
                 const { token, error } = await stripe.createToken(card);
@@ -133,7 +137,8 @@ export function initCartPage() {
                     const errorElement = document.getElementById('card-errors');
                     errorElement.textContent = error.message;
                     submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalBtnText;
                     return;
                 }
 
@@ -164,23 +169,40 @@ export function initCartPage() {
                 // Success!
                 cart.clearCart();
                 ui.showToast('Order placed successfully!', 'success');
-                
+
                 // Redirect to dashboard or show success message
-                container.innerHTML = `
-                    <div class="order-success">
-                        <i class="fas fa-check-circle"></i>
-                        <h2>Thank you for your order!</h2>
-                        <p>Your order has been placed successfully. You will receive a confirmation email shortly.</p>
-                        <a href="index.html" class="btn btn-primary">Continue Shopping</a>
-                    </div>
-                `;
+                container.innerHTML = '';
+                const successDiv = document.createElement('div');
+                successDiv.className = 'order-success';
+
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-check-circle';
+
+                const h2 = document.createElement('h2');
+                h2.textContent = 'Thank you for your order!';
+
+                const p = document.createElement('p');
+                p.textContent = 'Your order has been placed successfully. You will receive a confirmation email shortly.';
+
+                const link = document.createElement('a');
+                link.href = 'index.html';
+                link.className = 'btn btn-primary';
+                link.textContent = 'Continue Shopping';
+
+                successDiv.appendChild(icon);
+                successDiv.appendChild(h2);
+                successDiv.appendChild(p);
+                successDiv.appendChild(link);
+
+                container.appendChild(successDiv);
                 checkoutSection.classList.add('hidden');
 
             } catch (err) {
                 console.error('Order creation failed:', err);
                 ui.showToast(err.message || 'Failed to place order. Please try again.', 'error');
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
             }
         });
     }

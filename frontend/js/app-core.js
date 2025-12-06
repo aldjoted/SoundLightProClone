@@ -1,5 +1,6 @@
 import * as ui from './ui.js';
 import { ListenerManager, RequestManager } from './utils.js';
+import { ErrorTracking } from './analytics.js';
 
 // ============= Error Boundary =============
 
@@ -13,6 +14,9 @@ class ErrorBoundary {
         console.error(`[${context}] Error:`, error);
 
         this.logError(error, context);
+
+        // Use ErrorTracking from analytics
+        ErrorTracking.captureError(error, { context });
 
         if (window.Sentry) {
             window.Sentry.captureException(error, {
@@ -167,35 +171,7 @@ class SmartCache {
     }
 }
 
-class RequestCache {
-    constructor() {
-        this.pending = new Map();
-    }
-
-    async get(key, fetcher) {
-        if (this.pending.has(key)) {
-            return this.pending.get(key);
-        }
-
-        const promise = fetcher().finally(() => {
-            this.pending.delete(key);
-        });
-
-        this.pending.set(key, promise);
-        return promise;
-    }
-
-    invalidate(key) {
-        this.pending.delete(key);
-    }
-
-    clear() {
-        this.pending.clear();
-    }
-}
-
 const cache = new SmartCache();
-const requestCache = new RequestCache();
 
 const globalListenerManager = new ListenerManager();
 const globalRequestManager = new RequestManager();
@@ -212,9 +188,7 @@ async function getCached(key, fetcher, strategy = 'products') {
 export {
     ErrorBoundary,
     SmartCache,
-    RequestCache,
     cache,
-    requestCache,
     appState,
     globalListenerManager,
     globalRequestManager,

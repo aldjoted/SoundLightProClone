@@ -20,12 +20,12 @@ const translations = {
         nav_register: "Register",
         nav_logout: "Logout",
         nav_cart: "Cart",
-        
+
         // Search
         search_placeholder: "Search products...",
         search_no_results: "No products found.",
         search_try_again: "Search failed. Try again.",
-        
+
         // Product actions
         btn_add_to_cart: "Add to Cart",
         btn_quick_view: "Quick View",
@@ -34,7 +34,7 @@ const translations = {
         btn_remove: "Remove",
         btn_update: "Update",
         btn_send: "Send",
-        
+
         // Cart
         cart_empty: "Your cart is empty.",
         cart_total: "Total",
@@ -48,7 +48,7 @@ const translations = {
         cart_empty_title: "Your cart is empty",
         cart_empty_sub: "Looks like you haven't added anything yet.",
         cart_continue_shopping: "Continue shopping",
-        
+
         // Product details
         product_category: "Category",
         product_brand: "Brand",
@@ -58,7 +58,7 @@ const translations = {
         product_quantity: "Quantity",
         product_description: "Description",
         product_no_description: "No description available.",
-        
+
         // Home page sections
         home_hero_title: "A New Perspective",
         home_hero_subtitle: "in Sound & Light",
@@ -73,7 +73,7 @@ const translations = {
         home_newsletter_subtitle: "Get the latest news about new products and exclusive offers",
         home_newsletter_placeholder: "Enter your email",
         home_newsletter_btn: "Subscribe",
-        
+
         // Features
         feature_shipping: "Fast Shipping",
         feature_shipping_desc: "Free delivery on orders over $500",
@@ -83,7 +83,7 @@ const translations = {
         feature_support_desc: "24/7 technical assistance",
         feature_returns: "Easy Returns",
         feature_returns_desc: "30-day return policy",
-        
+
         // Footer
         footer_company_desc: "Professional audio and lighting solutions for events, concerts, and venues worldwide.",
         footer_quick_links: "Quick Links",
@@ -100,7 +100,7 @@ const translations = {
         footer_privacy_policy: "Privacy Policy",
         footer_terms_of_service: "Terms of Service",
         footer_cookie_policy: "Cookie Policy",
-        
+
         // Contact page
         contact_title: "Contact Us",
         contact_address: "Address",
@@ -113,7 +113,7 @@ const translations = {
         contact_subject: "Subject",
         contact_message: "Your Message",
         contact_send: "Send",
-        
+
         // Forms
         form_email: "Email",
         form_password: "Password",
@@ -124,7 +124,7 @@ const translations = {
         form_submit: "Submit",
         form_cancel: "Cancel",
         form_save: "Save",
-        
+
         // Messages
         msg_login_success: "Login successful!",
         msg_login_failed: "Login failed. Please check your credentials.",
@@ -135,7 +135,7 @@ const translations = {
         msg_loading: "Loading...",
         msg_loading_products: "Loading products...",
         msg_error: "An error occurred",
-        
+
         // General
         general_close: "Close",
         general_open: "Open",
@@ -148,29 +148,29 @@ const translations = {
         general_next: "Next",
         general_previous: "Previous",
         general_all: "All",
-        
+
         // Units and formatting
         currency_symbol: "$",
         units_available: "units available",
         units_left: "left in stock",
-        
+
         // Time
         time_just_now: "Just now",
         time_minutes_ago: "minutes ago",
         time_hours_ago: "hours ago",
         time_days_ago: "days ago",
-        
+
         // Chatbot
         chatbot_title: "Chat Support",
         chatbot_placeholder: "Type your message here...",
         chatbot_send: "Send",
         chatbot_greeting: "Hi there! 👋\nHow can I help you today?",
-        
+
         // Language switcher
         language_english: "English",
         language_french: "Français",
         language_switch_to: "Switch to",
-        
+
         // Wishlist
         wishlist_title: "My Wishlist",
         wishlist_subtitle: "Save your favorite items for later",
@@ -189,7 +189,7 @@ const translations = {
         error_removing_wishlist: "Error removing from wishlist",
         error_moving_to_cart: "Error moving to cart",
         error_loading_wishlist: "Error loading wishlist",
-        
+
         // Reviews
         reviews_title: "Customer Reviews",
         write_review: "Write a Review",
@@ -217,7 +217,7 @@ const translations = {
         reviews_based_on: "based on",
         review_single: "review",
         reviews_count: "reviews",
-        
+
         // Related Products
         related_products: "You May Also Like",
         related_products_subtitle: "Similar products you might be interested in",
@@ -225,7 +225,7 @@ const translations = {
         no_related_products: "No related products found",
         check_back_later: "Check back later for recommendations",
         error_loading_related: "Error loading related products",
-        
+
         // Common
         retry: "Retry",
 
@@ -592,12 +592,12 @@ const translations = {
         debug_status: "Status:",
         debug_products_found: "Products found:",
         debug_error: "Error:",
-        
+
         // Dashboard
         nav_dashboard: "Dashboard",
         dashboard_title: "My Dashboard",
         dashboard_subtitle: "Manage your account and orders",
-        
+
         // Dashboard Navigation
         dashboard_nav_overview: "Overview",
         dashboard_nav_profile: "Profile",
@@ -608,7 +608,7 @@ const translations = {
         dashboard_nav_payment: "Payment Methods",
         dashboard_nav_security: "Security",
         dashboard_nav_logout: "Logout",
-        
+
         // Overview Section
         dashboard_overview_title: "Account Overview",
         dashboard_overview_subtitle: "Your account summary and quick stats",
@@ -624,7 +624,7 @@ const translations = {
         dashboard_stats_wishlist: "Wishlist Items",
         dashboard_welcome: "Welcome back",
         dashboard_member_since: "Member since",
-        
+
         // Profile Section
         dashboard_profile_title: "Profile Information",
         dashboard_profile_subtitle: "Update your personal details",
@@ -634,7 +634,7 @@ const translations = {
         dashboard_profile_last_name: "Last Name",
         dashboard_profile_save: "Save Changes",
         dashboard_profile_updated: "Profile updated successfully!",
-        
+
         // Orders Section
         dashboard_orders_title: "Order History",
         dashboard_orders_subtitle: "View and track your orders",
@@ -657,7 +657,7 @@ const translations = {
         dashboard_orders_reorder: "Reorder",
         dashboard_orders_empty: "No orders found",
         dashboard_orders_cancelled: "Order cancelled successfully",
-        
+
         // Order Details Modal
         dashboard_order_details_title: "Order Details",
         dashboard_order_info: "Order Information",
@@ -670,7 +670,7 @@ const translations = {
         dashboard_order_tax: "Tax",
         dashboard_order_quantity: "Quantity",
         dashboard_order_price: "Price",
-        
+
         // Reviews Section
         dashboard_reviews_title: "My Reviews",
         dashboard_reviews_subtitle: "Manage your product reviews",
@@ -682,7 +682,7 @@ const translations = {
         dashboard_reviews_delete: "Delete",
         dashboard_reviews_empty: "You haven't written any reviews yet",
         dashboard_reviews_deleted: "Review deleted successfully",
-        
+
         // Wishlist Section
         dashboard_wishlist_title: "My Wishlist",
         dashboard_wishlist_subtitle: "Your saved items",
@@ -691,7 +691,7 @@ const translations = {
         dashboard_wishlist_removed: "Item removed from wishlist",
         dashboard_wishlist_add_to_cart: "Add to Cart",
         dashboard_wishlist_view_product: "View Product",
-        
+
         // Addresses Section
         dashboard_addresses_title: "Shipping Addresses",
         dashboard_addresses_subtitle: "Manage your delivery addresses",
@@ -711,12 +711,12 @@ const translations = {
         dashboard_addresses_empty: "No addresses saved",
         dashboard_addresses_saved: "Address saved successfully",
         dashboard_addresses_deleted: "Address deleted successfully",
-        
+
         // Address Modal
         dashboard_address_modal_title: "Add/Edit Address",
         dashboard_address_modal_add: "Add New Address",
         dashboard_address_modal_edit: "Edit Address",
-        
+
         // Payment Methods Section
         dashboard_payment_title: "Payment Methods",
         dashboard_payment_subtitle: "Manage your saved payment methods",
@@ -735,7 +735,7 @@ const translations = {
         dashboard_payment_deleted: "Payment method deleted successfully",
         dashboard_payment_expired: "Expired",
         dashboard_payment_expires: "Expires",
-        
+
         // Security Section
         dashboard_security_title: "Security Settings",
         dashboard_security_subtitle: "Update your password and security preferences",
@@ -749,7 +749,7 @@ const translations = {
         dashboard_security_password_strong: "Password is strong",
         dashboard_security_passwords_match: "Passwords match",
         dashboard_security_passwords_mismatch: "Passwords do not match",
-        
+
         // Common Dashboard Actions
         dashboard_btn_save: "Save",
         dashboard_btn_cancel: "Cancel",
@@ -758,7 +758,7 @@ const translations = {
         dashboard_btn_add: "Add",
         dashboard_btn_close: "Close",
         dashboard_btn_confirm: "Confirm",
-        
+
         // Status Messages
         dashboard_loading: "Loading...",
         dashboard_error: "An error occurred",
@@ -774,32 +774,32 @@ const translations = {
         testimonials_title_accent: "Client Success Stories",
         testimonials_title_main: "What Our Customers Say",
         testimonials_subtitle: "Trusted by professionals worldwide for quality and reliability",
-        
+
         // Testimonial 1
         testimonial_1_text: "Exceptional quality and professional service. The lighting equipment we purchased exceeded all expectations. Our events have never looked better!",
         testimonial_1_author: "Jean-Pierre Dubois",
         testimonial_1_role: "Event Manager, Douala Events",
-        
+
         // Testimonial 2
         testimonial_2_text: "Outstanding customer support and top-tier products. Their technical team helped us set up our entire sound system flawlessly. Highly recommended!",
         testimonial_2_author: "Amina Nkosi",
         testimonial_2_role: "Sound Engineer, Studio Pro Yaoundé",
-        
+
         // Testimonial 3
         testimonial_3_text: "Been working with SoundLightPro for 3 years now. Their equipment is reliable, durable, and always delivers crystal-clear sound quality. True professionals!",
         testimonial_3_author: "David Moukoko",
         testimonial_3_role: "DJ & Music Producer",
-        
+
         // Testimonial 4
         testimonial_4_text: "Perfect partner for our venue. Fast delivery, competitive prices, and excellent after-sales service. They truly understand the needs of event professionals.",
         testimonial_4_author: "Marie Kamga",
         testimonial_4_role: "Venue Owner, Le Grand Palais",
-        
+
         // Testimonial 5
         testimonial_5_text: "The best investment we've made for our church. The sound system is powerful, clear, and easy to use. The team's expertise made installation seamless.",
         testimonial_5_author: "Pastor Emmanuel Talla",
         testimonial_5_role: "Technical Director, Grace Church",
-        
+
         // Testimonial 6
         testimonial_6_text: "Incredible range of products and unbeatable prices. Their lighting solutions transformed our nightclub. Professional equipment that really makes a difference!",
         testimonial_6_author: "Carlos Mendez",
@@ -811,9 +811,9 @@ const translations = {
         cat_dj_equipment: "DJ Gear",
         cat_stage_effects: "Stage Effects",
         cat_cables: "Cables",
-        
+
     },
-    
+
     fr: {
         // Navigation
         nav_home: "Accueil",
@@ -825,12 +825,12 @@ const translations = {
         nav_register: "S'inscrire",
         nav_logout: "Déconnexion",
         nav_cart: "Panier",
-        
+
         // Search
         search_placeholder: "Rechercher des produits...",
         search_no_results: "Aucun produit trouvé.",
         search_try_again: "Recherche échouée. Réessayez.",
-        
+
         // Product actions
         btn_add_to_cart: "Ajouter au Panier",
         btn_quick_view: "Aperçu Rapide",
@@ -839,7 +839,7 @@ const translations = {
         btn_remove: "Supprimer",
         btn_update: "Mettre à Jour",
         btn_send: "Envoyer",
-        
+
         // Cart
         cart_empty: "Votre panier est vide.",
         cart_total: "Total",
@@ -853,7 +853,7 @@ const translations = {
         cart_empty_title: "Votre panier est vide",
         cart_empty_sub: "On dirait que vous n'avez encore rien ajouté.",
         cart_continue_shopping: "Continuer vos achats",
-        
+
         // Product details
         product_category: "Catégorie",
         product_brand: "Marque",
@@ -863,7 +863,7 @@ const translations = {
         product_quantity: "Quantité",
         product_description: "Description",
         product_no_description: "Aucune description disponible.",
-        
+
         // Home page sections
         home_hero_title: "Une Nouvelle Perspective",
         home_hero_subtitle: "en Son & Lumière",
@@ -878,7 +878,7 @@ const translations = {
         home_newsletter_subtitle: "Recevez les dernières nouvelles sur les nouveaux produits et offres exclusives",
         home_newsletter_placeholder: "Entrez votre e-mail",
         home_newsletter_btn: "S'abonner",
-        
+
         // Features
         feature_shipping: "Livraison Rapide",
         feature_shipping_desc: "Livraison gratuite pour les commandes de plus de 500$",
@@ -888,7 +888,7 @@ const translations = {
         feature_support_desc: "Assistance technique 24/7",
         feature_returns: "Retours Faciles",
         feature_returns_desc: "Politique de retour de 30 jours",
-        
+
         // Footer
         footer_company_desc: "Solutions audio et éclairage professionnelles pour événements, concerts et lieux dans le monde entier.",
         footer_quick_links: "Liens Rapides",
@@ -902,7 +902,7 @@ const translations = {
         footer_privacy_policy: "Politique de Confidentialité",
         footer_terms_of_service: "Conditions d'Utilisation",
         footer_cookie_policy: "Politique des Cookies",
-        
+
         // Contact page
         contact_title: "Contactez-Nous",
         contact_address: "Adresse",
@@ -915,7 +915,7 @@ const translations = {
         contact_subject: "Sujet",
         contact_message: "Votre Message",
         contact_send: "Envoyer",
-        
+
         // Forms
         form_email: "E-mail",
         form_password: "Mot de Passe",
@@ -926,7 +926,7 @@ const translations = {
         form_submit: "Envoyer",
         form_cancel: "Annuler",
         form_save: "Sauvegarder",
-        
+
         // Messages
         msg_login_success: "Connexion réussie !",
         msg_login_failed: "Connexion échouée. Vérifiez vos identifiants.",
@@ -937,7 +937,7 @@ const translations = {
         msg_loading: "Chargement...",
         msg_loading_products: "Chargement des produits...",
         msg_error: "Une erreur s'est produite",
-        
+
         // General
         general_close: "Fermer",
         general_open: "Ouvrir",
@@ -950,29 +950,29 @@ const translations = {
         general_next: "Suivant",
         general_previous: "Précédent",
         general_all: "Tous",
-        
+
         // Units and formatting
         currency_symbol: "$",
         units_available: "unités disponibles",
         units_left: "restant en stock",
-        
+
         // Time
         time_just_now: "À l'instant",
         time_minutes_ago: "il y a quelques minutes",
         time_hours_ago: "il y a quelques heures",
         time_days_ago: "il y a quelques jours",
-        
+
         // Chatbot
         chatbot_title: "Support Client",
         chatbot_placeholder: "Tapez votre message ici...",
         chatbot_send: "Envoyer",
         chatbot_greeting: "Bonjour ! 👋\nComment puis-je vous aider aujourd'hui ?",
-        
+
         // Language switcher
         language_english: "English",
         language_french: "Français",
         language_switch_to: "Basculer vers",
-        
+
         // Wishlist
         wishlist_title: "Ma Liste de Souhaits",
         wishlist_subtitle: "Enregistrez vos articles préférés pour plus tard",
@@ -991,7 +991,7 @@ const translations = {
         error_removing_wishlist: "Erreur lors de la suppression",
         error_moving_to_cart: "Erreur lors du déplacement",
         error_loading_wishlist: "Erreur de chargement de la liste",
-        
+
         // Reviews
         reviews_title: "Avis Clients",
         write_review: "Écrire un Avis",
@@ -1019,7 +1019,7 @@ const translations = {
         reviews_based_on: "basé sur",
         review_single: "avis",
         reviews_count: "avis",
-        
+
         // Related Products
         related_products: "Vous Aimerez Aussi",
         related_products_subtitle: "Produits similaires qui pourraient vous intéresser",
@@ -1027,7 +1027,7 @@ const translations = {
         no_related_products: "Aucun produit similaire trouvé",
         check_back_later: "Revenez plus tard pour des recommandations",
         error_loading_related: "Erreur de chargement des produits similaires",
-        
+
         // Common
         retry: "Réessayer",
 
@@ -1397,12 +1397,12 @@ const translations = {
         debug_status: "Statut :",
         debug_products_found: "Produits trouvés :",
         debug_error: "Erreur :",
-        
+
         // Dashboard
         nav_dashboard: "Tableau de Bord",
         dashboard_title: "Mon Tableau de Bord",
         dashboard_subtitle: "Gérer votre compte et vos commandes",
-        
+
         // Dashboard Navigation
         dashboard_nav_overview: "Aperçu",
         dashboard_nav_profile: "Profil",
@@ -1413,7 +1413,7 @@ const translations = {
         dashboard_nav_payment: "Modes de Paiement",
         dashboard_nav_security: "Sécurité",
         dashboard_nav_logout: "Déconnexion",
-        
+
         // Overview Section
         dashboard_overview_title: "Aperçu du Compte",
         dashboard_overview_subtitle: "Résumé de votre compte et statistiques rapides",
@@ -1429,7 +1429,7 @@ const translations = {
         dashboard_stats_wishlist: "Articles en Liste de Souhaits",
         dashboard_welcome: "Bienvenue",
         dashboard_member_since: "Membre depuis",
-        
+
         // Profile Section
         dashboard_profile_title: "Informations du Profil",
         dashboard_profile_subtitle: "Mettre à jour vos informations personnelles",
@@ -1439,7 +1439,7 @@ const translations = {
         dashboard_profile_last_name: "Nom",
         dashboard_profile_save: "Enregistrer les Modifications",
         dashboard_profile_updated: "Profil mis à jour avec succès !",
-        
+
         // Orders Section
         dashboard_orders_title: "Historique des Commandes",
         dashboard_orders_subtitle: "Voir et suivre vos commandes",
@@ -1462,7 +1462,7 @@ const translations = {
         dashboard_orders_reorder: "Recommander",
         dashboard_orders_empty: "Aucune commande trouvée",
         dashboard_orders_cancelled: "Commande annulée avec succès",
-        
+
         // Order Details Modal
         dashboard_order_details_title: "Détails de la Commande",
         dashboard_order_info: "Informations de Commande",
@@ -1475,7 +1475,7 @@ const translations = {
         dashboard_order_tax: "Taxe",
         dashboard_order_quantity: "Quantité",
         dashboard_order_price: "Prix",
-        
+
         // Reviews Section
         dashboard_reviews_title: "Mes Avis",
         dashboard_reviews_subtitle: "Gérer vos avis de produits",
@@ -1487,7 +1487,7 @@ const translations = {
         dashboard_reviews_delete: "Supprimer",
         dashboard_reviews_empty: "Vous n'avez pas encore écrit d'avis",
         dashboard_reviews_deleted: "Avis supprimé avec succès",
-        
+
         // Wishlist Section
         dashboard_wishlist_title: "Ma Liste de Souhaits",
         dashboard_wishlist_subtitle: "Vos articles enregistrés",
@@ -1496,7 +1496,7 @@ const translations = {
         dashboard_wishlist_removed: "Article retiré de la liste de souhaits",
         dashboard_wishlist_add_to_cart: "Ajouter au Panier",
         dashboard_wishlist_view_product: "Voir le Produit",
-        
+
         // Addresses Section
         dashboard_addresses_title: "Adresses de Livraison",
         dashboard_addresses_subtitle: "Gérer vos adresses de livraison",
@@ -1516,12 +1516,12 @@ const translations = {
         dashboard_addresses_empty: "Aucune adresse enregistrée",
         dashboard_addresses_saved: "Adresse enregistrée avec succès",
         dashboard_addresses_deleted: "Adresse supprimée avec succès",
-        
+
         // Address Modal
         dashboard_address_modal_title: "Ajouter/Modifier l'Adresse",
         dashboard_address_modal_add: "Ajouter une Nouvelle Adresse",
         dashboard_address_modal_edit: "Modifier l'Adresse",
-        
+
         // Payment Methods Section
         dashboard_payment_title: "Modes de Paiement",
         dashboard_payment_subtitle: "Gérer vos modes de paiement enregistrés",
@@ -1540,7 +1540,7 @@ const translations = {
         dashboard_payment_deleted: "Mode de paiement supprimé avec succès",
         dashboard_payment_expired: "Expiré",
         dashboard_payment_expires: "Expire",
-        
+
         // Security Section
         dashboard_security_title: "Paramètres de Sécurité",
         dashboard_security_subtitle: "Mettre à jour votre mot de passe et vos préférences de sécurité",
@@ -1554,7 +1554,7 @@ const translations = {
         dashboard_security_password_strong: "Le mot de passe est fort",
         dashboard_security_passwords_match: "Les mots de passe correspondent",
         dashboard_security_passwords_mismatch: "Les mots de passe ne correspondent pas",
-        
+
         // Common Dashboard Actions
         dashboard_btn_save: "Enregistrer",
         dashboard_btn_cancel: "Annuler",
@@ -1563,7 +1563,7 @@ const translations = {
         dashboard_btn_add: "Ajouter",
         dashboard_btn_close: "Fermer",
         dashboard_btn_confirm: "Confirmer",
-        
+
         // Status Messages
         dashboard_loading: "Chargement...",
         dashboard_error: "Une erreur s'est produite",
@@ -1581,7 +1581,7 @@ class I18n {
         this.listeners = new Set();
         this.init();
     }
-    
+
     /**
      * Detect user's preferred language
      */
@@ -1591,17 +1591,17 @@ class I18n {
         if (saved && translations[saved]) {
             return saved;
         }
-        
+
         // Check browser language
         const browserLang = navigator.language.split('-')[0];
         if (translations[browserLang]) {
             return browserLang;
         }
-        
+
         // Default to English
         return 'en';
     }
-    
+
     /**
      * Initialize the i18n system
      */
@@ -1610,7 +1610,7 @@ class I18n {
         this.translatePage();
         this.setupLanguageSwitcher();
     }
-    
+
     /**
      * Get translated text for a key
      */
@@ -1620,7 +1620,7 @@ class I18n {
         const normalizedKey = key
             .replace(/\./g, '_')
             .toLowerCase();
-        
+
         let translation = translations[this.currentLanguage]?.[normalizedKey] || translations.en[normalizedKey];
         if (!translation) {
             // Try original key as fallback
@@ -1636,7 +1636,7 @@ class I18n {
             return params[param] || match;
         });
     }
-    
+
     /**
      * Switch to a different language
      */
@@ -1645,35 +1645,35 @@ class I18n {
             console.warn(`Language ${lang} not supported`);
             return;
         }
-        
+
         this.currentLanguage = lang;
         localStorage.setItem('preferred_language', lang);
         this.updateHtmlLang();
         this.translatePage();
         this.notifyListeners();
     }
-    
+
     /**
      * Get current language
      */
     getCurrentLanguage() {
         return this.currentLanguage;
     }
-    
+
     /**
      * Get available languages
      */
     getAvailableLanguages() {
         return Object.keys(translations);
     }
-    
+
     /**
      * Update HTML lang attribute
      */
     updateHtmlLang() {
         document.documentElement.lang = this.currentLanguage;
     }
-    
+
     /**
      * Translate all elements with data-i18n attribute
      */
@@ -1688,25 +1688,11 @@ class I18n {
 
             if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
                 element.placeholder = translation;
-            } else if (element.tagName === 'META') {
-                element.setAttribute('content', translation);
-            } else if (element.tagName === 'TITLE') {
-                element.textContent = translation;
             } else {
-                // Convert \n to <br> for display in HTML
-                const htmlTranslation = translation.replace(/\n/g, '<br>');
-                element.innerHTML = htmlTranslation;
+                element.textContent = translation;
             }
         });
 
-        document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
-            const key = element.getAttribute('data-i18n-placeholder');
-            const translation = this.t(key);
-            if (translation) {
-                element.placeholder = translation;
-            }
-        });
-        
         // Translate elements with data-i18n-title (for tooltips)
         document.querySelectorAll('[data-i18n-title]').forEach(element => {
             const key = element.getAttribute('data-i18n-title');
@@ -1716,7 +1702,7 @@ class I18n {
             }
         });
     }
-    
+
     /**
      * Setup language switcher functionality
      */
@@ -1728,21 +1714,21 @@ class I18n {
             }
         });
     }
-    
+
     /**
      * Add listener for language changes
      */
     addListener(callback) {
         this.listeners.add(callback);
     }
-    
+
     /**
      * Remove listener
      */
     removeListener(callback) {
         this.listeners.delete(callback);
     }
-    
+
     /**
      * Notify all listeners of language change
      */
@@ -1755,7 +1741,7 @@ class I18n {
             }
         });
     }
-    
+
     /**
      * Format currency
      */
@@ -1764,14 +1750,14 @@ class I18n {
         const formatted = parseFloat(amount).toFixed(2);
         return `${symbol}${formatted}`;
     }
-    
+
     /**
      * Format number with locale
      */
     formatNumber(number) {
         return new Intl.NumberFormat(this.currentLanguage === 'fr' ? 'fr-FR' : 'en-US').format(number);
     }
-    
+
     /**
      * Format date with locale
      */

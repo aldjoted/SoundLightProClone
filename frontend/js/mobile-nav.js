@@ -40,7 +40,7 @@ class MobileNavigation {
 
         // Check if toggle button already exists in HTML
         let toggleButton = headerWrapper.querySelector('.mobile-menu-toggle');
-        
+
         // Only create toggle button if it doesn't exist (backward compatibility)
         if (!toggleButton) {
             toggleButton = document.createElement('button');
@@ -48,7 +48,12 @@ class MobileNavigation {
             toggleButton.setAttribute('aria-label', 'Toggle mobile menu');
             toggleButton.setAttribute('aria-expanded', 'false');
             toggleButton.setAttribute('aria-controls', 'mobile-nav-panel');
-            toggleButton.innerHTML = `<span class="hamburger-icon"><span></span><span></span><span></span></span>`;
+            const hamburger = document.createElement('span');
+            hamburger.className = 'hamburger-icon';
+            hamburger.appendChild(document.createElement('span'));
+            hamburger.appendChild(document.createElement('span'));
+            hamburger.appendChild(document.createElement('span'));
+            toggleButton.appendChild(hamburger);
             headerWrapper.appendChild(toggleButton);
         }
 
@@ -61,31 +66,95 @@ class MobileNavigation {
         navPanel.id = 'mobile-nav-panel';
         navPanel.className = 'mobile-nav-panel';
         navPanel.setAttribute('aria-hidden', 'true');
-        navPanel.innerHTML = `
-            <div class="mobile-nav-header">
-                <h3>Menu</h3>
-                <button class="mobile-close-btn" aria-label="Close menu"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="mobile-nav-content">
-                <div class="mobile-nav-section">
-                    <h4>Navigation</h4>
-                    <a href="index.html" class="mobile-nav-link"><i class="fas fa-home"></i><span>Home</span></a>
-                    <div id="mobile-categories-container"></div>
-                    <a href="about.html" class="mobile-nav-link"><i class="fas fa-users"></i><span>About Us</span></a>
-                    <a href="services.html" class="mobile-nav-link"><i class="fas fa-cogs"></i><span>Services</span></a>
-                    <a href="contact.html" class="mobile-nav-link"><i class="fas fa-envelope"></i><span>Contact</span></a>
-                </div>
-                <div class="mobile-nav-section">
-                    <h4>Account</h4>
-                    <a href="cart.html" class="mobile-nav-link mobile-cart-link">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span>Cart</span>
-                        <span id="mobile-cart-badge" class="mobile-cart-badge">0</span>
-                    </a>
-                    <div id="mobile-auth-container"></div>
-                </div>
-            </div>
-        `;
+
+        const navHeader = document.createElement('div');
+        navHeader.className = 'mobile-nav-header';
+
+        const h3 = document.createElement('h3');
+        h3.textContent = 'Menu';
+
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'mobile-close-btn';
+        closeBtn.setAttribute('aria-label', 'Close menu');
+        const closeIcon = document.createElement('i');
+        closeIcon.className = 'fas fa-times';
+        closeBtn.appendChild(closeIcon);
+
+        navHeader.appendChild(h3);
+        navHeader.appendChild(closeBtn);
+
+        const navContent = document.createElement('div');
+        navContent.className = 'mobile-nav-content';
+
+        // Navigation Section
+        const navSection = document.createElement('div');
+        navSection.className = 'mobile-nav-section';
+
+        const h4Nav = document.createElement('h4');
+        h4Nav.textContent = 'Navigation';
+        navSection.appendChild(h4Nav);
+
+        const createNavLink = (href, iconClass, text) => {
+            const a = document.createElement('a');
+            a.href = href;
+            a.className = 'mobile-nav-link';
+            const i = document.createElement('i');
+            i.className = iconClass;
+            const span = document.createElement('span');
+            span.textContent = text;
+            a.appendChild(i);
+            a.appendChild(span);
+            return a;
+        };
+
+        navSection.appendChild(createNavLink('index.html', 'fas fa-home', 'Home'));
+
+        const categoriesContainer = document.createElement('div');
+        categoriesContainer.id = 'mobile-categories-container';
+        navSection.appendChild(categoriesContainer);
+
+        navSection.appendChild(createNavLink('about.html', 'fas fa-users', 'About Us'));
+        navSection.appendChild(createNavLink('services.html', 'fas fa-cogs', 'Services'));
+        navSection.appendChild(createNavLink('contact.html', 'fas fa-envelope', 'Contact'));
+
+        // Account Section
+        const accountSection = document.createElement('div');
+        accountSection.className = 'mobile-nav-section';
+
+        const h4Account = document.createElement('h4');
+        h4Account.textContent = 'Account';
+        accountSection.appendChild(h4Account);
+
+        const cartLink = document.createElement('a');
+        cartLink.href = 'cart.html';
+        cartLink.className = 'mobile-nav-link mobile-cart-link';
+
+        const cartIcon = document.createElement('i');
+        cartIcon.className = 'fas fa-shopping-cart';
+
+        const cartText = document.createElement('span');
+        cartText.textContent = 'Cart';
+
+        const cartBadge = document.createElement('span');
+        cartBadge.id = 'mobile-cart-badge';
+        cartBadge.className = 'mobile-cart-badge';
+        cartBadge.textContent = '0';
+
+        cartLink.appendChild(cartIcon);
+        cartLink.appendChild(cartText);
+        cartLink.appendChild(cartBadge);
+
+        accountSection.appendChild(cartLink);
+
+        const authContainer = document.createElement('div');
+        authContainer.id = 'mobile-auth-container';
+        accountSection.appendChild(authContainer);
+
+        navContent.appendChild(navSection);
+        navContent.appendChild(accountSection);
+
+        navPanel.appendChild(navHeader);
+        navPanel.appendChild(navContent);
 
         document.body.appendChild(overlay);
         document.body.appendChild(navPanel);
@@ -104,7 +173,7 @@ class MobileNavigation {
         this.toggleButton.addEventListener('click', () => this.toggle());
         this.overlay.addEventListener('click', () => this.close());
         this.closeButton.addEventListener('click', () => this.close());
-        
+
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.isOpen) this.close();
             if (e.key === 'Tab' && this.isOpen) this.trapFocus(e);
@@ -138,26 +207,63 @@ class MobileNavigation {
         try {
             const categories = await apiService.getCategories();
             const parentCategories = categories.filter(cat => !cat.parent);
-            
-            container.innerHTML = parentCategories.map(category => `
-                <div class="mobile-category-item">
-                    <button class="mobile-category-toggle" data-category-slug="${category.slug}" aria-expanded="false" aria-label="Toggle ${category.name} subcategories">
-                        <span><i class="fas fa-cube"></i>${category.name}</span>
-                        <i class="fas fa-chevron-down chevron"></i>
-                    </button>
-                    <div class="mobile-subcategories" data-category-slug="${category.slug}">
-                        ${category.children.map(child => `
-                            <a href="search-results.html?category=${child.slug}" class="mobile-subcategory-link">${child.name}</a>
-                        `).join('')}
-                        <a href="search-results.html?category=${category.slug}" class="mobile-subcategory-link">
-                            <strong>View all ${category.name}</strong>
-                        </a>
-                    </div>
-                </div>
-            `).join('');
+
+            container.innerHTML = ''; // Clear container
+
+            parentCategories.forEach(category => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'mobile-category-item';
+
+                const button = document.createElement('button');
+                button.className = 'mobile-category-toggle';
+                button.dataset.categorySlug = category.slug;
+                button.setAttribute('aria-expanded', 'false');
+                button.setAttribute('aria-label', `Toggle ${category.name} subcategories`);
+
+                const span = document.createElement('span');
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-cube';
+                span.appendChild(icon);
+                span.appendChild(document.createTextNode(category.name));
+
+                const chevron = document.createElement('i');
+                chevron.className = 'fas fa-chevron-down chevron';
+
+                button.appendChild(span);
+                button.appendChild(chevron);
+
+                const subDiv = document.createElement('div');
+                subDiv.className = 'mobile-subcategories';
+                subDiv.dataset.categorySlug = category.slug;
+
+                category.children.forEach(child => {
+                    const a = document.createElement('a');
+                    a.href = `search-results.html?category=${child.slug}`;
+                    a.className = 'mobile-subcategory-link';
+                    a.textContent = child.name;
+                    subDiv.appendChild(a);
+                });
+
+                const viewAllLink = document.createElement('a');
+                viewAllLink.href = `search-results.html?category=${category.slug}`;
+                viewAllLink.className = 'mobile-subcategory-link';
+                const strong = document.createElement('strong');
+                strong.textContent = `View all ${category.name}`;
+                viewAllLink.appendChild(strong);
+                subDiv.appendChild(viewAllLink);
+
+                itemDiv.appendChild(button);
+                itemDiv.appendChild(subDiv);
+                container.appendChild(itemDiv);
+            });
+
         } catch (error) {
             console.error('Failed to load categories for mobile nav:', error);
-            container.innerHTML = `<p class="mobile-nav-error">Could not load categories.</p>`;
+            container.innerHTML = '';
+            const p = document.createElement('p');
+            p.className = 'mobile-nav-error';
+            p.textContent = 'Could not load categories.';
+            container.appendChild(p);
         }
     }
 
@@ -213,13 +319,29 @@ class MobileNavigation {
             const dashboardLink = document.createElement('a');
             dashboardLink.href = 'dashboard.html';
             dashboardLink.className = 'mobile-nav-link';
-            dashboardLink.innerHTML = `<i class="fas fa-tachometer-alt"></i><span>Dashboard</span>`;
+
+            const dashIcon = document.createElement('i');
+            dashIcon.className = 'fas fa-tachometer-alt';
+            const dashSpan = document.createElement('span');
+            dashSpan.textContent = 'Dashboard';
+
+            dashboardLink.appendChild(dashIcon);
+            dashboardLink.appendChild(dashSpan);
             container.appendChild(dashboardLink);
 
             const logoutButton = document.createElement('button');
             logoutButton.id = 'mobile-logout-button';
             logoutButton.className = 'mobile-nav-link';
-            logoutButton.innerHTML = `<i class="fas fa-sign-out-alt"></i><span data-i18n="nav_logout">Logout</span>`;
+
+            const logoutIcon = document.createElement('i');
+            logoutIcon.className = 'fas fa-sign-out-alt';
+            const logoutSpan = document.createElement('span');
+            logoutSpan.setAttribute('data-i18n', 'nav_logout');
+            logoutSpan.textContent = 'Logout';
+
+            logoutButton.appendChild(logoutIcon);
+            logoutButton.appendChild(logoutSpan);
+
             logoutButton.onclick = () => document.getElementById('logout-button')?.click();
             container.appendChild(logoutButton);
         }
@@ -260,7 +382,7 @@ class MobileNavigation {
         this.navPanel.classList.remove('active');
         this.navPanel.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
-        
+
         // A11Y: Return focus to the button that opened the menu
         this.toggleButton.focus();
     }

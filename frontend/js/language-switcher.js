@@ -13,9 +13,10 @@ import i18n from './i18n.js';
 class LanguageSwitcher {
     constructor() {
         this.isOpen = false;
+        this.element = null;
         this.init();
     }
-    
+
     /**
      * Initialize the language switcher
      */
@@ -25,88 +26,81 @@ class LanguageSwitcher {
             document.addEventListener('DOMContentLoaded', () => {
                 this.createSwitcher();
                 this.setupEventListeners();
+                this.updateCurrentLanguage();
             });
         } else {
             this.createSwitcher();
             this.setupEventListeners();
-        }
-        
-        // Listen for language changes
-        i18n.addListener((newLang) => {
             this.updateCurrentLanguage();
-        });
+        }
     }
-    
+
     /**
-     * Create the language switcher HTML
+     * Create the language switcher UI
      */
     createSwitcher() {
-        console.log('🌍 Creating language switcher...');
-        const switcher = document.createElement('div');
-        switcher.className = 'language-switcher';
-        switcher.innerHTML = this.getSwitcherHTML();
-        
-        // Insert into header-actions area as the LAST element
-        const headerActions = document.querySelector('.header-actions');
-        console.log('📍 Header actions found:', headerActions);
-        
-        if (headerActions) {
-            // Insert at the end (after user icon and cart)
-            headerActions.appendChild(switcher);
-            console.log('✅ Language switcher added to header-actions');
-        } else {
-            // Fallback: try navigation
-            const nav = document.querySelector('nav') || document.querySelector('.nav');
-            console.log('📍 Navigation found:', nav);
-            if (nav) {
-                nav.appendChild(switcher);
-                console.log('✅ Language switcher added to navigation');
-            } else {
-                // Final fallback: insert at top of body
-                document.body.insertBefore(switcher, document.body.firstChild);
-                console.log('✅ Language switcher added to body');
+        // Check if already exists
+        if (document.querySelector('.language-switcher')) {
+            this.element = document.querySelector('.language-switcher');
+            return;
+        }
+
+        // Create switcher element
+        this.element = document.createElement('div');
+        this.element.className = 'language-switcher';
+        this.element.setAttribute('role', 'group');
+        this.element.setAttribute('aria-label', 'Language selection');
+
+        const toggle = document.createElement('div');
+        toggle.className = 'lang-toggle';
+
+        // English button
+        const enBtn = document.createElement('button');
+        enBtn.className = 'lang-pill';
+        enBtn.setAttribute('data-lang-switch', 'en');
+        enBtn.setAttribute('aria-pressed', 'false');
+        enBtn.textContent = 'EN';
+        enBtn.type = 'button';
+
+        // French button
+        const frBtn = document.createElement('button');
+        frBtn.className = 'lang-pill';
+        frBtn.setAttribute('data-lang-switch', 'fr');
+        frBtn.setAttribute('aria-pressed', 'false');
+        frBtn.textContent = 'FR';
+        frBtn.type = 'button';
+
+        toggle.appendChild(enBtn);
+        toggle.appendChild(frBtn);
+        this.element.appendChild(toggle);
+
+        // Insert into header
+        const header = document.querySelector('.main-header');
+        if (header) {
+            const headerActions = header.querySelector('.header-actions');
+            if (headerActions) {
+                headerActions.insertBefore(this.element, headerActions.firstChild);
             }
         }
-        
-        this.element = switcher;
-        console.log('🌍 Language switcher element:', this.element);
     }
-    
-    /**
-     * Get the HTML for the language switcher
-     */
-    getSwitcherHTML() {
-        const currentLang = i18n.getCurrentLanguage();
-        return `
-            <div class="lang-toggle" role="group" aria-label="Language selector">
-                <button class="lang-pill ${currentLang === 'en' ? 'active' : ''}" data-lang-switch="en" aria-pressed="${currentLang === 'en'}" aria-label="Switch to English">EN</button>
-                <button class="lang-pill ${currentLang === 'fr' ? 'active' : ''}" data-lang-switch="fr" aria-pressed="${currentLang === 'fr'}" aria-label="Switch to French">FR</button>
-            </div>
-        `;
-    }
-    
+
     /**
      * Setup event listeners
      */
     setupEventListeners() {
-        document.addEventListener('click', (e) => {
-            const pill = e.target.closest('.lang-pill');
-            if (pill?.hasAttribute('data-lang-switch')) {
-                const lang = pill.getAttribute('data-lang-switch');
-                i18n.setLanguage(lang);
-                this.updateCurrentLanguage();
-            }
+        if (!this.element) return;
+
+        this.element.querySelectorAll('.lang-pill').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const lang = e.target.getAttribute('data-lang-switch');
+                if (lang) {
+                    i18n.setLanguage(lang);
+                    this.updateCurrentLanguage();
+                }
+            });
         });
     }
-    
-    /**
-     * Toggle dropdown
-     */
-    toggle() {
-        this.isOpen = !this.isOpen;
-        this.updateDropdown();
-    }
-    
+
     /**
      * Open dropdown
      */
@@ -114,7 +108,7 @@ class LanguageSwitcher {
         this.isOpen = true;
         this.updateDropdown();
     }
-    
+
     /**
      * Close dropdown
      */
@@ -122,25 +116,25 @@ class LanguageSwitcher {
         this.isOpen = false;
         this.updateDropdown();
     }
-    
+
     /**
      * Update dropdown state
      */
     updateDropdown() {
         if (!this.element) return;
-        
+
         const dropdown = this.element.querySelector('.lang-dropdown');
         if (dropdown) {
             dropdown.classList.toggle('open', this.isOpen);
         }
     }
-    
+
     /**
      * Update current language display
      */
     updateCurrentLanguage() {
         if (!this.element) return;
-        
+
         const currentLang = i18n.getCurrentLanguage();
         // Update active state on pills
         this.element.querySelectorAll('.lang-pill').forEach(btn => {
@@ -150,7 +144,7 @@ class LanguageSwitcher {
             btn.setAttribute('aria-pressed', String(isActive));
         });
     }
-    
+
     /**
      * Destroy the language switcher
      */
