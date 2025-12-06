@@ -800,3 +800,226 @@ class PasswordResetToken(models.Model):
         """Mark token as used"""
         self.used = True
         self.save(update_fields=['used'])
+
+
+class Quote(models.Model):
+    """
+    Model representing a customer quote (devis).
+    Similar to Order but for generating quotes without payment.
+    Stores address snapshots as JSON to preserve data integrity over time.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('sent', 'Sent'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+        ('expired', 'Expired'),
+        ('converted', 'Converted to Order'),
+    ]
+
+    # Quote identification
+    quote_number = models.CharField(
+        max_length=50,
+        unique=True,
+        db_index=True,
+        verbose_name=_("Quote Number")
+    )
+    
+    # Customer information
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='quotes'
+    )
+    customer_name = models.CharField(max_length=100, verbose_name=_("Customer Name"))
+    email = models.EmailField(verbose_name=_("Email"))
+    phone = models.CharField(max_length=20, blank=True, verbose_name=_("Phone"))
+    company = models.CharField(max_length=100, blank=True, verbose_name=_("Company"))
+    
+    # Address snapshots (stored as JSON to prevent data changes affecting old quotes)
+    billing_address_json = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name=_("Billing Address (JSON)")
+    )
+    shipping_address_json = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name=_("Shipping Address (JSON)")
+    )
+    
+    # Financial details
+    taxable_base = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        verbose_name=_("Taxable Base (HT)")
+    )
+    tax_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('21.00'),
+        verbose_name=_("Tax Rate (%)")
+    )
+    tax_total = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        verbose_name=_("Tax Total (TVA)")
+    )
+    shipping_cost = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        verbose_name=_("Shipping Cost (HT)")
+    )
+    total_ttc = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        verbose_name=_("Total TTC")
+    )
+    
+    # Quote metadata
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+        verbose_name=_("Status")
+    )
+    valid_until = models.DateField(verbose_name=_("Valid Until"))
+    
+    # Terms and notes
+    payment_terms = models.TextField(
+        default="Paiement à la commande",
+        verbose_name=_("Payment Terms")
+    )
+    delivery_time = models.CharField(
+        max_length=100,
+        default="2-5 jours ouvrables",
+        verbose_name=_("Delivery Time")
+    )
+    notes = models.TextField(blank=True, verbose_name=_("Notes"))
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # Link to order if converted
+    converted_order = models.ForeignKey(
+        'Order',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='source_quote'
+    )
+
+    class Meta:
+        ordering = ('-created_at',)
+        verbose_name = _("Quote")
+        verbose_name_plural = _("Quotes")
+        indexes = [
+            models.Index(fields=['quote_number']),
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['status', '-created_at']),
+            models.Index(fields=['valid_until']),
+        ]
+
+    def __str__(self):
+        return f"Quote {self.quote_number}"
+
+    def save(self, *args, **kwargs):
+        """Generate quote number if not set"""
+        if not self.quote_number:
+            self.quote_number = self._generate_quote_number()
+        if not self.valid_until:
+            self.valid_until = timezone.now().date() + timedelta(days=30)
+        super().save(*args, **kwargs)
+
+    def _generate_quote_number(self):
+        """Generate a unique quote number: Q-YYYYMMDD-XXXX"""
+        import secrets
+        import string
+        date_str = timezone.now().strftime('%Y%m%d')
+        random_suffix = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(4))
+        return f"Q-{date_str}-{random_suffix}"
+
+    def calculate_totals(self):
+        """Calculate and update all totals from items"""
+        from django.db.models import Sum, F
+        
+        # Calculate taxable base from items
+        items_total = self.items.aggregate(
+            total=Sum(F('line_total_ht'))
+        )['total'] or Decimal('0.00')
+        
+        self.taxable_base = items_total
+        
+        # Calculate tax on (taxable_base + shipping_cost)
+        taxable_amount = self.taxable_base + self.shipping_cost
+        self.tax_total = (taxable_amount * self.tax_rate / Decimal('100')).quantize(Decimal('0.01'))
+        
+        # Calculate total TTC
+        self.total_ttc = taxable_amount + self.tax_total
+        
+        self.save(update_fields=['taxable_base', 'tax_total', 'total_ttc'])
+
+    @property
+    def is_expired(self):
+        """Check if quote has expired"""
+        return timezone.now().date() > self.valid_until
+
+
+class QuoteItem(models.Model):
+    """
+    Model for items within a quote.
+    Stores product snapshot data to preserve pricing at quote time.
+    """
+    quote = models.ForeignKey(
+        Quote,
+        related_name='items',
+        on_delete=models.CASCADE
+    )
+    product = models.ForeignKey(
+        Product,
+        related_name='quote_items',
+        on_delete=models.SET_NULL,
+        null=True
+    )
+    
+    # Product snapshot (stored at quote creation time)
+    sku = models.CharField(max_length=100, blank=True, verbose_name=_("SKU/Reference"))
+    name = models.CharField(max_length=255, verbose_name=_("Product Name"))
+    options_description = models.CharField(
+        max_length=500,
+        blank=True,
+        verbose_name=_("Options/Variants Description")
+    )
+    
+    # Pricing
+    quantity = models.PositiveIntegerField(default=1, verbose_name=_("Quantity"))
+    unit_price_ht = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name=_("Unit Price HT")
+    )
+    line_total_ht = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name=_("Line Total HT")
+    )
+
+    class Meta:
+        ordering = ['id']
+        verbose_name = _("Quote Item")
+        verbose_name_plural = _("Quote Items")
+
+    def __str__(self):
+        return f"{self.quantity}x {self.name} in {self.quote.quote_number}"
+
+    def save(self, *args, **kwargs):
+        """Calculate line total before saving"""
+        self.line_total_ht = (self.unit_price_ht * self.quantity).quantize(Decimal('0.01'))
+        super().save(*args, **kwargs)

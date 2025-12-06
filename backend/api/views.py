@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 from .models import (
     Category, Brand, Product, Order, OrderItem, Wishlist, WishlistItem, ProductReview,
-    UserProfile, ShippingAddress, PaymentMethod, PasswordResetToken
+    UserProfile, ShippingAddress, PaymentMethod, PasswordResetToken, Quote, QuoteItem
 )
 from .embeddings import model as embedding_model, get_product_text
 from .vector_search import get_search_index_data
@@ -38,7 +38,8 @@ from .serializers import (
     UserProfileSerializer, UpdatePasswordSerializer, ShippingAddressSerializer,
     PaymentMethodSerializer, CreatePaymentMethodSerializer, UpdatePaymentMethodSerializer,
     DashboardOrderSerializer, DashboardOrderItemSerializer, OrderFilterSerializer,
-    StockNotificationRequestSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer
+    StockNotificationRequestSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
+    QuoteSerializer, CreateQuoteRequestSerializer
 )
 from .captcha import verify_captcha, get_client_ip, is_captcha_enabled, get_captcha_provider, get_captcha_site_key
 import secrets
@@ -1470,6 +1471,231 @@ class DashboardReviewDetailView(APIView):
         
         review.delete()
         return Response({'detail': 'Review deleted successfully.'}, status=status.HTTP_200_OK)
+
+
+# --- Quote (Devis) Views ---
+
+class CreateQuoteView(APIView):
+    """
+    API view to create a new quote (devis) from cart items.
+    POST: Create a new quote and return the quote number
+    
+    This view does not require payment - it generates a quote for the customer.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        """Create a new quote from cart items"""
+        from decimal import Decimal
+        
+        # Validate input
+        serializer = CreateQuoteRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        validated_data = serializer.validated_data
+        cart_items = validated_data['items']
+        
+        try:
+            with transaction.atomic():
+                # Prepare address JSON snapshots
+                billing_address = validated_data['billing_address']
+                
+                if validated_data.get('same_as_billing', True):
+                    shipping_address = billing_address.copy()
+                else:
+                    shipping_address = validated_data.get('shipping_address') or billing_address.copy()
+                
+                # Create the Quote
+                quote = Quote.objects.create(
+                    user=request.user if request.user.is_authenticated else None,
+                    customer_name=validated_data['customer_name'],
+                    email=validated_data['email'],
+                    phone=validated_data.get('phone', ''),
+                    company=validated_data.get('company', ''),
+                    billing_address_json=billing_address,
+                    shipping_address_json=shipping_address,
+                    shipping_cost=Decimal(str(validated_data.get('shipping_cost', 0))),
+                    tax_rate=Decimal(str(validated_data.get('tax_rate', 21))),
+                    notes=validated_data.get('notes', ''),
+                )
+                
+                # Process cart items
+                product_ids = [item['id'] for item in cart_items]
+                products = Product.objects.filter(id__in=product_ids, available=True)
+                products_dict = {p.id: p for p in products}
+                
+                # Validate all products exist
+                missing_products = set(product_ids) - set(products_dict.keys())
+                if missing_products:
+                    raise ValueError(f"Products not found or unavailable: {missing_products}")
+                
+                # Create QuoteItems
+                quote_items = []
+                for item in cart_items:
+                    product = products_dict[item['id']]
+                    quantity = item['quantity']
+                    unit_price_ht = product.price
+                    
+                    quote_item = QuoteItem(
+                        quote=quote,
+                        product=product,
+                        sku=f"SKU-{product.id}",  # Use product ID as SKU if not available
+                        name=product.name,
+                        options_description='',
+                        quantity=quantity,
+                        unit_price_ht=unit_price_ht,
+                        line_total_ht=unit_price_ht * quantity,
+                    )
+                    quote_items.append(quote_item)
+                
+                QuoteItem.objects.bulk_create(quote_items)
+                
+                # Calculate totals
+                quote.calculate_totals()
+                
+                # Return the created quote
+                response_serializer = QuoteSerializer(quote)
+                return Response({
+                    'message': 'Quote created successfully',
+                    'quote_number': quote.quote_number,
+                    'quote': response_serializer.data
+                }, status=status.HTTP_201_CREATED)
+                
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.exception(f"Error creating quote: {e}")
+            return Response(
+                {'error': 'An error occurred while creating the quote. Please try again.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class DownloadQuotePDFView(APIView):
+    """
+    API view to download a quote as a PDF.
+    GET: Generate and return PDF for the specified quote number
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, quote_number, *args, **kwargs):
+        """Generate and download PDF for a quote"""
+        from django.http import HttpResponse
+        from django.template.loader import render_to_string
+        from xhtml2pdf import pisa
+        from io import BytesIO
+        
+        try:
+            quote = Quote.objects.prefetch_related('items__product').get(quote_number=quote_number)
+        except Quote.DoesNotExist:
+            return Response(
+                {'error': 'Quote not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Prepare emitter (company) information
+        emitter = {
+            'nom': 'SoundLightPro',
+            'adresse': '1451, 63 Bd de la République\nDouala, Cameroon',
+            'tva': 'CM-TVA-000000000',
+            'contact': '+237 6 80 49 49 49 | info@soundlightpro.com',
+            'logo_url': None,  # Can be set to actual logo URL
+        }
+        
+        # Prepare items for template
+        items = []
+        for item in quote.items.all():
+            items.append({
+                'sku': item.sku,
+                'name': item.name,
+                'options_description': item.options_description,
+                'quantity': item.quantity,
+                'unit_price_ht': item.unit_price_ht,
+                'line_total_ht': item.line_total_ht,
+            })
+        
+        # Render HTML template
+        context = {
+            'quote': quote,
+            'items': items,
+            'emitter': emitter,
+        }
+        
+        try:
+            html_string = render_to_string('quotes/quote_pdf.html', context)
+        except Exception as e:
+            logger.error(f"Template rendering error: {e}")
+            return Response(
+                {'error': 'Error generating PDF template'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        # Generate PDF using xhtml2pdf
+        try:
+            pdf_buffer = BytesIO()
+            pisa_status = pisa.CreatePDF(
+                html_string,
+                dest=pdf_buffer,
+                encoding='utf-8'
+            )
+            
+            if pisa_status.err:
+                logger.error(f"PDF generation error: {pisa_status.err}")
+                return Response(
+                    {'error': 'Error generating PDF'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            pdf = pdf_buffer.getvalue()
+            pdf_buffer.close()
+        except Exception as e:
+            logger.error(f"PDF generation error: {e}")
+            return Response(
+                {'error': 'Error generating PDF'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        # Return PDF as downloadable response
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="devis-{quote.quote_number}.pdf"'
+        
+        return response
+
+
+class QuoteDetailView(APIView):
+    """
+    API view to retrieve quote details.
+    GET: Get quote details by quote number
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, quote_number, *args, **kwargs):
+        """Get quote details"""
+        try:
+            quote = Quote.objects.prefetch_related('items__product').get(quote_number=quote_number)
+        except Quote.DoesNotExist:
+            return Response(
+                {'error': 'Quote not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = QuoteSerializer(quote)
+        return Response(serializer.data)
+
+
+class UserQuoteListView(APIView):
+    """
+    API view to list quotes for the authenticated user.
+    GET: List all quotes for the current user
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        """List user's quotes"""
+        quotes = Quote.objects.filter(user=request.user).prefetch_related('items')
+        serializer = QuoteSerializer(quotes, many=True)
+        return Response(serializer.data)
 
 
 # Custom 404 handler function

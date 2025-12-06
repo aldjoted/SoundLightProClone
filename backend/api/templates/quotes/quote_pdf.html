@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Devis {{ quote.quote_number }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+
+        /* Base Typography */
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10pt;
+            color: #333;
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Utility Classes */
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .bold { font-weight: bold; }
+        .text-primary { color: #003366; }
+
+        /* Header Section */
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #003366;
+        }
+
+        .header-table td {
+            vertical-align: top;
+            padding: 0;
+        }
+
+        .company-info {
+            font-size: 9pt;
+            line-height: 1.4;
+        }
+
+        .document-title {
+            font-size: 28pt;
+            color: #003366;
+            margin: 0;
+            text-align: right;
+        }
+
+        .document-meta {
+            text-align: right;
+            font-size: 11pt;
+            margin-top: 10px;
+        }
+
+        .document-meta p {
+            margin: 3px 0;
+        }
+
+        /* Addresses Section */
+        .addresses-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .addresses-table td {
+            width: 48%;
+            vertical-align: top;
+            padding: 0;
+        }
+
+        .addresses-table td.spacer {
+            width: 4%;
+        }
+
+        .address-box {
+            background-color: #f8f9fa;
+            padding: 12px;
+            border-left: 4px solid #003366;
+        }
+
+        .address-box h3 {
+            margin: 0 0 8px 0;
+            font-size: 11pt;
+            color: #003366;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 5px;
+        }
+
+        .address-content {
+            font-size: 9pt;
+            line-height: 1.5;
+        }
+
+        /* Items Table */
+        table.items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+        }
+
+        table.items-table th {
+            background-color: #003366;
+            color: white;
+            padding: 8px 6px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 9pt;
+            text-transform: uppercase;
+        }
+
+        table.items-table td {
+            padding: 8px 6px;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+            font-size: 9pt;
+        }
+
+        table.items-table .col-ref { width: 15%; }
+        table.items-table .col-desc { width: 45%; }
+        table.items-table .col-qty { width: 10%; text-align: right; }
+        table.items-table .col-price { width: 15%; text-align: right; }
+        table.items-table .col-total { width: 15%; text-align: right; }
+
+        .item-name { font-weight: bold; }
+        .item-options { color: #666; font-size: 8pt; }
+
+        /* Totals Section */
+        .totals-container {
+            width: 100%;
+        }
+
+        .totals-table {
+            width: 45%;
+            margin-left: 55%;
+            border-collapse: collapse;
+        }
+
+        .totals-table td {
+            padding: 6px 8px;
+            font-size: 10pt;
+        }
+
+        .totals-table .label {
+            text-align: left;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .totals-table .amount {
+            text-align: right;
+        }
+
+        .totals-table .total-row td {
+            background-color: #003366;
+            color: white;
+            font-size: 12pt;
+            font-weight: bold;
+            padding: 10px 8px;
+        }
+
+        /* Conditions */
+        .conditions {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+            font-size: 9pt;
+            color: #555;
+        }
+
+        .conditions h4 {
+            margin: 0 0 10px 0;
+            color: #003366;
+            font-size: 10pt;
+        }
+
+        .conditions p {
+            margin: 5px 0;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 8pt;
+            color: #888;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <table class="header-table">
+        <tr>
+            <td style="width: 50%;">
+                <div class="company-info">
+                    <strong style="font-size: 14pt; color: #003366;">{{ emitter.nom }}</strong><br><br>
+                    {{ emitter.adresse|linebreaksbr }}<br>
+                    TVA: {{ emitter.tva }}<br>
+                    {{ emitter.contact }}
+                </div>
+            </td>
+            <td style="width: 50%;">
+                <h1 class="document-title">DEVIS</h1>
+                <div class="document-meta">
+                    <p><strong>N° :</strong> {{ quote.quote_number }}</p>
+                    <p><strong>Date :</strong> {{ quote.created_at|date:"d/m/Y" }}</p>
+                    <p><strong>Valable jusqu'au :</strong> {{ quote.valid_until|date:"d/m/Y" }}</p>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Addresses -->
+    <table class="addresses-table">
+        <tr>
+            <td>
+                <div class="address-box">
+                    <h3>Facturation</h3>
+                    <div class="address-content">
+                        <strong>{{ quote.customer_name }}</strong><br>
+                        {{ quote.email }}<br>
+                        {% if quote.phone %}{{ quote.phone }}<br>{% endif %}
+                        {% if quote.company %}{{ quote.company }}<br>{% endif %}
+                        <br>
+                        {% if quote.billing_address_json %}
+                            {{ quote.billing_address_json.address_line_1 }}<br>
+                            {% if quote.billing_address_json.address_line_2 %}
+                                {{ quote.billing_address_json.address_line_2 }}<br>
+                            {% endif %}
+                            {{ quote.billing_address_json.postal_code }} {{ quote.billing_address_json.city }}<br>
+                            {% if quote.billing_address_json.state %}{{ quote.billing_address_json.state }}, {% endif %}{{ quote.billing_address_json.country }}
+                        {% else %}
+                            <em>Adresse non spécifiée</em>
+                        {% endif %}
+                    </div>
+                </div>
+            </td>
+            <td class="spacer"></td>
+            <td>
+                <div class="address-box">
+                    <h3>Livraison</h3>
+                    <div class="address-content">
+                        {% if quote.shipping_address_json %}
+                            <strong>{{ quote.customer_name }}</strong><br>
+                            {{ quote.shipping_address_json.address_line_1 }}<br>
+                            {% if quote.shipping_address_json.address_line_2 %}
+                                {{ quote.shipping_address_json.address_line_2 }}<br>
+                            {% endif %}
+                            {{ quote.shipping_address_json.postal_code }} {{ quote.shipping_address_json.city }}<br>
+                            {% if quote.shipping_address_json.state %}{{ quote.shipping_address_json.state }}, {% endif %}{{ quote.shipping_address_json.country }}
+                        {% else %}
+                            <em>Identique à l'adresse de facturation</em>
+                        {% endif %}
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Items Table -->
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th class="col-ref">Réf.</th>
+                <th class="col-desc">Désignation</th>
+                <th class="col-qty">Qté</th>
+                <th class="col-price">P.U. HT</th>
+                <th class="col-total">Total HT</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.sku }}</td>
+                <td>
+                    <span class="item-name">{{ item.name }}</span>
+                    {% if item.options_description %}
+                        <br><span class="item-options">{{ item.options_description }}</span>
+                    {% endif %}
+                </td>
+                <td class="text-right">{{ item.quantity }}</td>
+                <td class="text-right">{{ item.unit_price_ht|floatformat:2 }} €</td>
+                <td class="text-right bold">{{ item.line_total_ht|floatformat:2 }} €</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Totals -->
+    <div class="totals-container">
+        <table class="totals-table">
+            <tr>
+                <td class="label">Sous-total HT</td>
+                <td class="amount">{{ quote.taxable_base|floatformat:2 }} €</td>
+            </tr>
+            <tr>
+                <td class="label">Livraison HT</td>
+                <td class="amount">{{ quote.shipping_cost|floatformat:2 }} €</td>
+            </tr>
+            <tr>
+                <td class="label">TVA ({{ quote.tax_rate|floatformat:0 }}%)</td>
+                <td class="amount">{{ quote.tax_total|floatformat:2 }} €</td>
+            </tr>
+            <tr class="total-row">
+                <td class="label">Total TTC</td>
+                <td class="amount">{{ quote.total_ttc|floatformat:2 }} €</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Conditions -->
+    <div class="conditions">
+        <h4>Conditions &amp; Notes</h4>
+        <p><strong>Conditions de paiement :</strong> {{ quote.payment_terms }}</p>
+        <p><strong>Délai de livraison estimé :</strong> {{ quote.delivery_time }}</p>
+        {% if quote.notes %}
+            <p><strong>Notes :</strong> {{ quote.notes }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        {{ emitter.nom }} &bull; {{ emitter.adresse|striptags }} &bull; TVA: {{ emitter.tva }} &bull; {{ emitter.contact }}
+    </div>
+
+</body>
+</html>

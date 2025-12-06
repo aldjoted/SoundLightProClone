@@ -161,37 +161,167 @@
                 <h2 data-i18n="checkout_title">Checkout</h2>
                 <div id="checkout-message" class="hidden"></div>
                 
+                <!-- Tabs for Payment vs Quote -->
+                <div class="checkout-tabs">
+                    <button type="button" id="tab-payment" class="checkout-tab active">
+                        <i class="fas fa-credit-card"></i> Pay Now
+                    </button>
+                    <button type="button" id="tab-quote" class="checkout-tab">
+                        <i class="fas fa-file-invoice"></i> Request Quote
+                    </button>
+                </div>
+
+                <!-- Saved Addresses Section (for logged in users) -->
+                <div id="saved-addresses-section" class="hidden">
+                    <div class="saved-address-header">
+                        <label>
+                            <i class="fas fa-bookmark"></i> Use Saved Address
+                        </label>
+                        <button type="button" id="toggle-manual-address" class="btn-link">
+                            Enter manually
+                        </button>
+                    </div>
+                    <select id="saved-address-select">
+                        <option value="">-- Select a saved address --</option>
+                    </select>
+                </div>
+                
                 <form id="checkout-form" class="checkout-form">
-                    <fieldset>
-                        <legend data-i18n="shipping_information">Shipping Information</legend>
-                        <div>
-                            <label for="first_name" data-i18n="first_name_label">First Name</label>
-                            <input type="text" id="first_name" name="first_name" required autocomplete="given-name">
+                    <fieldset id="customer-info-fieldset">
+                        <legend><i class="fas fa-user"></i> Customer Information</legend>
+                        <div class="form-row">
+                            <div>
+                                <label for="first_name" data-i18n="first_name_label">First Name *</label>
+                                <input type="text" id="first_name" name="first_name" required autocomplete="given-name">
+                            </div>
+                            <div>
+                                <label for="last_name" data-i18n="last_name_label">Last Name *</label>
+                                <input type="text" id="last_name" name="last_name" required autocomplete="family-name">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div>
+                                <label for="email" data-i18n="email_label">Email Address *</label>
+                                <input type="email" id="email" name="email" required autocomplete="email">
+                            </div>
+                            <div>
+                                <label for="phone">Phone Number</label>
+                                <input type="tel" id="phone" name="phone" autocomplete="tel" placeholder="+237 6XX XXX XXX">
+                            </div>
                         </div>
                         <div>
-                            <label for="last_name" data-i18n="last_name_label">Last Name</label>
-                            <input type="text" id="last_name" name="last_name" required autocomplete="family-name">
-                        </div>
-                        <div>
-                            <label for="email" data-i18n="email_label">Email Address</label>
-                            <input type="email" id="email" name="email" required autocomplete="email">
-                        </div>
-                        <div>
-                            <label for="address" data-i18n="address_label">Address</label>
-                            <input type="text" id="address" name="address" required autocomplete="street-address">
-                        </div>
-                        <div>
-                            <label for="postal_code" data-i18n="postal_code_label">Postal Code</label>
-                            <input type="text" id="postal_code" name="postal_code" required autocomplete="postal-code">
-                        </div>
-                        <div>
-                            <label for="city" data-i18n="city_label">City</label>
-                            <input type="text" id="city" name="city" required autocomplete="address-level2">
+                            <label for="company">Company Name (Optional)</label>
+                            <input type="text" id="company" name="company" autocomplete="organization" placeholder="Your company name">
                         </div>
                     </fieldset>
 
-                    <fieldset>
-                        <legend data-i18n="payment_details">Payment Details</legend>
+                    <fieldset id="billing-address-fieldset">
+                        <legend><i class="fas fa-map-marker-alt"></i> Billing Address</legend>
+                        <div>
+                            <label for="address" data-i18n="address_label">Street Address *</label>
+                            <input type="text" id="address" name="address" required autocomplete="street-address" placeholder="123 Main Street">
+                        </div>
+                        <div>
+                            <label for="address_line_2">Address Line 2 (Optional)</label>
+                            <input type="text" id="address_line_2" name="address_line_2" autocomplete="address-line2" placeholder="Apartment, suite, unit, etc.">
+                        </div>
+                        <div class="form-row">
+                            <div>
+                                <label for="city" data-i18n="city_label">City *</label>
+                                <input type="text" id="city" name="city" required autocomplete="address-level2">
+                            </div>
+                            <div>
+                                <label for="postal_code" data-i18n="postal_code_label">Postal Code *</label>
+                                <input type="text" id="postal_code" name="postal_code" required autocomplete="postal-code">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div>
+                                <label for="state">State/Province</label>
+                                <input type="text" id="state" name="state" autocomplete="address-level1">
+                            </div>
+                            <div>
+                                <label for="country">Country *</label>
+                                <select id="country" name="country" required autocomplete="country">
+                                    <option value="Cameroon" selected>Cameroon</option>
+                                    <option value="France">France</option>
+                                    <option value="Belgium">Belgium</option>
+                                    <option value="Switzerland">Switzerland</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Shipping Address Section (for quotes) -->
+                    <fieldset id="shipping-address-fieldset" class="hidden">
+                        <legend class="shipping-legend">
+                            <span><i class="fas fa-truck"></i> Shipping Address</span>
+                            <label class="same-as-billing-label">
+                                <input type="checkbox" id="same_as_billing" name="same_as_billing" checked>
+                                Same as billing
+                            </label>
+                        </legend>
+                        <div id="shipping-fields" class="hidden">
+                            <div>
+                                <label for="shipping_address">Street Address *</label>
+                                <input type="text" id="shipping_address" name="shipping_address" placeholder="123 Main Street">
+                            </div>
+                            <div>
+                                <label for="shipping_address_line_2">Address Line 2</label>
+                                <input type="text" id="shipping_address_line_2" name="shipping_address_line_2" placeholder="Apartment, suite, unit, etc.">
+                            </div>
+                            <div class="form-row">
+                                <div>
+                                    <label for="shipping_city">City *</label>
+                                    <input type="text" id="shipping_city" name="shipping_city">
+                                </div>
+                                <div>
+                                    <label for="shipping_postal_code">Postal Code *</label>
+                                    <input type="text" id="shipping_postal_code" name="shipping_postal_code">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div>
+                                    <label for="shipping_state">State/Province</label>
+                                    <input type="text" id="shipping_state" name="shipping_state">
+                                </div>
+                                <div>
+                                    <label for="shipping_country">Country *</label>
+                                    <select id="shipping_country" name="shipping_country">
+                                        <option value="Cameroon" selected>Cameroon</option>
+                                        <option value="France">France</option>
+                                        <option value="Belgium">Belgium</option>
+                                        <option value="Switzerland">Switzerland</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Quote Options Section -->
+                    <fieldset id="quote-options-fieldset" class="hidden">
+                        <legend><i class="fas fa-cog"></i> Quote Options</legend>
+                        <div class="form-row">
+                            <div>
+                                <label for="tax_rate">Tax Rate (%)</label>
+                                <input type="number" id="tax_rate" name="tax_rate" value="21" min="0" max="100" step="0.01">
+                            </div>
+                            <div>
+                                <label for="shipping_cost">Shipping Cost (€)</label>
+                                <input type="number" id="shipping_cost" name="shipping_cost" value="0" min="0" step="0.01">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="quote_notes">Additional Notes</label>
+                            <textarea id="quote_notes" name="quote_notes" rows="3" placeholder="Any special requirements or notes for the quote..."></textarea>
+                        </div>
+                    </fieldset>
+
+                    <!-- Payment Details (for checkout) -->
+                    <fieldset id="payment-fieldset">
+                        <legend><i class="fas fa-credit-card"></i> Payment Details</legend>
                         <label for="card-element" data-i18n="credit_debit_card">Credit or debit card</label>
                         <div id="card-element">
                           <!-- A Stripe Element will be inserted here. -->
@@ -201,7 +331,21 @@
                         <div id="card-errors" role="alert"></div>
                     </fieldset>
 
-                    <button type="submit" id="submit-payment-btn" class="btn btn-primary checkout-btn" aria-label="Complete payment" data-i18n="pay_now">Pay Now</button>
+                    <!-- Action Buttons -->
+                    <div id="payment-actions">
+                        <button type="submit" id="submit-payment-btn" class="btn btn-primary checkout-btn" aria-label="Complete payment" data-i18n="pay_now">
+                            <i class="fas fa-lock"></i> Pay Now
+                        </button>
+                    </div>
+
+                    <div id="quote-actions" class="hidden">
+                        <button type="button" id="request-quote-btn" class="btn btn-primary checkout-btn">
+                            <i class="fas fa-file-pdf"></i> Generate PDF Quote
+                        </button>
+                        <p class="quote-hint">
+                            <i class="fas fa-info-circle"></i> No payment required. Download your quote instantly.
+                        </p>
+                    </div>
                 </form>
             </div>
         </div>

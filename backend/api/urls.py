@@ -85,4 +85,14 @@ urlpatterns = [
     # Reviews (Dashboard view)
     path('dashboard/reviews/', views.DashboardReviewListView.as_view(), name='dashboard_reviews'),
     path('dashboard/reviews/<int:review_id>/', views.DashboardReviewDetailView.as_view(), name='dashboard_review_detail'),
+    
+    # --- Quote (Devis) Endpoints ---
+    # Create a new quote from cart items (POST)
+    path('quotes/', views.CreateQuoteView.as_view(), name='create_quote'),
+    # Get quote details by quote number
+    path('quotes/<str:quote_number>/', views.QuoteDetailView.as_view(), name='quote_detail'),
+    # Download quote as PDF
+    path('quotes/<str:quote_number>/pdf/', views.DownloadQuotePDFView.as_view(), name='quote_pdf'),
+    # List user's quotes (requires authentication)
+    path('dashboard/quotes/', views.UserQuoteListView.as_view(), name='user_quotes'),
 ]

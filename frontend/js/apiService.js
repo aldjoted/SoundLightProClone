@@ -1601,3 +1601,94 @@ export const deleteReview = async (reviewId) => {
         throw error;
     }
 };
+
+// --- Quote (Devis) API Functions ---
+
+/**
+ * Creates a new quote (devis) from cart items.
+ * @param {Object} quoteData - The quote data including items, customer info, and addresses.
+ * @returns {Promise<Object>} A promise that resolves to the created quote with quote_number.
+ */
+export const createQuote = async (quoteData) => {
+    if (!quoteData?.items?.length) {
+        throw new APIError('Quote must contain at least one item', 400, 'EMPTY_QUOTE');
+    }
+    
+    if (!quoteData?.customer_name || !quoteData?.email) {
+        throw new APIError('Customer name and email are required', 400, 'MISSING_CUSTOMER_INFO');
+    }
+    
+    try {
+        return await apiFetch('/quotes/', {
+            method: 'POST',
+            body: JSON.stringify(quoteData),
+        });
+    } catch (error) {
+        console.error('Failed to create quote:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to create quote: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Fetches quote details by quote number.
+ * @param {string} quoteNumber - The quote number (e.g., Q-20231025-ABCD).
+ * @returns {Promise<Object>} A promise that resolves to the quote details.
+ */
+export const getQuoteDetails = async (quoteNumber) => {
+    if (!quoteNumber) {
+        throw new APIError('Quote number is required', 400, 'INVALID_QUOTE_NUMBER');
+    }
+    
+    try {
+        return await apiFetch(`/quotes/${quoteNumber}/`);
+    } catch (error) {
+        console.error('Failed to fetch quote details:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load quote: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};
+
+/**
+ * Gets the download URL for a quote PDF.
+ * @param {string} quoteNumber - The quote number.
+ * @returns {string} The URL to download the quote PDF.
+ */
+export const getQuotePDFUrl = (quoteNumber) => {
+    return `${API_BASE_URL}/quotes/${quoteNumber}/pdf/`;
+};
+
+/**
+ * Fetches quotes for the authenticated user.
+ * @returns {Promise<Array>} A promise that resolves to an array of quotes.
+ */
+export const getUserQuotes = async () => {
+    try {
+        return await apiFetch('/dashboard/quotes/');
+    } catch (error) {
+        console.error('Failed to fetch user quotes:', error);
+        if (error instanceof APIError) {
+            throw new APIError(
+                `Failed to load quotes: ${error.getUserMessage()}`,
+                error.status,
+                error.code,
+                error.response
+            );
+        }
+        throw error;
+    }
+};

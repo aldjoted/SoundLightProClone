@@ -369,6 +369,21 @@
     padding-bottom: var(--spacing-xs);
 }
 
+.checkout-form legend.shipping-legend {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.same-as-billing-label {
+    font-weight: normal !important;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
 /* Target the divs wrapping inputs inside fieldset */
 .checkout-form fieldset > div {
     display: flex;
@@ -383,7 +398,12 @@
 }
 
 .checkout-form input[type="text"],
-.checkout-form input[type="email"] {
+.checkout-form input[type="email"],
+.checkout-form input[type="tel"],
+.checkout-form input[type="number"],
+.checkout-form select,
+.checkout-form textarea {
+    width: 100%;
     padding: var(--spacing-sm) var(--spacing-md);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
@@ -391,9 +411,18 @@
     background-color: var(--bg-primary);
     color: var(--text-primary);
     transition: var(--transition-colors);
+    box-sizing: border-box;
+    font-family: inherit;
 }
 
-.checkout-form input:focus {
+.checkout-form textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.checkout-form input:focus,
+.checkout-form select:focus,
+.checkout-form textarea:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgb(var(--primary-color-rgb) / 0.2);
@@ -439,35 +468,176 @@
     box-shadow: var(--shadow-md);
 }
 
-/* Responsive Grid Layout for Form Fields */
-@media (min-width: 640px) {
-    .checkout-form fieldset {
-        grid-template-columns: 1fr 1fr;
-    }
-    
-    /* Legend spans full width */
-    .checkout-form legend {
-        grid-column: 1 / -1;
-    }
+/* Form Row for inline fields - using HTML inline grid styles */
+.checkout-form .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
 
-    /* Email (3rd div) and Address (4th div) span full width */
-    /* Note: nth-child counts legend as 1 */
-    /* 
-       1: legend
-       2: First Name
-       3: Last Name
-       4: Email -> Span 2
-       5: Address -> Span 2
-       6: Postal Code
-       7: City
-    */
-    .checkout-form fieldset > div:nth-child(4),
-    .checkout-form fieldset > div:nth-child(5) {
-        grid-column: 1 / -1;
-    }
-    
-    /* Payment details fieldset (2nd one) should be single column */
-    .checkout-form fieldset:last-of-type {
+.checkout-form .form-row > div {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+/* Responsive: Stack form rows on mobile */
+@media (max-width: 639px) {
+    .checkout-form .form-row {
         grid-template-columns: 1fr;
     }
+}
+
+/* Enhanced Checkout Form Styles */
+.checkout-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: var(--spacing-lg);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.checkout-tab {
+    flex: 1;
+    padding: var(--spacing-md);
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+}
+
+.checkout-tab:hover {
+    color: var(--primary-color);
+    background: rgba(0, 51, 102, 0.05);
+}
+
+.checkout-tab.active,
+.checkout-tab[style*="border-bottom-color: #003366"] {
+    border-bottom-color: var(--primary-color);
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Saved Addresses Section */
+#saved-addresses-section {
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: rgba(0, 51, 102, 0.03);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.saved-address-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+}
+
+.saved-address-header label {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+#saved-address-select {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: var(--transition-colors);
+}
+
+#saved-address-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgb(var(--primary-color-rgb) / 0.2);
+}
+
+/* Checkbox styling in shipping fieldset */
+.checkout-form input[type="checkbox"] {
+    width: auto;
+    margin-right: var(--spacing-xs);
+    accent-color: var(--primary-color);
+}
+
+/* Quote Actions */
+#quote-actions {
+    margin-top: var(--spacing-md);
+}
+
+#request-quote-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    background: linear-gradient(135deg, var(--primary-color), #0066cc);
+}
+
+#request-quote-btn:hover {
+    background: linear-gradient(135deg, var(--primary-dark), #005ab5);
+}
+
+.quote-hint {
+    text-align: center;
+    margin-top: var(--spacing-sm);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* Quote Success Styling */
+.quote-success {
+    text-align: center;
+    padding: var(--spacing-2xl) var(--spacing-lg);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    margin: var(--spacing-lg) 0;
+}
+
+.quote-success h2 {
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-xs);
+}
+
+/* Button Link Styles */
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-decoration: underline;
+    transition: color 0.2s ease;
+}
+
+.btn-link:hover {
+    color: var(--primary-dark);
+}
+
+/* Payment/Quote Mode Transitions */
+#payment-fieldset,
+#quote-options-fieldset,
+#shipping-address-fieldset,
+#payment-actions,
+#quote-actions {
+    transition: opacity 0.3s ease, max-height 0.3s ease;
+}
+
+/* Input validation states */
+.checkout-form input:invalid:not(:focus):not(:placeholder-shown) {
+    border-color: var(--danger-color);
+}
+
+.checkout-form input:valid:not(:focus) {
+    border-color: var(--border-color);
 }

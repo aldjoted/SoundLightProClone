@@ -6,7 +6,7 @@ import re  # ✅ ADD for validation patterns
 from .models import (
     Category, Brand, Product, ProductImage, Order, OrderItem,
     Wishlist, WishlistItem, ProductReview, UserProfile, ShippingAddress, PaymentMethod,
-    StockNotificationRequest, ProductVideo, ProductAttachment
+    StockNotificationRequest, ProductVideo, ProductAttachment, Quote, QuoteItem
 )
 
 # --- Product Catalog Serializers ---
@@ -879,3 +879,113 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
                 'confirm_password': "Passwords do not match."
             })
         return attrs
+
+
+# --- Quote (Devis) Serializers ---
+
+class QuoteItemSerializer(serializers.ModelSerializer):
+    """
+    Serializer for QuoteItem model.
+    Used for displaying quote line items.
+    """
+    class Meta:
+        model = QuoteItem
+        fields = [
+            'id', 'product', 'sku', 'name', 'options_description',
+            'quantity', 'unit_price_ht', 'line_total_ht'
+        ]
+        read_only_fields = ['line_total_ht']
+
+
+class QuoteSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Quote model.
+    Includes nested items for displaying complete quote.
+    """
+    items = QuoteItemSerializer(many=True, read_only=True)
+    is_expired = serializers.BooleanField(read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+
+    class Meta:
+        model = Quote
+        fields = [
+            'id', 'quote_number', 'customer_name', 'email', 'phone', 'company',
+            'billing_address_json', 'shipping_address_json',
+            'taxable_base', 'tax_rate', 'tax_total', 'shipping_cost', 'total_ttc',
+            'status', 'status_display', 'valid_until', 'is_expired',
+            'payment_terms', 'delivery_time', 'notes',
+            'created_at', 'updated_at', 'items'
+        ]
+        read_only_fields = [
+            'quote_number', 'taxable_base', 'tax_total', 'total_ttc',
+            'created_at', 'updated_at'
+        ]
+
+
+class QuoteAddressSerializer(serializers.Serializer):
+    """
+    Serializer for quote address data.
+    Used to capture and validate address JSON.
+    """
+    address_line_1 = serializers.CharField(max_length=255)
+    address_line_2 = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    city = serializers.CharField(max_length=100)
+    postal_code = serializers.CharField(max_length=20)
+    country = serializers.CharField(max_length=100, default='Cameroon')
+    state = serializers.CharField(max_length=100, required=False, allow_blank=True)
+
+
+class QuoteCartItemSerializer(serializers.Serializer):
+    """
+    Serializer for validating cart items in quote creation.
+    """
+    id = serializers.IntegerField()
+    quantity = serializers.IntegerField(min_value=1)
+
+
+class CreateQuoteRequestSerializer(serializers.Serializer):
+    """
+    Serializer for validating the complete quote creation request.
+    Reuses similar structure to CreateOrderRequestSerializer.
+    """
+    items = QuoteCartItemSerializer(many=True)
+    
+    # Customer information
+    customer_name = serializers.CharField(max_length=100)
+    email = serializers.EmailField()
+    phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    company = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    
+    # Address information
+    billing_address = QuoteAddressSerializer()
+    shipping_address = QuoteAddressSerializer(required=False, allow_null=True)
+    same_as_billing = serializers.BooleanField(default=True)
+    
+    # Optional fields
+    shipping_cost = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        required=False
+    )
+    tax_rate = serializers.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=21,
+        required=False
+    )
+    notes = serializers.CharField(required=False, allow_blank=True, max_length=1000)
+
+    def validate_items(self, value):
+        """Ensure at least one item is provided"""
+        if not value:
+            raise serializers.ValidationError("At least one item is required.")
+        return value
+
+    def validate(self, data):
+        """Validate that shipping address is provided if not same as billing"""
+        if not data.get('same_as_billing') and not data.get('shipping_address'):
+            raise serializers.ValidationError({
+                'shipping_address': 'Shipping address is required when not same as billing.'
+            })
+        return data
