@@ -28,10 +28,6 @@
 /* ============================================= */
 /* Modern CSS Utility Classes                   */
 /* ============================================= */
-.container-query {
-    container-type: inline-size;
-}
-
 .aspect-video {
     aspect-ratio: 16 / 9;
 }
@@ -40,28 +36,7 @@
     aspect-ratio: 1 / 1;
 }
 
-.aspect-hero {
-    aspect-ratio: 21 / 9;
-    max-height: 700px;
-}
-
-.aspect-card {
-    aspect-ratio: 4 / 3;
-}
-
 /* Reusable Grid Utilities */
-.grid-auto-fit-250 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--spacing-xl);
-}
-
-.grid-auto-fit-280 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--spacing-xl);
-}
-
 .grid-auto-fit-300 {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -75,20 +50,8 @@
 .text-center {
     text-align: center;
 }
-.text-left {
-    text-align: left;
-}
 
-/* Spacing Utilities */
-.mt-md {
-    margin-top: var(--spacing-md);
-}
-.mt-lg {
-    margin-top: var(--spacing-lg);
-}
-.mb-md {
-    margin-bottom: var(--spacing-md);
-}
+/* Spacing Utilities - Only frequently used ones */
 .mb-lg {
     margin-bottom: var(--spacing-lg);
 }
@@ -97,30 +60,6 @@
 }
 .mb-2xl {
     margin-bottom: var(--spacing-2xl);
-}
-.p-lg {
-    padding: var(--spacing-lg);
-}
-.p-xl {
-    padding: var(--spacing-xl);
-}
-.p-2xl {
-    padding: var(--spacing-2xl);
-}
-
-/* Layout Utilities */
-.max-w-800 {
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
-}
-.pb-xl {
-    padding-bottom: var(--spacing-xl);
-}
-.flex-row-center {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
 }
 
 /* Accessibility */
@@ -395,31 +334,6 @@ body.no-scroll {
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-sm);
-}
-
-/* Empty State Variants */
-.empty-state--compact {
-    min-height: 200px;
-    padding: var(--spacing-xl);
-}
-
-.empty-state--compact .empty-state-icon {
-    width: 80px;
-    height: 80px;
-    margin-bottom: var(--spacing-md);
-}
-
-.empty-state--compact .empty-state-icon i {
-    font-size: 2rem;
-}
-
-.empty-state--compact .empty-state-title {
-    font-size: 1.125rem;
-}
-
-.empty-state--compact .empty-state-description {
-    font-size: 0.875rem;
-    margin-bottom: var(--spacing-md);
 }
 
 /* ============================================= */
@@ -977,14 +891,7 @@ body.no-scroll {
 /* Enhanced Dark Mode Contrast (WCAG AA)        */
 /* ============================================= */
 @media (prefers-color-scheme: dark) {
-    /* Improve text contrast - ensure minimum 4.5:1 ratio */
-    :root {
-        --text-primary-dark: #f1f5f9;        /* slate-100 - contrast 15.4:1 */
-        --text-secondary-dark: #cbd5e1;      /* slate-300 - contrast 10.5:1 */
-        --text-muted-dark: #94a3b8;          /* slate-400 - contrast 6.2:1 */
-        --bg-dark-elevated: #1e293b;         /* slate-800 */
-        --border-dark: rgba(148, 163, 184, 0.2);
-    }
+    /* Dark mode variables are defined globally in variables.css */
     
     /* Global text improvements */
     body {

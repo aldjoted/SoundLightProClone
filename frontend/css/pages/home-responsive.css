@@ -89,24 +89,6 @@
         line-height: 1 !important;
     }
     
-    .cart-badge {
-        top: -8px !important;
-        right: -8px !important;
-        font-size: 0.75rem !important;
-        min-width: 20px !important;
-        height: 20px !important;
-        padding: 2px 5px !important;
-        background: var(--accent-color) !important;
-        color: white !important;
-        font-weight: 700 !important;
-        border: 2px solid #000000 !important;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        line-height: 1 !important;
-    }
-    
     /* Language switcher positioning */
     .language-switcher {
         display: flex !important;
@@ -259,24 +241,6 @@
     .user-icon-btn i,
     .header-cart-icon i {
         font-size: 1.1rem !important;
-    }
-    
-    .cart-badge {
-        top: -6px !important;
-        right: -6px !important;
-        font-size: 0.7rem !important;
-        min-width: 18px !important;
-        height: 18px !important;
-        padding: 2px 4px !important;
-        background: var(--accent-color) !important;
-        color: white !important;
-        font-weight: 700 !important;
-        border: 2px solid #000000 !important;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        line-height: 1 !important;
     }
     
     .language-switcher .lang-btn {
@@ -644,24 +608,6 @@
         font-size: 1.3rem !important;
     }
     
-    .cart-badge {
-        top: -8px !important;
-        right: -8px !important;
-        font-size: 0.75rem !important;
-        min-width: 20px !important;
-        height: 20px !important;
-        padding: 2px 5px !important;
-        background: var(--accent-color) !important;
-        color: white !important;
-        font-weight: 700 !important;
-        border: 2px solid #000000 !important;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        line-height: 1 !important;
-    }
-    
     .language-switcher .lang-btn {
         padding: 6px 10px !important;
         font-size: 0.85rem !important;
@@ -794,25 +740,6 @@
     .language-switcher {
         display: flex !important;
         align-items: center !important;
-    }
-    
-    /* Cart badge tablette - Bien visible */
-    .cart-badge {
-        top: -8px !important;
-        right: -8px !important;
-        font-size: 0.8rem !important;
-        min-width: 22px !important;
-        height: 22px !important;
-        padding: 3px 6px !important;
-        background: var(--accent-color) !important;
-        color: white !important;
-        font-weight: 700 !important;
-        border: 2px solid #000000 !important;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        line-height: 1 !important;
     }
     
     /* Marges sections tablette */
@@ -1041,26 +968,6 @@
         padding: 8px 12px !important;
         font-size: 0.9rem !important;
     }
-    
-    /* Desktop badge - Clean and visible */
-    .cart-badge {
-        top: -6px !important;
-        right: -6px !important;
-        font-size: 0.75rem !important;
-        font-weight: 700 !important;
-        min-width: 20px !important;
-        height: 20px !important;
-        padding: 3px 6px !important;
-        background: var(--accent-color) !important;
-        color: white !important;
-        border: 2px solid #000000 !important;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        line-height: 1 !important;
-        z-index: 10 !important;
-    }
 }
 
 /* ============================================================ */
@@ -1094,13 +1001,6 @@
     .user-icon-btn i,
     .header-cart-icon i {
         font-size: 1.3rem !important;
-    }
-    
-    .cart-badge {
-        min-width: 22px !important;
-        height: 22px !important;
-        font-size: 0.8rem !important;
-        padding: 3px 7px !important;
     }
     
     .testimonials-grid {
@@ -1148,13 +1048,6 @@
         font-size: 1.35rem !important;
     }
     
-    .cart-badge {
-        min-width: 22px !important;
-        height: 22px !important;
-        font-size: 0.8rem !important;
-        padding: 4px 7px !important;
-    }
-    
     .featured-focus,
     .product-listing,
     .features-section,
@@ -1189,15 +1082,6 @@
     .user-icon-btn i,
     .header-cart-icon i {
         font-size: 1.4rem !important;
-    }
-    
-    .cart-badge {
-        font-size: 0.85rem !important;
-        min-width: 24px !important;
-        height: 24px !important;
-        padding: 4px 8px !important;
-        top: -8px !important;
-        right: -8px !important;
     }
 }
 

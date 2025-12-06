@@ -44,6 +44,17 @@
     --primary-color-rgb: 79 70 229;
 
     /* ============================================= */
+    /* Dark Mode Colors (available globally)        */
+    /* ============================================= */
+    /* These variables are defined here for global access
+       and are applied in utilities.css dark mode media query */
+    --text-primary-dark: #f1f5f9;        /* slate-100 - contrast 15.4:1 */
+    --text-secondary-dark: #cbd5e1;      /* slate-300 - contrast 10.5:1 */
+    --text-muted-dark: #94a3b8;          /* slate-400 - contrast 6.2:1 */
+    --bg-dark-elevated: #1e293b;         /* slate-800 */
+    --border-dark: rgba(148, 163, 184, 0.2);
+
+    /* ============================================= */
     /* Breakpoints                                   */
     /* ============================================= */
     --breakpoint-sm: 640px;
