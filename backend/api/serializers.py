@@ -443,7 +443,26 @@ class AddToWishlistSerializer(serializers.Serializer):
 
 # --- Product Review Serializers ---
 
-class ProductReviewSerializer(serializers.ModelSerializer):
+class ReviewValidationMixin:
+    """
+    Mixin providing common validation methods for product reviews.
+    Centralizes rating and comment validation to avoid code duplication.
+    """
+    
+    def validate_rating(self, value):
+        """Ensure rating is between 1 and 5"""
+        if value not in [1, 2, 3, 4, 5]:
+            raise serializers.ValidationError("Rating must be between 1 and 5.")
+        return value
+
+    def validate_comment(self, value):
+        """Ensure comment is at least 10 characters"""
+        if len(value.strip()) < 10:
+            raise serializers.ValidationError("Review comment must be at least 10 characters long.")
+        return value.strip()
+
+
+class ProductReviewSerializer(ReviewValidationMixin, serializers.ModelSerializer):
     """
     Serializer for ProductReview model.
     Includes user information for displaying reviews.
@@ -465,20 +484,10 @@ class ProductReviewSerializer(serializers.ModelSerializer):
             return f"{obj.user.first_name} {obj.user.last_name}"
         return obj.user.username
 
-    def validate_rating(self, value):
-        """Ensure rating is between 1 and 5"""
-        if value not in [1, 2, 3, 4, 5]:
-            raise serializers.ValidationError("Rating must be between 1 and 5.")
-        return value
-
-    def validate_comment(self, value):
-        """Ensure comment is at least 10 characters"""
-        if len(value.strip()) < 10:
-            raise serializers.ValidationError("Review comment must be at least 10 characters long.")
-        return value.strip()
+    # validate_rating and validate_comment inherited from ReviewValidationMixin
 
 
-class CreateReviewSerializer(serializers.ModelSerializer):
+class CreateReviewSerializer(ReviewValidationMixin, serializers.ModelSerializer):
     """
     Serializer for creating a new product review.
     """
@@ -486,17 +495,7 @@ class CreateReviewSerializer(serializers.ModelSerializer):
         model = ProductReview
         fields = ['product', 'rating', 'title', 'comment']
 
-    def validate_rating(self, value):
-        """Ensure rating is between 1 and 5"""
-        if value not in [1, 2, 3, 4, 5]:
-            raise serializers.ValidationError("Rating must be between 1 and 5.")
-        return value
-
-    def validate_comment(self, value):
-        """Ensure comment is at least 10 characters"""
-        if len(value.strip()) < 10:
-            raise serializers.ValidationError("Review comment must be at least 10 characters long.")
-        return value.strip()
+    # validate_rating and validate_comment inherited from ReviewValidationMixin
 
     def validate(self, data):
         """Check if user has already reviewed this product"""
@@ -641,19 +640,6 @@ class ShippingAddressSerializer(serializers.ModelSerializer):
                 "Postal code must be 3-10 alphanumeric characters"
             )
         return cleaned.upper()
-    
-    def validate_email(self, value):
-        """✅ IMPROVEMENT: Additional email validation beyond Django's default"""
-        # Check for disposable email domains
-        disposable_domains = ['tempmail.com', 'throwaway.email', '10minutemail.com', 'guerrillamail.com']
-        if '@' in value:
-            domain = value.split('@')[1].lower()
-            
-            if domain in disposable_domains:
-                raise serializers.ValidationError(
-                    "Disposable email addresses are not allowed"
-                )
-        return value.lower()
 
     def validate(self, data):
         """Ensure the user never ends up without a default shipping address."""

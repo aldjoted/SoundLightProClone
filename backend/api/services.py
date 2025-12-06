@@ -7,16 +7,13 @@ making it easier to test, reuse, and maintain.
 import os
 import stripe
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import Any, Dict, List, Optional
 from dotenv import load_dotenv
 import logging
 
 from django.db import transaction
 from django.contrib.auth.models import User
 from stripe.error import StripeError # type: ignore
-
-if TYPE_CHECKING:
-    from django.db.models import QuerySet
 
 from .models import Product, Order, OrderItem
 from django.conf import settings
@@ -53,8 +50,31 @@ def get_stripe_key():
 
 
 class OrderCreationError(Exception):
-    """Custom exception for order creation failures."""
-    pass
+    """
+    Custom exception for order creation failures.
+    
+    Attributes:
+        message: Human-readable error message
+        code: Machine-readable error code for frontend handling
+        details: Optional dictionary with additional error context
+    """
+    
+    # Error codes for different failure types
+    EMPTY_CART = 'empty_cart'
+    MISSING_TOKEN = 'missing_payment_token'
+    PRODUCT_NOT_FOUND = 'product_not_found'
+    PRODUCT_UNAVAILABLE = 'product_unavailable'
+    INSUFFICIENT_STOCK = 'insufficient_stock'
+    INVALID_QUANTITY = 'invalid_quantity'
+    INVALID_TOTAL = 'invalid_total'
+    PAYMENT_FAILED = 'payment_failed'
+    UNEXPECTED_ERROR = 'unexpected_error'
+    
+    def __init__(self, message: str, code: str = 'unexpected_error', details: Optional[Dict[str, Any]] = None):
+        super().__init__(message)
+        self.message = message
+        self.code = code
+        self.details = details or {}
 
 
 def create_order_from_cart(

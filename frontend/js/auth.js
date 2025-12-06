@@ -91,33 +91,60 @@ export function initRegisterPageValidation() {
 /**
  * Authenticate user on page load
  * Checks if user has a valid refresh token and attempts to get user profile
+ * 
+ * ✅ IMPROVED: Better handling of cookie-based authentication
+ * - First checks for cached user profile
+ * - Then validates session via token refresh (httpOnly cookie)
+ * - Gracefully handles missing/invalid sessions without console errors
+ * 
  * @returns {Promise<Object|null>} User profile object or null if not authenticated
  */
 export async function authenticateUser() {
     try {
-        // Ensure we have a valid access token (will attempt refresh using httpOnly cookie)
+        // First, check if we have a cached user profile
+        const cachedUser = getStoredUserProfile();
+        
+        // Try to ensure we have a valid access token
+        // This will attempt refresh via httpOnly cookie if no token in memory
         const accessToken = await ensureAccessToken();
+        
         if (!accessToken) {
-            console.log('[Auth] No valid session found, user not logged in');
+            // No valid session - this is normal for unauthenticated users
+            // Don't log as an error, it's expected behavior
+            console.debug('[Auth] No valid session found, user not logged in');
             return null;
         }
 
-        // Fetch user profile (will refresh automatically if needed)
-        const user = await getUserProfile();
-        
-        console.log('[Auth] User authenticated:', user.username);
-        return user;
+        // We have a token, try to fetch the user profile
+        try {
+            const user = await getUserProfile();
+            console.log('[Auth] User authenticated:', user.username);
+            return user;
+        } catch (profileError) {
+            // Profile fetch failed - token might have just expired
+            console.debug('[Auth] Failed to fetch profile, session may be invalid');
+            
+            // Clear tokens and cached data
+            try {
+                sessionStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+            } catch (storageError) {
+                // Ignore storage errors
+            }
+            clearStoredUserProfile();
+            
+            return null;
+        }
         
     } catch (error) {
-        console.error('[Auth] Authentication failed:', error);
+        // Unexpected error during authentication
+        console.error('[Auth] Authentication error:', error);
         
-        // If authentication fails, clear tokens
+        // Clear any stale data
         try {
             sessionStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
         } catch (storageError) {
-            console.warn('Failed to clear session access token during auth failure:', storageError);
+            // Ignore storage errors
         }
-        // Refresh cookies are managed by the backend; no client-side storage to clear anymore.
         clearStoredUserProfile();
         
         return null;

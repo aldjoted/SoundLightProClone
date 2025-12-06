@@ -2,7 +2,6 @@ import os
 import html
 import stripe
 from dotenv import load_dotenv
-from typing import Optional
 
 from django.db import transaction
 from django.db.models import Q, Prefetch, Case, When
@@ -49,27 +48,10 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from . import services
 from .services import OrderCreationError
+from .utils import ratelimit_error_response, parse_date_param, get_cookie_settings
 
-# Load environment variables and configure Stripe
+# Load environment variables (Stripe is configured lazily in services.py)
 load_dotenv()
-stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
-
-
-# --- Rate Limiting Error Handler ---
-
-def ratelimit_error(request, exception):
-    """
-    Custom error handler for rate limit exceeded.
-    Returns a JSON response with 429 status code.
-    """
-    return Response(
-        {
-            'error': 'Too many requests',
-            'detail': 'You have exceeded the rate limit. Please try again later.',
-            'retry_after': '60'  # seconds
-        },
-        status=status.HTTP_429_TOO_MANY_REQUESTS
-    )
 
 
 # --- Authentication Views ---
@@ -108,7 +90,7 @@ class RegisterView(generics.CreateAPIView):
             
             return super().create(request, *args, **kwargs)
         except Ratelimited:
-            return ratelimit_error(request, None)
+            return ratelimit_error_response()
 
 
 class CaptchaConfigView(APIView):
@@ -147,13 +129,8 @@ class LogoutView(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request, *args, **kwargs):
-        # Get cookie settings
-        cookie_settings = {
-            'key': settings.SIMPLE_JWT.get('AUTH_COOKIE', 'refreshToken'),
-            'path': settings.SIMPLE_JWT.get('AUTH_COOKIE_PATH', '/api/'),
-            'samesite': settings.SIMPLE_JWT.get('AUTH_COOKIE_SAMESITE', 'Strict'),
-            'secure': settings.SIMPLE_JWT.get('AUTH_COOKIE_SECURE', not settings.DEBUG),
-        }
+        # Get cookie settings from shared utility
+        cookie_settings = get_cookie_settings()
         
         # Get refresh token from cookie
         refresh_token = request.COOKIES.get(cookie_settings['key'])
@@ -175,10 +152,12 @@ class LogoutView(APIView):
         )
         
         # Delete the refresh token cookie
+        # Note: Must match the same parameters used when setting the cookie
         response.delete_cookie(
             cookie_settings['key'],
             path=cookie_settings['path'],
             samesite=cookie_settings['samesite'],
+            domain=cookie_settings.get('domain'),
         )
         
         return response
@@ -1341,26 +1320,17 @@ class DashboardOrderListView(APIView):
         if status_filter and status_filter != 'all':
             queryset = queryset.filter(status=status_filter)
         
-        # Apply date filters
-        if date_from:
-            from datetime import datetime
-            try:
-                date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
-                queryset = queryset.filter(created_at__date__gte=date_from_obj)
-            except ValueError:
-                pass
+        # Apply date filters using shared utility with proper logging
+        date_from_obj = parse_date_param(date_from, 'date_from')
+        if date_from_obj:
+            queryset = queryset.filter(created_at__date__gte=date_from_obj)
         
-        if date_to:
-            from datetime import datetime
-            try:
-                date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
-                queryset = queryset.filter(created_at__date__lte=date_to_obj)
-            except ValueError:
-                pass
+        date_to_obj = parse_date_param(date_to, 'date_to')
+        if date_to_obj:
+            queryset = queryset.filter(created_at__date__lte=date_to_obj)
         
         # Apply search filter (search in order ID, tracking number, product names)
         if search:
-            from django.db.models import Q
             queryset = queryset.filter(
                 Q(id__icontains=search) |
                 Q(tracking_number__icontains=search) |

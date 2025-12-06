@@ -1,3 +1,5 @@
+import logging
+
 from django import forms
 from django.contrib import admin
 from django.urls import reverse, path
@@ -7,6 +9,8 @@ from django.core.files.base import ContentFile
 import requests
 
 from mptt.admin import DraggableMPTTAdmin
+
+logger = logging.getLogger(__name__)
 from import_export import resources, fields
 from import_export.widgets import CharWidget
 from import_export.admin import ImportExportModelAdmin
@@ -74,8 +78,8 @@ class ProductResource(resources.ModelResource):
                         img = ProductImage(product=obj)
                         img.image.save(filename, ContentFile(response.content), save=True)
             except Exception as e:
-                # Log error silently or use django logging
-                print(f"Failed to import image for product {obj.id}: {e}")
+                # Log error using proper logging instead of print
+                logger.error(f"Failed to import image for product {obj.id}: {e}")
 
 
 

@@ -24,9 +24,13 @@ from functools import lru_cache
 logger = logging.getLogger(__name__)
 
 
-class CaptchaError(Exception):
-    """Exception raised when CAPTCHA verification fails."""
-    pass
+# Note: CaptchaError was removed as it was defined but never raised anywhere.
+# If custom CAPTCHA exception handling is needed in the future, uncomment:
+# class CaptchaError(Exception):
+#     """Exception raised when CAPTCHA verification fails."""
+#     def __init__(self, message: str, error_codes: list = None):
+#         super().__init__(message)
+#         self.error_codes = error_codes or []
 
 
 @lru_cache(maxsize=1)

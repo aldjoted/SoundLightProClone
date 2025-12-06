@@ -219,9 +219,7 @@ export class CSPManager {
     // ✅ IMPROVED: Apply CSP in all environments for consistent security
     // CSP is now applied even in development to catch issues early
     // Only exception: completely disable via explicit flag
-    const explicitlyDisabled = IS_PRODUCTION === false && 
-                               typeof window !== 'undefined' && 
-                               window.__DISABLE_CSP__ === true;
+    const explicitlyDisabled = typeof window !== 'undefined' && window.__DISABLE_CSP__ === true;
     
     if (!explicitlyDisabled) {
       const cspString = this.generateCSPString();
@@ -230,9 +228,13 @@ export class CSPManager {
       meta.setAttribute('content', cspString);
       document.head.appendChild(meta);
       
-      console.log('[Security] Content Security Policy applied');
+      if (IS_PRODUCTION) {
+        console.log('[Security] Content Security Policy enforced (production)');
+      } else {
+        console.log('[Security] Content Security Policy applied (development mode)');
+      }
     } else {
-      console.warn('[Security] CSP explicitly disabled - USE ONLY FOR DEBUGGING');
+      console.warn('[Security] CSP explicitly disabled via window.__DISABLE_CSP__ - USE ONLY FOR DEBUGGING');
     }
   }
 }

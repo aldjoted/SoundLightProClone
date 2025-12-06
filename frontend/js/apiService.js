@@ -203,30 +203,86 @@ const handleResponse = async (response) => {
 // --- Single-flight token refresh management ---
 // ✅ Improved: Better race condition handling with synchronous reset
 let refreshPromise = null;
+let isRefreshing = false;
+let lastRefreshAttempt = 0;
+const REFRESH_COOLDOWN_MS = 2000; // Prevent rapid refresh attempts
+
+/**
+ * Checks if we should attempt a token refresh.
+ * Prevents rapid successive refresh attempts.
+ * @returns {boolean} True if enough time has passed since last attempt
+ */
+function canAttemptRefresh() {
+    const now = Date.now();
+    if (now - lastRefreshAttempt < REFRESH_COOLDOWN_MS) {
+        console.debug('[Auth] Refresh cooldown active, skipping attempt');
+        return false;
+    }
+    return true;
+}
 
 /**
  * Refreshes the access token while preventing concurrent refresh races.
  *
  * ✅ SECURITY FIX: The request body no longer includes a refresh token. The backend
  * reads the secure, httpOnly cookie automatically because `credentials: 'include'` is set.
+ * 
+ * ✅ IMPROVED: Better error handling and cooldown mechanism
  *
  * @returns {Promise<Object>} Promise that resolves with new tokens.
+ * @throws {APIError} If refresh fails
  */
 async function refreshAccessToken() {
     // If a refresh is already in progress, return the existing promise
     if (refreshPromise) {
+        console.debug('[Auth] Reusing existing refresh promise');
         return refreshPromise;
     }
     
+    // Check cooldown
+    if (!canAttemptRefresh()) {
+        throw new APIError('Refresh rate limited', 429, 'REFRESH_COOLDOWN');
+    }
+    
+    lastRefreshAttempt = Date.now();
+    isRefreshing = true;
+    
     refreshPromise = (async () => {
         try {
+            console.debug('[Auth] Attempting token refresh via httpOnly cookie');
+            
             const res = await fetch(`${API_BASE_URL}/token/refresh/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',  // ✅ Include credentials for httpOnly cookies
             });
-            return await handleResponse(res);
+            
+            // Handle specific error cases
+            if (res.status === 401) {
+                console.debug('[Auth] Refresh token invalid or not present - user not authenticated');
+                throw new APIError('Session expired', 401, 'REFRESH_TOKEN_INVALID');
+            }
+            
+            if (res.status === 429) {
+                console.warn('[Auth] Refresh rate limited by server');
+                throw new APIError('Too many refresh attempts', 429, 'REFRESH_RATE_LIMITED');
+            }
+            
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new APIError(
+                    errorData.detail || 'Token refresh failed',
+                    res.status,
+                    'REFRESH_FAILED'
+                );
+            }
+            
+            const data = await res.json();
+            console.debug('[Auth] Token refresh successful');
+            return data;
+            
         } finally {
+            isRefreshing = false;
             // Reset after a short delay to avoid rapid successive requests
             setTimeout(() => { refreshPromise = null; }, 100);
         }
@@ -235,28 +291,56 @@ async function refreshAccessToken() {
     return refreshPromise;
 }
 
+/**
+ * Ensures a valid access token is available.
+ * 
+ * ✅ IMPROVED: Better handling of missing tokens and refresh failures.
+ * - Returns existing token if valid
+ * - Attempts refresh via httpOnly cookie if no token
+ * - Does NOT redirect to login (let caller decide)
+ * 
+ * @returns {Promise<string|null>} Access token or null if unavailable
+ */
 async function ensureAccessToken() {
     const existingToken = tokenManager.getAccessToken();
+    
+    // If we have a token, return it (assume it's valid, 401 handler will refresh if needed)
     if (existingToken) {
         return existingToken;
     }
+    
+    // No token in memory - try to refresh using httpOnly cookie
+    console.debug('[Auth] No access token in memory, attempting refresh');
 
     try {
         const tokens = await refreshAccessToken();
         if (tokens?.access) {
             tokenManager.setAccessToken(tokens.access);
+            console.debug('[Auth] Access token obtained via refresh');
             return tokens.access;
         }
     } catch (error) {
-        console.warn('Unable to ensure access token:', error);
+        // Log but don't throw - just return null to indicate no valid session
+        if (error?.status === 401) {
+            console.debug('[Auth] No valid session (refresh token missing/invalid)');
+        } else {
+            console.warn('[Auth] Unable to ensure access token:', error?.message || error);
+        }
     }
 
+    // No valid session - clear any stale data
     tokenManager.clearTokens();
     return null;
 }
 
 /**
  * Core fetch function with built-in authentication and token refresh logic.
+ * 
+ * ✅ IMPROVED: Better 401 handling
+ * - Attempts token refresh on 401
+ * - Only redirects to login if refresh fails and not already on login page
+ * - Preserves request context during retry
+ * 
  * @param {string} url The API endpoint (e.g., '/products/').
  * @param {RequestInit} options The options for the fetch call.
  * @returns {Promise<any>} The JSON response from the API.
@@ -285,22 +369,44 @@ async function apiFetch(url, options = {}) {
     try {
         let response = await fetch(`${API_BASE_URL}${url}`, options);
 
+        // Handle 401 Unauthorized - attempt token refresh
         if (response.status === 401) {
+            console.debug(`[API] 401 received for ${url}, attempting refresh`);
+            
             try {
                 const newTokens = await refreshAccessToken();
                 if (newTokens?.access) {
                     tokenManager.setAccessToken(newTokens.access);
+                    
+                    // Retry the original request with new token
                     options.headers['Authorization'] = `Bearer ${newTokens.access}`;
+                    console.debug(`[API] Retrying ${url} with new token`);
                     response = await fetch(`${API_BASE_URL}${url}`, options);
                 } else {
-                    throw new APIError('Unable to refresh session.', 401, 'TOKEN_REFRESH_EMPTY');
+                    throw new APIError('Token refresh returned no access token', 401, 'TOKEN_REFRESH_EMPTY');
                 }
             } catch (refreshError) {
-                console.error('Failed to refresh token:', refreshError);
+                console.debug('[API] Token refresh failed:', refreshError?.message || refreshError);
+                
+                // Clear tokens on refresh failure
                 tokenManager.clearTokens();
-                if (!window.location.pathname.endsWith('login.html')) {
+                
+                // Only redirect to login if:
+                // 1. Not already on login-related pages
+                // 2. This was an authenticated request that failed
+                const currentPath = window.location.pathname.toLowerCase();
+                const isAuthPage = currentPath.includes('login') || 
+                                   currentPath.includes('register') || 
+                                   currentPath.includes('verify') ||
+                                   currentPath.includes('reset-password') ||
+                                   currentPath.includes('forgot-password');
+                
+                if (!isAuthPage && accessToken) {
+                    // User had a session that is now invalid - redirect to login
+                    console.info('[API] Session expired, redirecting to login');
                     window.location.href = resolveLoginUrl();
                 }
+                
                 throw new APIError('Session expired. Please log in again.', 401, 'TOKEN_REFRESH_FAILED');
             }
         }
@@ -314,7 +420,7 @@ async function apiFetch(url, options = {}) {
         
         // Handle network errors (e.g., offline)
         if (error instanceof TypeError) {
-            console.error("Network error:", error);
+            console.error("[API] Network error:", error);
             throw new APIError("Network error. Please check your connection.", 0, 'NETWORK_ERROR');
         }
         

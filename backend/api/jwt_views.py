@@ -22,31 +22,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from django.conf import settings
 
+from .utils import ratelimit_error_response, get_cookie_settings
+
 logger = logging.getLogger(__name__)
-
-
-def get_cookie_settings():
-    """Get httpOnly cookie settings from Django settings."""
-    return {
-        'key': settings.SIMPLE_JWT.get('AUTH_COOKIE', 'refreshToken'),
-        'httponly': settings.SIMPLE_JWT.get('AUTH_COOKIE_HTTP_ONLY', True),
-        'secure': settings.SIMPLE_JWT.get('AUTH_COOKIE_SECURE', not settings.DEBUG),
-        'samesite': settings.SIMPLE_JWT.get('AUTH_COOKIE_SAMESITE', 'Strict'),
-        'path': settings.SIMPLE_JWT.get('AUTH_COOKIE_PATH', '/api/'),
-        'max_age': int(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds()),
-    }
-
-
-def ratelimit_error_response():
-    """Return a standardized rate limit error response."""
-    return Response(
-        {
-            'error': 'Too many requests',
-            'detail': 'You have exceeded the rate limit. Please try again later.',
-            'retry_after': '60'
-        },
-        status=status.HTTP_429_TOO_MANY_REQUESTS
-    )
 
 
 @method_decorator(ratelimit(key='ip', rate='5/m', method='POST', block=True), name='dispatch')
@@ -200,6 +178,7 @@ class RateLimitedTokenRefreshView(TokenRefreshView):
                     secure=cookie_settings['secure'],
                     samesite=cookie_settings['samesite'],
                     path=cookie_settings['path'],
+                    domain=cookie_settings.get('domain'),
                 )
 
             return response
@@ -325,6 +304,7 @@ class VerifyLoginCodeView(APIView):
                 secure=cookie_settings['secure'],
                 samesite=cookie_settings['samesite'],
                 path=cookie_settings['path'],
+                domain=cookie_settings.get('domain'),
             )
             
             return response

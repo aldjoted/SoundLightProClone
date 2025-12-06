@@ -201,7 +201,9 @@ class Product(models.Model):
 
         try:
             vector = index.reconstruct(current_product_index)
-        except Exception:
+        except Exception as e:
+            # Log warning and fall back to regenerating embedding
+            logger.warning(f"Failed to reconstruct vector for product {self.id}: {e}. Regenerating embedding.")
             product_vector = embedding_model.encode([get_product_text(self)], normalize_embeddings=True)
             vector = product_vector[0]
 

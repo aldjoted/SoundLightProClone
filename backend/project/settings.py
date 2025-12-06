@@ -217,9 +217,16 @@ SIMPLE_JWT = {
     'AUTH_COOKIE': 'refreshToken',
     'AUTH_COOKIE_SECURE': not DEBUG,  # HTTPS only in production
     'AUTH_COOKIE_HTTP_ONLY': True,    # Prevent JavaScript access
-    'AUTH_COOKIE_SAMESITE': 'Strict', # CSRF protection
     'AUTH_COOKIE_PATH': '/api/',      # Restrict cookie path
     'AUTH_COOKIE_DOMAIN': None,       # Use default domain
+    
+    # ✅ CROSS-ORIGIN FIX: SameSite configuration
+    # In development with cross-origin setup (frontend on different port):
+    # - Set AUTH_COOKIE_SAMESITE_FORCE_NONE=True in .env for cross-origin POST cookies
+    # In production with same-origin:
+    # - 'Strict' prevents CSRF attacks
+    'AUTH_COOKIE_SAMESITE': 'Lax' if DEBUG else 'Strict',
+    'AUTH_COOKIE_SAMESITE_FORCE_NONE': os.getenv('AUTH_COOKIE_SAMESITE_FORCE_NONE', 'False') == 'True',
 }
 
 # --- CORS Headers Configuration ---
@@ -227,12 +234,15 @@ SIMPLE_JWT = {
 # Provide comma-separated origins via environment variable for deployment flexibility.
 CORS_ALLOWED_ORIGINS_STRING = os.getenv(
     'CORS_ALLOWED_ORIGINS',
-    'http://localhost:5500,http://127.0.0.1:5500,http://localhost:3000'
+    'http://localhost:5500,http://127.0.0.1:5500,http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173'
 )
 CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS_STRING.split(',') if origin.strip()]
 
 # ✅ SECURITY: Enable credentials for httpOnly cookies
 CORS_ALLOW_CREDENTIALS = True
+
+# ✅ FIX: Expose headers for debugging (optional, remove in production)
+CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSP-Nonce']
 
 # Cache Configuration
 # Using LocMemCache for development (stores cache in local memory)

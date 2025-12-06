@@ -16,11 +16,6 @@ EMBEDDINGS_PATH = os.path.join(settings.BASE_DIR, 'product_embeddings.npy')
 INDEX_PATH = os.path.join(settings.BASE_DIR, 'product_faiss.index')
 PRODUCT_IDS_PATH = os.path.join(settings.BASE_DIR, 'product_ids.npy')
 
-# ✅ IMPROVEMENT: Cache loaded index and embeddings in memory
-_cached_index = None
-_cached_embeddings = None
-_cached_product_ids: Optional[List[int]] = None
-
 
 def build_and_save_faiss_index():
     """
@@ -49,44 +44,23 @@ def build_and_save_faiss_index():
     product_ids = np.array([p.id for p in products], dtype=np.int64)
     np.save(PRODUCT_IDS_PATH, product_ids)
     
-    # ✅ IMPROVEMENT: Clear cache to force reload with new index
-    global _cached_index, _cached_embeddings, _cached_product_ids
-    _cached_index = None
-    _cached_embeddings = None
-    _cached_product_ids = None
+    # Clear lru_cache to force reload with new index on next call
     get_search_index_data.cache_clear()
     
     return len(products)
 
 
-def load_faiss_index_and_embeddings(force_reload=False):
-    """
-    Load the Faiss index and embeddings from disk with caching.
-    
-    ✅ IMPROVEMENT: Caches index and embeddings in memory to avoid repeated disk I/O.
-    
-    Args:
-        force_reload: Force reload from disk even if cached
-        
-    Returns:
-        Tuple of (index, embeddings) or (None, None) if not found
-    """
-    global _cached_index, _cached_embeddings, _cached_product_ids
-    
-    if force_reload or _cached_index is None or _cached_embeddings is None or _cached_product_ids is None:
-        if not os.path.exists(EMBEDDINGS_PATH) or not os.path.exists(INDEX_PATH) or not os.path.exists(PRODUCT_IDS_PATH):
-            return None, None
-        
-        _cached_embeddings = np.load(EMBEDDINGS_PATH)
-        _cached_index = faiss.read_index(INDEX_PATH)
-        _cached_product_ids = np.load(PRODUCT_IDS_PATH).astype(np.int64).tolist()
-    
-    return _cached_index, _cached_embeddings
-
-
 @lru_cache(maxsize=None)
 def get_search_index_data() -> Tuple[Optional[faiss.Index], Optional[List[int]]]:
-    """Load FAISS index and the immutable product ID mapping once per process."""
+    """
+    Load FAISS index and the immutable product ID mapping once per process.
+    
+    Uses @lru_cache for efficient in-memory caching. The cache is cleared
+    when build_and_save_faiss_index() rebuilds the index.
+    
+    Returns:
+        Tuple of (faiss.Index, List[int]) or (None, None) if resources are unavailable
+    """
     if not (os.path.exists(INDEX_PATH) and os.path.exists(EMBEDDINGS_PATH) and os.path.exists(PRODUCT_IDS_PATH)):
         logger.info("FAISS resources are incomplete. Run 'build_product_index' to regenerate embeddings and index.")
         return None, None
