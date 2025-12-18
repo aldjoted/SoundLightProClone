@@ -14,7 +14,7 @@
 
 import * as apiService from './apiService.js';
 import { getWishlistData, isInWishlist, removeFromWishlist, moveToCart, initWishlist } from './wishlist.js';
-import { showToast } from './ui.js';
+import { showToast, showConfirmModal } from './ui.js';
 import { initRegisterPageValidation } from './auth.js';
 import i18n from './i18n.js';
 
@@ -760,7 +760,15 @@ export async function viewOrderDetails(orderId) {
  * Cancel order
  */
 export async function cancelOrder(orderId) {
-    if (!confirm('Are you sure you want to cancel this order?')) return;
+    const confirmed = await showConfirmModal({
+        title: 'Cancel Order',
+        message: 'Are you sure you want to cancel this order? This action cannot be undone.',
+        confirmText: 'Cancel Order',
+        cancelText: 'Keep Order',
+        type: 'danger'
+    });
+    
+    if (!confirmed) return;
 
     try {
         await apiService.cancelOrder(orderId);
@@ -1128,7 +1136,15 @@ async function handleEditReviewSubmit(form) {
  * Delete review
  */
 export async function deleteReview(reviewId) {
-    if (!confirm('Are you sure you want to delete this review?')) return;
+    const confirmed = await showConfirmModal({
+        title: 'Delete Review',
+        message: 'Are you sure you want to delete this review? This action cannot be undone.',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        type: 'danger'
+    });
+    
+    if (!confirmed) return;
 
     try {
         await apiService.deleteReview(reviewId);
@@ -1199,7 +1215,15 @@ async function loadWishlist() {
      * Handle clear wishlist
      */
     async function handleClearWishlist() {
-        if (!confirm('Are you sure you want to clear your entire wishlist?')) return;
+        const confirmed = await showConfirmModal({
+            title: 'Clear Wishlist',
+            message: 'Are you sure you want to remove all items from your wishlist?',
+            confirmText: 'Clear All',
+            cancelText: 'Cancel',
+            type: 'warning'
+        });
+        
+        if (!confirmed) return;
 
         try {
             const { clearWishlist } = await import('./wishlist.js');
@@ -1637,7 +1661,15 @@ export async function editAddress(addressId) {
  * Delete address
  */
 export async function deleteAddress(addressId) {
-    if (!confirm('Are you sure you want to delete this address?')) return;
+    const confirmed = await showConfirmModal({
+        title: 'Delete Address',
+        message: 'Are you sure you want to delete this address?',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        type: 'danger'
+    });
+    
+    if (!confirmed) return;
 
     try {
         await apiService.deleteShippingAddress(addressId);
@@ -1806,7 +1838,15 @@ export async function setDefaultPaymentMethod(pmId) {
  * Delete payment method
  */
 export async function deletePaymentMethod(pmId) {
-    if (!confirm('Are you sure you want to delete this payment method?')) return;
+    const confirmed = await showConfirmModal({
+        title: 'Delete Payment Method',
+        message: 'Are you sure you want to delete this payment method?',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        type: 'danger'
+    });
+    
+    if (!confirmed) return;
 
     try {
         await apiService.deletePaymentMethod(pmId);
@@ -1929,10 +1969,18 @@ function validatePasswordsMatch(password, confirmPassword) {
 /**
  * Handle logout
  */
-function handleLogout(e) {
+async function handleLogout(e) {
     e.preventDefault();
 
-    if (confirm('Are you sure you want to logout?')) {
+    const confirmed = await showConfirmModal({
+        title: 'Logout',
+        message: 'Are you sure you want to logout?',
+        confirmText: 'Logout',
+        cancelText: 'Cancel',
+        type: 'info'
+    });
+    
+    if (confirmed) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = 'index.html';

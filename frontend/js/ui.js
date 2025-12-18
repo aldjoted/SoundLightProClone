@@ -464,6 +464,124 @@ export function showToast(message, type = 'info') {
 }
 
 /**
+ * Shows a non-blocking confirmation modal.
+ * Replaces the native confirm() for better UX.
+ * 
+ * @param {Object} options - Configuration options
+ * @param {string} options.title - Modal title
+ * @param {string} options.message - Confirmation message
+ * @param {string} [options.confirmText='Confirm'] - Confirm button text
+ * @param {string} [options.cancelText='Cancel'] - Cancel button text
+ * @param {string} [options.type='warning'] - Modal type: 'warning', 'danger', 'info'
+ * @returns {Promise<boolean>} Resolves true if confirmed, false if cancelled
+ */
+export function showConfirmModal({
+    title = 'Confirm Action',
+    message,
+    confirmText = 'Confirm',
+    cancelText = 'Cancel',
+    type = 'warning'
+} = {}) {
+    return new Promise((resolve) => {
+        // Remove any existing confirmation modal
+        document.getElementById('confirm-modal-overlay')?.remove();
+
+        const iconClass = {
+            warning: 'fa-exclamation-triangle',
+            danger: 'fa-trash-alt',
+            info: 'fa-question-circle'
+        }[type] || 'fa-question-circle';
+
+        const iconColorClass = {
+            warning: 'warning',
+            danger: 'danger',
+            info: 'info'
+        }[type] || 'warning';
+
+        const overlay = createElement('div', {
+            id: 'confirm-modal-overlay',
+            class: 'confirm-modal-overlay'
+        });
+
+        const modal = createElement('div', {
+            class: 'confirm-modal',
+            role: 'alertdialog',
+            'aria-modal': 'true',
+            'aria-labelledby': 'confirm-modal-title',
+            'aria-describedby': 'confirm-modal-message'
+        });
+
+        const iconWrapper = createElement('div', { class: `confirm-modal-icon ${iconColorClass}` }, [
+            createElement('i', { class: `fas ${iconClass}` })
+        ]);
+
+        const content = createElement('div', { class: 'confirm-modal-content' }, [
+            createElement('h3', { id: 'confirm-modal-title' }, [title]),
+            createElement('p', { id: 'confirm-modal-message' }, [message])
+        ]);
+
+        const actions = createElement('div', { class: 'confirm-modal-actions' }, [
+            createElement('button', {
+                class: 'btn btn--secondary confirm-modal-cancel',
+                type: 'button'
+            }, [cancelText]),
+            createElement('button', {
+                class: `btn btn--${type === 'danger' ? 'danger' : 'primary'} confirm-modal-confirm`,
+                type: 'button'
+            }, [confirmText])
+        ]);
+
+        modal.appendChild(iconWrapper);
+        modal.appendChild(content);
+        modal.appendChild(actions);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        // Trap focus in modal
+        const confirmBtn = modal.querySelector('.confirm-modal-confirm');
+        const cancelBtn = modal.querySelector('.confirm-modal-cancel');
+        confirmBtn.focus();
+
+        const cleanup = (result) => {
+            overlay.classList.add('closing');
+            setTimeout(() => {
+                overlay.remove();
+                resolve(result);
+            }, 200);
+        };
+
+        // Event handlers
+        confirmBtn.addEventListener('click', () => cleanup(true));
+        cancelBtn.addEventListener('click', () => cleanup(false));
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) cleanup(false);
+        });
+
+        // Keyboard handling
+        const handleKeydown = (e) => {
+            if (e.key === 'Escape') {
+                cleanup(false);
+                document.removeEventListener('keydown', handleKeydown);
+            }
+            if (e.key === 'Tab') {
+                // Trap focus
+                const focusable = [cancelBtn, confirmBtn];
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+                if (e.shiftKey && document.activeElement === first) {
+                    e.preventDefault();
+                    last.focus();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                    e.preventDefault();
+                    first.focus();
+                }
+            }
+        };
+        document.addEventListener('keydown', handleKeydown);
+    });
+}
+
+/**
  * Renders search suggestions dropdown
  * @param {Array<Object>} products - Array of product objects
  * @param {HTMLElement} container - The container element for suggestions

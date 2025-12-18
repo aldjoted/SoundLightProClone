@@ -185,6 +185,148 @@ body.no-scroll {
 .toast.success { background: var(--success-color); }
 .toast.error { background: var(--danger-color); }
 
+/* ============================================= */
+/* Confirmation Modal (replaces native confirm) */
+/* ============================================= */
+.confirm-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.75);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: var(--z-modal);
+    padding: var(--spacing-md);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .confirm-modal-overlay {
+        animation: fadeInModal 0.2s ease;
+    }
+    
+    .confirm-modal-overlay.closing {
+        animation: fadeOutModal 0.2s ease forwards;
+    }
+    
+    @keyframes fadeOutModal {
+        from { opacity: 1; }
+        to { opacity: 0; }
+    }
+}
+
+.confirm-modal {
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2xl);
+    max-width: 420px;
+    width: 100%;
+    padding: var(--spacing-xl);
+    text-align: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .confirm-modal {
+        animation: scaleIn 0.25s ease;
+    }
+    
+    @keyframes scaleIn {
+        from {
+            transform: scale(0.9);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+}
+
+.confirm-modal-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--spacing-lg);
+    font-size: 1.75rem;
+}
+
+.confirm-modal-icon.warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning-color);
+}
+
+.confirm-modal-icon.danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger-color);
+}
+
+.confirm-modal-icon.info {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary-color);
+}
+
+.confirm-modal-content h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 var(--spacing-sm);
+}
+
+.confirm-modal-content p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.confirm-modal-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-xl);
+    justify-content: center;
+}
+
+.confirm-modal-actions .btn {
+    flex: 1;
+    max-width: 150px;
+    padding: var(--spacing-sm) var(--spacing-lg);
+}
+
+/* Danger button variant for confirm modals */
+.btn--danger {
+    --btn-bg: var(--danger-color);
+    --btn-color: white;
+    --btn-border: var(--danger-color);
+    --btn-hover-bg: #dc2626;
+    --btn-hover-border: #dc2626;
+}
+
+/* Mobile adjustments */
+@media (max-width: 479px) {
+    .confirm-modal {
+        padding: var(--spacing-lg);
+    }
+    
+    .confirm-modal-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 1.5rem;
+    }
+    
+    .confirm-modal-actions {
+        flex-direction: column;
+    }
+    
+    .confirm-modal-actions .btn {
+        max-width: none;
+        width: 100%;
+    }
+}
+
 /* Modal (Quick View) */
 .modal-overlay {
     position: fixed;
@@ -759,7 +901,7 @@ body.no-scroll {
     background: rgba(255, 255, 255, 0.8);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
-    color: #1e293b;
+    color: var(--gray-800);
     transition: all 0.2s ease;
 }
 .chat-input textarea:focus { 
@@ -878,7 +1020,7 @@ body.no-scroll {
     
     .chat-input textarea {
         background: rgba(255, 255, 255, 0.95);
-        color: #1e293b;
+        color: var(--gray-800);
         border: 1px solid rgba(71, 85, 105, 0.8);
     }
     
@@ -913,7 +1055,7 @@ body.no-scroll {
     
     .product-card .product-price,
     .price {
-        color: #67e8f9; /* cyan-300 for price emphasis */
+        color: var(--secondary-color); /* Uses design system secondary color for price emphasis */
     }
     
     /* Form element contrast */
@@ -944,11 +1086,12 @@ body.no-scroll {
     
     /* Link contrast */
     a:not(.btn) {
-        color: #93c5fd; /* blue-300 - better contrast than blue-500 */
+        color: var(--primary-light); /* Uses design system primary-light for better contrast */
     }
     
     a:not(.btn):hover {
-        color: #bfdbfe; /* blue-200 */
+        color: var(--primary-light);
+        filter: brightness(1.2);
     }
     
     /* Navigation improvements */
@@ -964,13 +1107,13 @@ body.no-scroll {
     /* Badge and tag contrast */
     .badge,
     .tag {
-        background-color: rgba(99, 102, 241, 0.3);
-        color: #a5b4fc; /* indigo-300 */
+        background-color: rgba(var(--primary-color-rgb), 0.3);
+        color: var(--primary-light);
     }
     
     /* Improve empty state in dark mode */
     .empty-state-icon {
-        background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+        background: linear-gradient(135deg, var(--gray-700) 0%, var(--bg-dark-elevated) 100%);
     }
     
     .empty-state-icon i {
@@ -996,7 +1139,7 @@ body.no-scroll {
     .skeleton-loader,
     .skeleton-card,
     [class*="product-skeleton-"] {
-        background: #334155; /* slate-700 */
+        background: var(--gray-700);
     }
     
     .skeleton-shimmer,
