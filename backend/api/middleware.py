@@ -2,16 +2,28 @@
 Custom middleware for security enhancements.
 
 This module provides:
-- CSP nonce generation and injection
-- Security header management
+- CSP nonce generation and injection for inline script protection
+- Additional security headers (Permissions-Policy, COEP, CORP)
 """
 
-import secrets
+from __future__ import annotations
+
 import logging
+import secrets
+from typing import TYPE_CHECKING, Final
+
 from django.conf import settings
 from django.utils.deprecation import MiddlewareMixin
 
-logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from django.http import HttpRequest, HttpResponse
+
+__all__: Final[list[str]] = [
+    "CSPNonceMiddleware",
+    "SecurityHeadersMiddleware",
+]
+
+logger: Final = logging.getLogger(__name__)
 
 
 class CSPNonceMiddleware(MiddlewareMixin):
@@ -30,13 +42,13 @@ class CSPNonceMiddleware(MiddlewareMixin):
     necessary inline scripts.
     """
     
-    def process_request(self, request):
+    def process_request(self, request: HttpRequest) -> None:
         """Generate a unique nonce for this request."""
         # Generate a cryptographically secure nonce (128-bit, base64 encoded)
-        request.csp_nonce = secrets.token_urlsafe(16)
+        request.csp_nonce = secrets.token_urlsafe(16)  # type: ignore[attr-defined]
         return None
     
-    def process_response(self, request, response):
+    def process_response(self, request: HttpRequest, response: HttpResponse) -> HttpResponse:
         """
         Add the nonce to the Content-Security-Policy header.
         
@@ -120,10 +132,13 @@ class SecurityHeadersMiddleware(MiddlewareMixin):
     """
     Additional security headers middleware.
     
-    Adds headers that complement Django's built-in security middleware.
+    Adds headers that complement Django's built-in security middleware:
+    - Permissions-Policy: Restricts browser feature access
+    - Cross-Origin-Embedder-Policy: Enables cross-origin isolation
+    - Cross-Origin-Resource-Policy: Controls resource sharing
     """
     
-    def process_response(self, request, response):
+    def process_response(self, request: HttpRequest, response: HttpResponse) -> HttpResponse:
         """Add additional security headers to response."""
         
         # Permissions-Policy (formerly Feature-Policy)

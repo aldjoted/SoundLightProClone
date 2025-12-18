@@ -1,30 +1,51 @@
 """
-Custom JWT Token Views with httpOnly Cookie Support and Rate Limiting
-Implements secure refresh token handling via httpOnly cookies.
-Includes 2FA email verification for login.
+Custom JWT Token Views with httpOnly Cookie Support and Rate Limiting.
+
+This module implements secure refresh token handling via httpOnly cookies
+with 2FA email verification for login.
+
+Endpoints:
+- RateLimitedTokenObtainPairView: Initial auth with 2FA code generation
+- RateLimitedTokenRefreshView: Refresh tokens via httpOnly cookie
+- VerifyLoginCodeView: Verify 2FA code and obtain tokens
+- ResendVerificationCodeView: Resend 2FA verification code
 """
 
-import secrets
+from __future__ import annotations
+
 import logging
+import secrets
 from datetime import timedelta
-from django.utils import timezone
-from django.utils.decorators import method_decorator
+from typing import TYPE_CHECKING, Any, Final
+
+from django.conf import settings
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
+from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
 from django_ratelimit.exceptions import Ratelimited
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
-from django.conf import settings
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from .utils import ratelimit_error_response, get_cookie_settings
+from .utils import get_cookie_settings, ratelimit_error_response
 
-logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from rest_framework.request import Request
+
+__all__: Final[list[str]] = [
+    "RateLimitedTokenObtainPairView",
+    "RateLimitedTokenRefreshView",
+    "VerifyLoginCodeView",
+    "ResendVerificationCodeView",
+]
+
+logger: Final = logging.getLogger(__name__)
 
 
 @method_decorator(ratelimit(key='ip', rate='5/m', method='POST', block=True), name='dispatch')
@@ -32,7 +53,7 @@ class RateLimitedTokenObtainPairView(TokenObtainPairView):
     """
     Token obtain view with httpOnly cookie support and rate limiting.
     
-    ✅ SECURITY IMPROVEMENT:
+    Security Features:
     - Implements 2FA via email verification
     - Generates a 6-digit code on successful password validation
     - Sends code to user's email
@@ -40,10 +61,14 @@ class RateLimitedTokenObtainPairView(TokenObtainPairView):
     - Rate limited to 5 attempts per minute per IP
     """
     
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """
+        Handle login request with 2FA code generation.
+        
+        Accepts username/email + password, validates credentials,
+        generates a verification code, and sends it via email.
+        """
         try:
-            from django.contrib.auth import authenticate
-            
             identifier = (request.data.get('username')
                            or request.data.get('email')
                            or request.data.get('identifier')
@@ -140,13 +165,19 @@ class RateLimitedTokenRefreshView(TokenRefreshView):
     """
     Token refresh view with httpOnly cookie support and rate limiting.
     
-    ✅ SECURITY IMPROVEMENT:
+    Security Features:
     - Reads refresh token from httpOnly cookie instead of request body
     - Returns new access token and refreshes the httpOnly cookie
     - Rate limited to 10 attempts per minute per IP
     """
     
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """
+        Refresh access token using httpOnly cookie.
+        
+        Reads the refresh token from the httpOnly cookie, validates it,
+        and returns a new access token (and optionally rotates refresh token).
+        """
         try:
             # Get refresh token from httpOnly cookie
             cookie_settings = get_cookie_settings()
@@ -192,7 +223,7 @@ class VerifyLoginCodeView(APIView):
     """
     API view to verify the 6-digit login verification code.
     
-    ✅ SECURITY IMPROVEMENT:
+    Security Features:
     - Verifies the code matches and hasn't expired
     - Returns JWT tokens only after successful verification
     - Tracks failed attempts and locks account after 5 failures
@@ -200,7 +231,13 @@ class VerifyLoginCodeView(APIView):
     """
     permission_classes = [AllowAny]
     
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """
+        Verify 2FA code and return JWT tokens.
+        
+        Validates the 6-digit code sent to user's email. On success,
+        returns access token in body and sets refresh token as httpOnly cookie.
+        """
         try:
             email = request.data.get('email')
             code = request.data.get('code')
@@ -318,14 +355,20 @@ class ResendVerificationCodeView(APIView):
     """
     API view to resend the 6-digit login verification code.
     
-    ✅ SECURITY:
+    Security Features:
     - Only resends if a valid pending verification exists
     - Rate limited to 3 resends per minute per IP
     - Generates a new code and extends expiration
     """
     permission_classes = [AllowAny]
     
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """
+        Resend 2FA verification code.
+        
+        Generates a new 6-digit code and sends it to the user's email.
+        Only works if there's a pending verification for the email address.
+        """
         try:
             email = request.data.get('email')
             
