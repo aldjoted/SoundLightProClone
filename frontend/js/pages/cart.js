@@ -320,34 +320,71 @@ export function initCartPage() {
         const successDiv = document.createElement('div');
         successDiv.className = 'order-success quote-success';
         successDiv.style.cssText = 'text-align: center; padding: 3rem 2rem; background: #f8f9fa; border-radius: 12px; margin: 2rem 0;';
-        
-        successDiv.innerHTML = `
-            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #003366, #0066cc); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
-                <i class="fas fa-file-pdf" style="font-size: 2rem; color: white;"></i>
-            </div>
-            <h2 style="color: #003366; margin-bottom: 0.5rem;">Your Quote is Ready!</h2>
-            <p style="color: #666; margin-bottom: 0.5rem;">Quote Number: <strong style="color: #003366;">${quoteNumber}</strong></p>
-            <p style="color: #888; font-size: 0.9rem; margin-bottom: 1.5rem;">Your quote has been generated and is ready for download.</p>
-            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                <a href="${getQuotePDFUrl(quoteNumber)}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.875rem 1.5rem;">
-                    <i class="fas fa-download"></i> Download PDF Quote
-                </a>
-                <a href="index.html" class="btn btn-secondary" style="padding: 0.875rem 1.5rem;">
-                    Continue Shopping
-                </a>
-            </div>
-            <p style="margin-top: 1.5rem; font-size: 0.85rem; color: #888;">
-                <i class="fas fa-info-circle"></i> This quote is valid for 30 days. Contact us to place your order.
-            </p>
-        `;
+
+        const iconWrap = document.createElement('div');
+        iconWrap.style.cssText = 'width: 80px; height: 80px; background: linear-gradient(135deg, #003366, #0066cc); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;';
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-file-pdf';
+        icon.style.cssText = 'font-size: 2rem; color: white;';
+        iconWrap.appendChild(icon);
+
+        const title = document.createElement('h2');
+        title.style.cssText = 'color: #003366; margin-bottom: 0.5rem;';
+        title.textContent = 'Your Quote is Ready!';
+
+        const quoteLine = document.createElement('p');
+        quoteLine.style.cssText = 'color: #666; margin-bottom: 0.5rem;';
+        quoteLine.appendChild(document.createTextNode('Quote Number: '));
+        const quoteStrong = document.createElement('strong');
+        quoteStrong.style.cssText = 'color: #003366;';
+        quoteStrong.textContent = String(quoteNumber || '');
+        quoteLine.appendChild(quoteStrong);
+
+        const subtitle = document.createElement('p');
+        subtitle.style.cssText = 'color: #888; font-size: 0.9rem; margin-bottom: 1.5rem;';
+        subtitle.textContent = 'Your quote has been generated and is ready for download.';
+
+        const actions = document.createElement('div');
+        actions.style.cssText = 'display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;';
+
+        const pdfLink = document.createElement('a');
+        pdfLink.className = 'btn btn-primary';
+        pdfLink.style.cssText = 'display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.875rem 1.5rem;';
+        pdfLink.target = '_blank';
+        pdfLink.rel = 'noopener noreferrer';
+        // Avoid URL injection; quoteNumber is used as a path segment.
+        const safeQuoteNumber = encodeURIComponent(String(quoteNumber || ''));
+        pdfLink.href = getQuotePDFUrl(safeQuoteNumber);
+        const downloadIcon = document.createElement('i');
+        downloadIcon.className = 'fas fa-download';
+        pdfLink.appendChild(downloadIcon);
+        pdfLink.appendChild(document.createTextNode(' Download PDF Quote'));
+
+        const continueLink = document.createElement('a');
+        continueLink.className = 'btn btn-secondary';
+        continueLink.style.cssText = 'padding: 0.875rem 1.5rem;';
+        continueLink.href = 'index.html';
+        continueLink.textContent = 'Continue Shopping';
+
+        actions.appendChild(pdfLink);
+        actions.appendChild(continueLink);
+
+        const info = document.createElement('p');
+        info.style.cssText = 'margin-top: 1.5rem; font-size: 0.85rem; color: #888;';
+        const infoIcon = document.createElement('i');
+        infoIcon.className = 'fas fa-info-circle';
+        info.appendChild(infoIcon);
+        info.appendChild(document.createTextNode(' This quote is valid for 30 days. Contact us to place your order.'));
+
+        successDiv.appendChild(iconWrap);
+        successDiv.appendChild(title);
+        successDiv.appendChild(quoteLine);
+        successDiv.appendChild(subtitle);
+        successDiv.appendChild(actions);
+        successDiv.appendChild(info);
 
         container.appendChild(successDiv);
         checkoutSection.classList.add('hidden');
-
-        // Auto-trigger PDF download
-        setTimeout(() => {
-            window.open(getQuotePDFUrl(quoteNumber), '_blank');
-        }, 500);
     }
 
     // Tab click handlers

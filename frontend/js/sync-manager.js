@@ -214,14 +214,15 @@ class SyncManager {
         
         // If online and user is authenticated, attempt immediate sync
         if (navigator.onLine) {
-            const accessToken = localStorage.getItem('accessToken');
-            if (accessToken) {
-                try {
+            try {
+                const { ensureAccessToken } = await import('./apiService.js');
+                const accessToken = await ensureAccessToken();
+                if (accessToken) {
                     await this.syncWishlistOperation(operation, data);
                     return;
-                } catch (error) {
-                    console.log('[SyncManager] Immediate wishlist sync failed, queueing...', error);
                 }
+            } catch (error) {
+                console.log('[SyncManager] Immediate wishlist sync failed, queueing...', error);
             }
         }
         
@@ -600,8 +601,9 @@ class SyncManager {
     async syncWishlistOperation(operation, data) {
         console.log('[SyncManager] Syncing wishlist operation:', operation, data);
         
-        // Check if user is authenticated
-        const accessToken = localStorage.getItem('accessToken');
+        // Check if user is authenticated (cookie/session + in-memory/sessionStorage token)
+        const { ensureAccessToken } = await import('./apiService.js');
+        const accessToken = await ensureAccessToken();
         if (!accessToken) {
             console.warn('[SyncManager] User not authenticated, cannot sync wishlist to backend');
             throw new Error('Authentication required for wishlist sync');

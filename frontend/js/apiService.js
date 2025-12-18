@@ -8,7 +8,7 @@
 
 import { API_BASE_URL } from './config.js';
 import { APIError, RetryManager } from './utils.js';
-import { RateLimiter } from './security.js';
+import { RateLimiter, CSPNonceManager } from './security.js';
 
 // Initialize global retry manager with sensible defaults
 const retryManager = new RetryManager({
@@ -256,6 +256,9 @@ async function refreshAccessToken() {
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',  // ✅ Include credentials for httpOnly cookies
             });
+
+            // Capture CSP nonce if provided
+            try { CSPNonceManager.extractFromResponse(res); } catch { }
             
             // Handle specific error cases
             if (res.status === 401) {
@@ -369,6 +372,9 @@ async function apiFetch(url, options = {}) {
     try {
         let response = await fetch(`${API_BASE_URL}${url}`, options);
 
+        // Capture CSP nonce if provided
+        try { CSPNonceManager.extractFromResponse(response); } catch { }
+
         // Handle 401 Unauthorized - attempt token refresh
         if (response.status === 401) {
             console.debug(`[API] 401 received for ${url}, attempting refresh`);
@@ -382,6 +388,9 @@ async function apiFetch(url, options = {}) {
                     options.headers['Authorization'] = `Bearer ${newTokens.access}`;
                     console.debug(`[API] Retrying ${url} with new token`);
                     response = await fetch(`${API_BASE_URL}${url}`, options);
+
+                    // Capture CSP nonce if provided
+                    try { CSPNonceManager.extractFromResponse(response); } catch { }
                 } else {
                     throw new APIError('Token refresh returned no access token', 401, 'TOKEN_REFRESH_EMPTY');
                 }

@@ -159,11 +159,6 @@ async function initApp() {
         // Initialize i18n first (synchronous)
         setupI18n();
 
-        // Disable CSP in local dev to avoid blocking API calls
-        if (typeof window !== 'undefined') {
-            window.__DISABLE_CSP__ = true;
-        }
-
         // Initialize security and performance optimizations
         initSecurity();
         initPerformanceOptimizations();

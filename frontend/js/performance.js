@@ -461,9 +461,8 @@ export class ServiceWorkerManager {
     // Do not register on local/LAN hosts to avoid cache issues while previewing
     if ('serviceWorker' in navigator && IS_PRODUCTION && !DISABLE_SW && !IS_LOCAL_HOST) {
       try {
-        const registration = await navigator.serviceWorker.register('/sw.js', {
-          scope: '/'
-        });
+        const swUrl = new URL('sw.js', window.location.href);
+        const registration = await navigator.serviceWorker.register(swUrl);
 
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
