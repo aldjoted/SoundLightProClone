@@ -1651,13 +1651,15 @@ export const createQuote = async (quoteData) => {
  * @param {string} quoteNumber - The quote number (e.g., Q-20231025-ABCD).
  * @returns {Promise<Object>} A promise that resolves to the quote details.
  */
-export const getQuoteDetails = async (quoteNumber) => {
+export const getQuoteDetails = async (quoteNumber, accessToken = '') => {
     if (!quoteNumber) {
         throw new APIError('Quote number is required', 400, 'INVALID_QUOTE_NUMBER');
     }
     
     try {
-        return await apiFetch(`/quotes/${quoteNumber}/`);
+        const token = String(accessToken || '').trim();
+        const qs = token ? `?token=${encodeURIComponent(token)}` : '';
+        return await apiFetch(`/quotes/${quoteNumber}/${qs}`);
     } catch (error) {
         console.error('Failed to fetch quote details:', error);
         if (error instanceof APIError) {
@@ -1677,8 +1679,15 @@ export const getQuoteDetails = async (quoteNumber) => {
  * @param {string} quoteNumber - The quote number.
  * @returns {string} The URL to download the quote PDF.
  */
-export const getQuotePDFUrl = (quoteNumber) => {
-    return `${API_BASE_URL}/quotes/${quoteNumber}/pdf/`;
+export const getQuotePDFUrl = (quoteNumber, accessToken = '') => {
+    const base = `${API_BASE_URL}/quotes/${quoteNumber}/pdf/`;
+    const token = String(accessToken || '').trim();
+    if (!token) {
+        return base;
+    }
+    const url = new URL(base, window.location.origin);
+    url.searchParams.set('token', token);
+    return url.toString();
 };
 
 /**

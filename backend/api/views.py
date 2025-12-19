@@ -1536,6 +1536,7 @@ class CreateQuoteView(APIView):
                     product = products_dict[item['id']]
                     quantity = item['quantity']
                     unit_price_ht = product.price
+                    line_total_ht = (unit_price_ht * quantity).quantize(Decimal('0.01'))
                     
                     quote_item = QuoteItem(
                         quote=quote,
@@ -1545,7 +1546,7 @@ class CreateQuoteView(APIView):
                         options_description='',
                         quantity=quantity,
                         unit_price_ht=unit_price_ht,
-                        line_total_ht=unit_price_ht * quantity,
+                        line_total_ht=line_total_ht,
                     )
                     quote_items.append(quote_item)
                 
@@ -1559,6 +1560,7 @@ class CreateQuoteView(APIView):
                 return Response({
                     'message': 'Quote created successfully',
                     'quote_number': quote.quote_number,
+                    'access_token': quote.access_token,
                     'quote': response_serializer.data
                 }, status=status.HTTP_201_CREATED)
                 
@@ -1589,10 +1591,16 @@ class DownloadQuotePDFView(APIView):
         try:
             quote = Quote.objects.prefetch_related('items__product').get(quote_number=quote_number)
         except Quote.DoesNotExist:
-            return Response(
-                {'error': 'Quote not found'},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({'error': 'Quote not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        is_owner = bool(getattr(request, 'user', None) and request.user.is_authenticated and quote.user_id == request.user.id)
+        if not is_owner:
+            provided_token = (
+                (request.query_params.get('token') or '')
+                or (request.headers.get('X-Quote-Token', '') or '')
+            ).strip()
+            if not provided_token or not secrets.compare_digest(str(provided_token), str(quote.access_token)):
+                return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
         
         # Prepare emitter (company) information
         emitter = {
@@ -1675,10 +1683,16 @@ class QuoteDetailView(APIView):
         try:
             quote = Quote.objects.prefetch_related('items__product').get(quote_number=quote_number)
         except Quote.DoesNotExist:
-            return Response(
-                {'error': 'Quote not found'},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({'error': 'Quote not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        is_owner = bool(getattr(request, 'user', None) and request.user.is_authenticated and quote.user_id == request.user.id)
+        if not is_owner:
+            provided_token = (
+                (request.query_params.get('token') or '')
+                or (request.headers.get('X-Quote-Token', '') or '')
+            ).strip()
+            if not provided_token or not secrets.compare_digest(str(provided_token), str(quote.access_token)):
+                return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
         
         serializer = QuoteSerializer(quote)
         return Response(serializer.data)

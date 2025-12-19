@@ -314,7 +314,7 @@ export function initCartPage() {
     /**
      * Show success state after quote generation
      */
-    function showQuoteSuccess(quoteNumber) {
+    function showQuoteSuccess(quoteNumber, accessToken = '') {
         container.innerHTML = '';
         
         const successDiv = document.createElement('div');
@@ -354,7 +354,7 @@ export function initCartPage() {
         pdfLink.rel = 'noopener noreferrer';
         // Avoid URL injection; quoteNumber is used as a path segment.
         const safeQuoteNumber = encodeURIComponent(String(quoteNumber || ''));
-        pdfLink.href = getQuotePDFUrl(safeQuoteNumber);
+        pdfLink.href = getQuotePDFUrl(safeQuoteNumber, accessToken);
         const downloadIcon = document.createElement('i');
         downloadIcon.className = 'fas fa-download';
         pdfLink.appendChild(downloadIcon);
@@ -533,7 +533,7 @@ export function initCartPage() {
                 };
 
                 const cartItems = cart.getCart().map(item => ({
-                    product_id: item.id,
+                    id: item.id,
                     quantity: item.quantity
                 }));
 
@@ -600,7 +600,7 @@ export function initCartPage() {
 
                 if (response?.quote_number) {
                     ui.showToast('Quote generated successfully!', 'success');
-                    showQuoteSuccess(response.quote_number);
+                    showQuoteSuccess(response.quote_number, response.access_token);
                 } else {
                     throw new Error('Failed to generate quote - no quote number received');
                 }

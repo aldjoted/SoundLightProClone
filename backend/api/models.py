@@ -10,6 +10,7 @@ from django.dispatch import receiver
 from django.conf import settings
 from django.core.mail import send_mail
 import logging
+import secrets
 
 
 logger = logging.getLogger(__name__)
@@ -824,6 +825,17 @@ class Quote(models.Model):
         db_index=True,
         verbose_name=_("Quote Number")
     )
+
+    # Optional access token for secure public retrieval/download.
+    # Note: Some deployments already have a NOT NULL access_token column at the DB level.
+    access_token = models.CharField(
+        max_length=64,
+        unique=True,
+        db_index=True,
+        default=secrets.token_urlsafe,
+        editable=False,
+        verbose_name=_("Access Token")
+    )
     
     # Customer information
     user = models.ForeignKey(
@@ -934,6 +946,8 @@ class Quote(models.Model):
         """Generate quote number if not set"""
         if not self.quote_number:
             self.quote_number = self._generate_quote_number()
+        if not self.access_token:
+            self.access_token = secrets.token_urlsafe()
         if not self.valid_until:
             self.valid_until = timezone.now().date() + timedelta(days=30)
         super().save(*args, **kwargs)
