@@ -416,23 +416,25 @@
     
     .features-grid {
         gap: var(--spacing-md);
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
     }
     
     .feature-card {
-        padding: var(--spacing-lg);
+        padding: var(--spacing-md);
     }
     
     .feature-icon {
-        font-size: 2rem;
+        font-size: 1.25rem;
+        width: 44px;
+        height: 44px;
     }
     
     .feature-card h3 {
-        font-size: 1rem;
+        font-size: 0.875rem;
     }
     
     .feature-card p {
-        font-size: 0.875rem;
+        font-size: 0.8rem;
     }
 }
 
@@ -507,12 +509,13 @@
     }
     
     .testimonials-grid {
-        gap: var(--spacing-lg);
-        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+        padding-bottom: var(--spacing-sm);
     }
     
     .testimonial-card {
-        padding: var(--spacing-lg);
+        padding: var(--spacing-md);
+        min-width: 260px;
     }
     
     .testimonial-text {

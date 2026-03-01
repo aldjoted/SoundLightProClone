@@ -245,6 +245,19 @@ def create_order_from_cart(
                         details={"product_id": product.id, "quantity": quantity},
                     )
 
+                MAX_QUANTITY_PER_ITEM = 99
+                if quantity > MAX_QUANTITY_PER_ITEM:
+                    raise OrderCreationError(
+                        f"Maximum {MAX_QUANTITY_PER_ITEM} units per item. "
+                        f"Requested {quantity} of '{product.name}'.",
+                        code=OrderCreationError.INVALID_QUANTITY,
+                        details={
+                            "product_id": product.id,
+                            "quantity": quantity,
+                            "max_allowed": MAX_QUANTITY_PER_ITEM,
+                        },
+                    )
+
                 if product.stock < quantity:
                     raise OrderCreationError(
                         f"Not enough stock for '{product.name}'. "

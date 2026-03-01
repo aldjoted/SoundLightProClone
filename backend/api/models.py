@@ -1,5 +1,7 @@
 from django.db import models, transaction
 from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password, check_password
+from django.core.validators import FileExtensionValidator
 from decimal import Decimal
 from datetime import timedelta
 from mptt.models import MPTTModel, TreeForeignKey
@@ -244,7 +246,10 @@ class ProductImage(models.Model):
 class ProductAttachment(models.Model):
     """Optional rich-media assets such as PDF manuals or spec sheets."""
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='attachments')
-    file = models.FileField(upload_to='products/attachments/')
+    file = models.FileField(
+        upload_to='products/attachments/',
+        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'docx', 'xlsx', 'xls', 'csv', 'txt'])],
+    )
     label = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -404,7 +409,8 @@ class UserProfile(models.Model):
     newsletter_subscription = models.BooleanField(default=False, verbose_name=_("Newsletter Subscription"))
     
     # 2FA Email Verification fields
-    login_verification_code = models.CharField(max_length=6, blank=True, verbose_name=_("Login Verification Code"))
+    # SECURITY: Store hashed verification code, not plaintext (CWE-256)
+    login_verification_code = models.CharField(max_length=128, blank=True, verbose_name=_("Login Verification Code Hash"))
     login_verification_code_expires = models.DateTimeField(null=True, blank=True, verbose_name=_("Verification Code Expiry"))
     
     # Account lockout fields for brute force protection
@@ -458,9 +464,9 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 
 @receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    """Signal to save UserProfile when User is saved"""
-    if hasattr(instance, 'profile'):
+def save_user_profile(sender, instance, created, **kwargs):
+    """Signal to save UserProfile when User is saved (skip on creation, handled by create_user_profile)."""
+    if not created and hasattr(instance, 'profile'):
         instance.profile.save()
 
 
@@ -799,6 +805,36 @@ class PasswordResetToken(models.Model):
     
     def mark_used(self):
         """Mark token as used"""
+        self.used = True
+        self.save(update_fields=['used'])
+
+
+class EmailVerificationToken(models.Model):
+    """
+    Token for verifying email ownership during registration.
+    Account stays inactive (is_active=False) until verified.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='email_verification_tokens')
+    token = models.CharField(max_length=64, unique=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = _("Email Verification Token")
+        verbose_name_plural = _("Email Verification Tokens")
+        indexes = [
+            models.Index(fields=['token', 'used', 'expires_at']),
+        ]
+
+    def __str__(self):
+        return f"Email verification for {self.user.username}"
+
+    @property
+    def is_valid(self):
+        return not self.used and self.expires_at > timezone.now()
+
+    def mark_used(self):
         self.used = True
         self.save(update_fields=['used'])
 

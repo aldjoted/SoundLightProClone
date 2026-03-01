@@ -289,7 +289,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     
     def validate_email(self, value):
         """
-        Validate email uniqueness.
+        Validate email format. Uniqueness is checked silently to prevent enumeration.
         """
         if not value:
             raise serializers.ValidationError("Email is required.")
@@ -297,10 +297,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         # Normalize email to lowercase
         value = value.lower()
         
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError(
-                "A user with this email address already exists. Please use a different email or try logging in."
-            )
+        # SECURITY: Do not reveal whether an email is already registered.
+        # The duplicate check is deferred to create() which returns a generic
+        # success message regardless, preventing email enumeration (CWE-204).
         
         return value
     
@@ -312,12 +311,13 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # Create a new user with a hashed password
-        # Normalize email before saving
+        # Account starts inactive until email is verified
         user = User.objects.create(
             username=validated_data['username'],
             email=validated_data['email'].lower(),
             first_name=validated_data['first_name'],
-            last_name=validated_data['last_name']
+            last_name=validated_data['last_name'],
+            is_active=False,
         )
         user.set_password(validated_data['password'])
         user.save()

@@ -91,7 +91,6 @@ export async function initDashboard() {
             } catch (storageError) {
                 console.warn('Failed to clear session token during dashboard auth failure:', storageError);
             }
-            localStorage.removeItem('refreshToken');
             window.location.href = 'login.html?redirect=dashboard.html';
         } else {
             showToast('Failed to load dashboard. Please refresh the page.', 'error');
@@ -963,7 +962,7 @@ function createEditReviewModal() {
 
     const closeBtn = document.createElement('button');
     closeBtn.className = 'modal-close';
-    closeBtn.innerHTML = '&times;';
+    closeBtn.textContent = '\u00D7';
     closeBtn.onclick = () => closeModal('edit-review-modal');
 
     const h3 = document.createElement('h3');

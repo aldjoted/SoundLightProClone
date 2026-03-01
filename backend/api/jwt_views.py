@@ -22,6 +22,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
+from django.contrib.auth.hashers import make_password, check_password as check_password_hash
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
@@ -116,9 +117,9 @@ class RateLimitedTokenObtainPairView(TokenObtainPairView):
             # Generate 6-digit verification code using cryptographically secure random
             verification_code = str(secrets.randbelow(900000) + 100000)
             
-            # Store code in user profile with 10-minute expiration
+            # SECURITY: Hash the code before storing to protect against DB compromise (CWE-256)
             profile = user.profile
-            profile.login_verification_code = verification_code
+            profile.login_verification_code = make_password(verification_code)
             profile.login_verification_code_expires = timezone.now() + timedelta(minutes=10)
             profile.save()
             
@@ -141,7 +142,7 @@ class RateLimitedTokenObtainPairView(TokenObtainPairView):
                     recipient_list=[user.email],
                     fail_silently=False,
                 )
-                logger.info(f"Verification code sent to {user.email}")
+                logger.info("Verification code sent to %s***@%s", user.email[:3], user.email.split('@')[-1])
             except Exception as e:
                 logger.error(f"Failed to send verification email: {e}")
                 return Response(
@@ -271,8 +272,8 @@ class VerifyLoginCodeView(APIView):
                     status=status.HTTP_423_LOCKED
                 )
             
-            # Check if code matches
-            if profile.login_verification_code != code:
+            # Check if code matches (compare against hashed stored value)
+            if not profile.login_verification_code or not check_password_hash(code, profile.login_verification_code):
                 # Increment failed attempts
                 profile.increment_failed_attempts()
                 

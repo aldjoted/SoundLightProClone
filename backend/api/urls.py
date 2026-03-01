@@ -18,6 +18,8 @@ urlpatterns = [
     path('logout/', views.LogoutView.as_view(), name='logout'),
     # For new user registration (Rate Limited: 3/hour + CAPTCHA)
     path('register/', views.RegisterView.as_view(), name='register'),
+    # Verify email address after registration
+    path('verify-email/', views.VerifyEmailView.as_view(), name='verify_email'),
     # To get details of the current logged-in user
     path('user/', views.UserDetailView.as_view(), name='user_detail'),
     # Get CAPTCHA configuration for frontend

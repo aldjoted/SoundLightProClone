@@ -305,6 +305,13 @@ def verify_captcha(
 
     # If CAPTCHA not configured, allow the request
     if not provider:
+        from django.conf import settings as _settings
+        if not getattr(_settings, 'DEBUG', True):
+            logger.critical(
+                "CAPTCHA is not configured in production! "
+                "Registration is unprotected against bots. "
+                "Set HCAPTCHA_SITE_KEY/HCAPTCHA_SECRET_KEY or RECAPTCHA_* environment variables."
+            )
         logger.debug("CAPTCHA not configured, skipping verification")
         return True
 

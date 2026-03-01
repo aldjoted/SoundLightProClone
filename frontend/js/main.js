@@ -824,7 +824,7 @@ function initRegisterPage() {
         e.preventDefault();
 
         const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn ? submitBtn.innerHTML : '';
+        const originalText = submitBtn ? submitBtn.textContent : '';
 
         const usernameInput = form.querySelector('[name="username"]');
         const emailInput = form.querySelector('[name="email"]');
@@ -925,7 +925,7 @@ function initRegisterPage() {
         } finally {
             if (submitBtn && !window.location.href.includes('login.html')) {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
+                submitBtn.textContent = originalText;
             }
         }
     });
@@ -1023,7 +1023,7 @@ function enhanceFooterAddressLinks() {
                     return;
                 }
                 link.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(spanText)}`;
-                link.innerHTML = addressSpan.innerHTML;
+                link.textContent = addressSpan.textContent;
                 container.replaceChild(link, addressSpan);
                 return;
             }

@@ -781,9 +781,15 @@
 .footer-links a { 
     color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
-    transition: all 0.3s ease;
     display: inline-block;
     position: relative;
+    padding: var(--spacing-xs) 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .footer-links a {
+        transition: color var(--transition-base), transform var(--transition-base);
+    }
 }
 
 .footer-links a::before {
@@ -821,18 +827,42 @@
     justify-content: center;
     font-size: 1.1rem;
     color: rgba(255, 255, 255, 0.7);
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     text-decoration: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .social-link {
+        transition: background-color var(--transition-base), border-color var(--transition-base), color var(--transition-base), transform var(--transition-base), box-shadow var(--transition-base);
+    }
+    .social-link:hover {
+        transform: translateY(-2px);
+    }
 }
 
 .social-link:hover {
     background: var(--primary-color);
     border-color: var(--primary-color);
     color: white;
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+}
+
+/* Brand-specific hover colors */
+.social-link[aria-label="Facebook"]:hover {
+    background: #1877f2;
+    border-color: #1877f2;
+    box-shadow: 0 4px 12px rgba(24, 119, 242, 0.35);
+}
+.social-link[aria-label="YouTube"]:hover {
+    background: #ff0000;
+    border-color: #ff0000;
+    box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
+}
+
+.social-link:focus-visible {
+    outline: 3px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
 }
 
 /* ============= Mobile Navigation ============= */

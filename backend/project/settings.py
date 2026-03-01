@@ -247,26 +247,27 @@ CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSP-Nonce']
 # Cache Configuration
 # Using LocMemCache for development (stores cache in local memory)
 # For production, use Redis for better performance and persistence
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "unique-snowflake",
-        "OPTIONS": {
-            "MAX_ENTRIES": 1000,
+# Use Redis for caching and rate limiting when REDIS_URL is set (required for
+# production so rate-limit counters are shared across all Gunicorn workers).
+# Falls back to LocMemCache for local development.
+_REDIS_URL = os.getenv('REDIS_URL')
+if _REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": _REDIS_URL,
         }
     }
-}
-
-# Uncomment below when Redis is available in production
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "redis://127.0.0.1:6379/1",
-#         "OPTIONS": {
-#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-#         }
-#     }
-# }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-snowflake",
+            "OPTIONS": {
+                "MAX_ENTRIES": 1000,
+            }
+        }
+    }
 
 # --- Security Headers Configuration ---
 # These headers help protect against common web vulnerabilities
@@ -274,8 +275,8 @@ CACHES = {
 # Prevent browsers from MIME-sniffing a response away from the declared content-type
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-# Enable the browser's XSS filtering and prevent rendering if attack is detected
-SECURE_BROWSER_XSS_FILTER = True
+# SECURE_BROWSER_XSS_FILTER removed — X-XSS-Protection header is deprecated in
+# modern browsers and can introduce vulnerabilities. CSP provides superior protection.
 
 # Prevent the site from being displayed in an iframe (clickjacking protection)
 X_FRAME_OPTIONS = 'DENY'
@@ -339,13 +340,22 @@ CONTENT_SECURITY_POLICY = {
             "https://newassets.hcaptcha.com",  # hCaptcha iframe
             "https://www.google.com",  # reCAPTCHA iframe
         ),
+        'frame-ancestors': ("'none'",),
     }
 }
 
-# Report-only mode in development, enforce in production
+# In development, enforce CSP with a more permissive policy rather than pure report-only.
+# This ensures developers experience CSP enforcement and catch violations early.
 if DEBUG:
-    CONTENT_SECURITY_POLICY_REPORT_ONLY = CONTENT_SECURITY_POLICY.copy()
-    CONTENT_SECURITY_POLICY = None
+    _dev_csp = {
+        'DIRECTIVES': dict(CONTENT_SECURITY_POLICY['DIRECTIVES'])
+    }
+    # Allow localhost connect-src for dev servers
+    _dev_csp['DIRECTIVES']['connect-src'] = (
+        CONTENT_SECURITY_POLICY['DIRECTIVES'].get('connect-src', ("'self'",))
+        + ('http://localhost:*', 'http://127.0.0.1:*', 'ws://localhost:*', 'ws://127.0.0.1:*')
+    )
+    CONTENT_SECURITY_POLICY = _dev_csp
 
 # Production security settings (only apply when DEBUG=False)
 if not DEBUG:
@@ -406,8 +416,9 @@ SILENCED_SYSTEM_CHECKS = [
 # If no CAPTCHA is configured, the system will allow requests without verification.
 # This is intentional for development environments.
 
-# CAPTCHA bypass for testing (set to True in test settings, never in production)
-CAPTCHA_TEST_MODE = os.getenv('CAPTCHA_TEST_MODE', 'False') == 'True'
+# CAPTCHA bypass for testing (only allowed when DEBUG is True)
+# SECURITY: Even if the env var is set, CAPTCHA_TEST_MODE is forced off in production
+CAPTCHA_TEST_MODE = os.getenv('CAPTCHA_TEST_MODE', 'False') == 'True' and DEBUG
 
 # ========================================
 # OpenAPI / Swagger Documentation (drf-spectacular)

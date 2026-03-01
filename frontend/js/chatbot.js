@@ -213,11 +213,19 @@ const ChatbotModule = (() => {
             return document.createDocumentFragment();
         }
 
-        // Sanitize input to prevent basic XSS attempts
+        // Strip dangerous HTML tags and attributes as defense-in-depth.
+        // Primary XSS protection comes from using createElement/textContent below.
         const sanitizedMarkdown = markdown
-            .replace(/<script[^>]*>.*?<\/script>/gi, '')
-            .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
+            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+            .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '')
+            .replace(/<object[^>]*>[\s\S]*?<\/object>/gi, '')
+            .replace(/<embed[^>]*\/?>/gi, '')
+            .replace(/<svg[^>]*>[\s\S]*?<\/svg>/gi, '')
+            .replace(/<math[^>]*>[\s\S]*?<\/math>/gi, '')
+            .replace(/<link[^>]*\/?>/gi, '')
+            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
             .replace(/javascript:/gi, '')
+            .replace(/data:\s*text\/html/gi, '')
             .replace(/on\w+\s*=/gi, '');
 
         const fragment = document.createDocumentFragment();

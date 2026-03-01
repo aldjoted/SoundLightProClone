@@ -218,12 +218,13 @@
             </div>
         </section>
 
-        <section class="features-section container" data-aos="fade-up">
+        <section class="features-section container" data-aos="fade-up" aria-labelledby="features-section-title">
+            <h2 id="features-section-title" class="visually-hidden" data-i18n="features_section_title">Why Choose SoundLightPro</h2>
             <div class="features-grid">
-                <div class="feature-card"><i class="fas fa-truck feature-icon"></i><h3 data-i18n="feature_shipping">Fast Shipping</h3><p data-i18n="feature_shipping_desc">Free delivery on orders over $500</p></div>
-                <div class="feature-card"><i class="fas fa-shield-alt feature-icon"></i><h3 data-i18n="feature_warranty">Warranty Protection</h3><p data-i18n="feature_warranty_desc">2-year warranty on all products</p></div>
-                <div class="feature-card"><i class="fas fa-headset feature-icon"></i><h3 data-i18n="feature_support">Expert Support</h3><p data-i18n="feature_support_desc">24/7 technical assistance</p></div>
-                <div class="feature-card"><i class="fas fa-undo feature-icon"></i><h3 data-i18n="feature_returns">Easy Returns</h3><p data-i18n="feature_returns_desc">30-day return policy</p></div>
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="0"><i class="fas fa-truck feature-icon" aria-hidden="true"></i><h3 data-i18n="feature_shipping">Fast Shipping</h3><p data-i18n="feature_shipping_desc">Free delivery on orders over $500</p></div>
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="80"><i class="fas fa-shield-alt feature-icon" aria-hidden="true"></i><h3 data-i18n="feature_warranty">Warranty Protection</h3><p data-i18n="feature_warranty_desc">2-year warranty on all products</p></div>
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="160"><i class="fas fa-headset feature-icon" aria-hidden="true"></i><h3 data-i18n="feature_support">Expert Support</h3><p data-i18n="feature_support_desc">24/7 technical assistance</p></div>
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="240"><i class="fas fa-undo feature-icon" aria-hidden="true"></i><h3 data-i18n="feature_returns">Easy Returns</h3><p data-i18n="feature_returns_desc">30-day return policy</p></div>
             </div>
         </section>
 
@@ -231,15 +232,16 @@
             <div class="cta-content">
                 <h2 id="training-cta-title" data-i18n="home_training_title">Pro Training for DJs & Sound Techs</h2>
                 <p data-i18n="home_training_description">Hands-on workshops to master pro audio and lighting. Limited seats monthly.</p>
-                <a href="services.html" class="btn btn--secondary"><i class="fas fa-graduation-cap"></i> <span data-i18n="home_training_btn">View Training & Enroll</span></a>
+                <a href="services.html" class="btn btn--secondary"><i class="fas fa-graduation-cap" aria-hidden="true"></i> <span data-i18n="home_training_btn">View Training & Enroll</span></a>
             </div>
         </section>
 
-        <section class="newsletter-section" data-aos="fade-up">
+        <section class="newsletter-section" data-aos="fade-up" aria-labelledby="newsletter-title">
             <div class="container">
                 <div class="newsletter-content">
-                    <h2 data-i18n="home_newsletter_title">Stay Updated</h2><p data-i18n="home_newsletter_subtitle">Get the latest news about new products and exclusive offers</p>
+                    <h2 id="newsletter-title" data-i18n="home_newsletter_title">Stay Updated</h2><p data-i18n="home_newsletter_subtitle">Get the latest news about new products and exclusive offers</p>
                     <form class="newsletter-form" id="newsletter-form">
+                        <label for="newsletter-email" class="visually-hidden" data-i18n="home_newsletter_label">Email address</label>
                         <input type="email" id="newsletter-email" name="email" data-i18n="home_newsletter_placeholder" placeholder="Enter your email" required aria-label="Email for newsletter"><button type="submit" class="btn btn--primary" aria-label="Subscribe to newsletter" data-i18n="home_newsletter_btn">Subscribe</button>
                     </form>
                 </div>
@@ -259,9 +261,9 @@
         </section>
 
         <!-- Testimonials Section -->
-        <section class="testimonials-section container" data-aos="fade-up">
+        <section class="testimonials-section container" data-aos="fade-up" aria-labelledby="testimonials-title">
             <div class="section-header">
-                <h2 class="section-title">
+                <h2 id="testimonials-title" class="section-title">
                     <span class="title-accent" data-i18n="testimonials_title_accent">Client Success Stories</span>
                     <span class="title-main" data-i18n="testimonials_title_main">What Our Customers Say</span>
                 </h2>
@@ -271,7 +273,7 @@
             <div class="testimonials-grid">
                 <!-- Testimonial 1 -->
                 <div class="testimonial-card">
-                    <div class="testimonial-rating">
+                    <div class="testimonial-rating" role="img" aria-label="5 out of 5 stars">
                         <i class="fas fa-star"></i>
                         <i class="fas fa-star"></i>
                         <i class="fas fa-star"></i>
@@ -281,7 +283,7 @@
                     <p class="testimonial-text" data-i18n="testimonial_1_text">"Exceptional quality and professional service. The lighting equipment we purchased exceeded all expectations. Our events have never looked better!"</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">
-                            <i class="fas fa-user"></i>
+                            <i class="fas fa-user" aria-hidden="true"></i>
                         </div>
                         <div class="author-info">
                             <h4 data-i18n="testimonial_1_author">Jean-Pierre Dubois</h4>
@@ -292,7 +294,7 @@
 
                 <!-- Testimonial 2 -->
                 <div class="testimonial-card">
-                    <div class="testimonial-rating">
+                    <div class="testimonial-rating" role="img" aria-label="5 out of 5 stars">
                         <i class="fas fa-star"></i>
                         <i class="fas fa-star"></i>
                         <i class="fas fa-star"></i>
@@ -302,7 +304,7 @@
                     <p class="testimonial-text" data-i18n="testimonial_2_text">"Outstanding customer support and top-tier products. Their technical team helped us set up our entire sound system flawlessly. Highly recommended!"</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">
-                            <i class="fas fa-user"></i>
+                            <i class="fas fa-user" aria-hidden="true"></i>
                         </div>
                         <div class="author-info">
                             <h4 data-i18n="testimonial_2_author">Amina Nkosi</h4>
@@ -313,7 +315,7 @@
 
                 <!-- Testimonial 3 -->
                 <div class="testimonial-card">
-                    <div class="testimonial-rating">
+                    <div class="testimonial-rating" role="img" aria-label="5 out of 5 stars">
                         <i class="fas fa-star"></i>
                         <i class="fas fa-star"></i>
                         <i class="fas fa-star"></i>
@@ -323,7 +325,7 @@
                     <p class="testimonial-text" data-i18n="testimonial_3_text">"Been working with SoundLightPro for 3 years now. Their equipment is reliable, durable, and always delivers crystal-clear sound quality. True professionals!"</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">
-                            <i class="fas fa-user"></i>
+                            <i class="fas fa-user" aria-hidden="true"></i>
                         </div>
                         <div class="author-info">
                             <h4 data-i18n="testimonial_3_author">David Moukoko</h4>
@@ -334,7 +336,7 @@
 
                 <!-- Testimonial 4 -->
                 <div class="testimonial-card">
-                    <div class="testimonial-rating">
+                    <div class="testimonial-rating" role="img" aria-label="5 out of 5 stars">
                         <i class="fas fa-star"></i>
                         <i class="fas fa-star"></i>
                         <i class="fas fa-star"></i>
@@ -344,7 +346,7 @@
                     <p class="testimonial-text" data-i18n="testimonial_4_text">"Perfect partner for our venue. Fast delivery, competitive prices, and excellent after-sales service. They truly understand the needs of event professionals."</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">
-                            <i class="fas fa-user"></i>
+                            <i class="fas fa-user" aria-hidden="true"></i>
                         </div>
                         <div class="author-info">
                             <h4 data-i18n="testimonial_4_author">Marie Kamga</h4>
@@ -355,7 +357,7 @@
 
                 <!-- Testimonial 5 -->
                 <div class="testimonial-card">
-                    <div class="testimonial-rating">
+                    <div class="testimonial-rating" role="img" aria-label="5 out of 5 stars">
                         <i class="fas fa-star"></i>
                         <i class="fas fa-star"></i>
                         <i class="fas fa-star"></i>
@@ -365,7 +367,7 @@
                     <p class="testimonial-text" data-i18n="testimonial_5_text">"The best investment we've made for our church. The sound system is powerful, clear, and easy to use. The team's expertise made installation seamless."</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">
-                            <i class="fas fa-user"></i>
+                            <i class="fas fa-user" aria-hidden="true"></i>
                         </div>
                         <div class="author-info">
                             <h4 data-i18n="testimonial_5_author">Pastor Emmanuel Talla</h4>
@@ -376,7 +378,7 @@
 
                 <!-- Testimonial 6 -->
                 <div class="testimonial-card">
-                    <div class="testimonial-rating">
+                    <div class="testimonial-rating" role="img" aria-label="5 out of 5 stars">
                         <i class="fas fa-star"></i>
                         <i class="fas fa-star"></i>
                         <i class="fas fa-star"></i>
@@ -386,7 +388,7 @@
                     <p class="testimonial-text" data-i18n="testimonial_6_text">"Incredible range of products and unbeatable prices. Their lighting solutions transformed our nightclub. Professional equipment that really makes a difference!"</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">
-                            <i class="fas fa-user"></i>
+                            <i class="fas fa-user" aria-hidden="true"></i>
                         </div>
                         <div class="author-info">
                             <h4 data-i18n="testimonial_6_author">Carlos Mendez</h4>
@@ -450,7 +452,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2025 SoundLightPro. <span data-i18n="footer_all_rights">All rights reserved.</span></p>
+                <p>&copy; 2026 SoundLightPro. <span data-i18n="footer_all_rights">All rights reserved.</span></p>
                 <div class="footer-bottom-links">
                     <a href="privacy-policy.html" data-i18n="footer_privacy_policy">Privacy Policy</a>
                     <a href="terms-of-service.html" data-i18n="footer_terms_of_service">Terms of Service</a>

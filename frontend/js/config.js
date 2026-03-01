@@ -99,11 +99,14 @@ export const DISABLE_SW = (() => {
   return IS_LOCAL_HOST;
 })();
 
-// Stripe key
-export const STRIPE_PUBLISHABLE_KEY =
-  runtime.STRIPE_PUBLISHABLE_KEY ||
-  getEnv('VITE_STRIPE_PUBLISHABLE_KEY') ||
-  'pk_test_51SGlxnL3Yer4f974pQeRKB0AmIroFjZ4UPnvxGsHtm3bV5A6FOwP7Xbc6ZI8BiQO6FLW8cjNA9df3uHP5jrj19mC00XKUkds1P';
+// Stripe key -- SECURITY: No hardcoded fallback; must be configured via env or runtime
+export const STRIPE_PUBLISHABLE_KEY = (() => {
+  const key = runtime.STRIPE_PUBLISHABLE_KEY || getEnv('VITE_STRIPE_PUBLISHABLE_KEY') || '';
+  if (!key) {
+    console.error('[config] STRIPE_PUBLISHABLE_KEY is not configured. Payment features will be unavailable.');
+  }
+  return key;
+})();
 
 export default {
   API_BASE_URL,

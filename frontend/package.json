@@ -13,7 +13,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-legacy": "^7.2.1",
-    "baseline-browser-mapping": "^2.8.29",
+    "baseline-browser-mapping": "^2.10.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
@@ -22,12 +22,12 @@
     "terser": "^5.31.1",
     "vite": "^7.2.4",
     "vite-plugin-html": "^3.2.2",
-    "workbox-build": "^7.1.1",
+    "workbox-build": "^7.0.0",
     "workbox-window": "^7.1.0"
   },
   "dependencies": {
     "aos": "^2.3.4",
-    "swiper": "^11.1.9"
+    "swiper": "^12.1.2"
   },
   "engines": {
     "node": ">=18.0.0"
