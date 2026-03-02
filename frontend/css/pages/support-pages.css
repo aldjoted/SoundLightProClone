@@ -65,11 +65,10 @@ main section {
 .support-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: var(--spacing-xl);
 }
 
 .support-card {
-    background: white;
+    background: var(--bg-secondary);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
@@ -97,7 +96,6 @@ main section {
 }
 
 .support-card:hover {
-    transform: translateY(-8px);
     box-shadow: var(--shadow-xl);
     border-color: var(--primary-color);
 }
@@ -153,7 +151,7 @@ main section {
 }
 
 .faq-item {
-    background: white;
+    background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     margin-bottom: var(--spacing-md);
@@ -172,7 +170,6 @@ main section {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: var(--spacing-md);
     transition: all var(--transition-base);
     user-select: none;
 }
@@ -228,7 +225,7 @@ main section {
 
 /* ========== Support Contact Section ========== */
 .support-contact {
-    background: linear-gradient(135deg, white 0%, var(--bg-secondary) 100%);
+    background: var(--bg-secondary);
     padding: var(--spacing-2xl);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-xl);
@@ -245,7 +242,7 @@ main section {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--primary-color) 0%, #c71585 100%);
+    background: var(--bg-secondary);
 }
 
 .support-contact h2 {
@@ -260,7 +257,7 @@ main section {
 }
 
 .support-hours {
-    background: white;
+    background: var(--bg-secondary);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
     margin-bottom: var(--spacing-xl);
@@ -288,7 +285,6 @@ main section {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: var(--spacing-sm);
 }
 
 .support-hours li:last-child {
@@ -303,7 +299,7 @@ main section {
 
 /* ========== Feature Cards ========== */
 .feature-card {
-    background: linear-gradient(135deg, white 0%, #f8f9fa 100%);
+    background: var(--bg-secondary);
     padding: var(--spacing-2xl);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-xl);
@@ -319,7 +315,7 @@ main section {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--primary-color) 0%, #c71585 100%);
+    background: var(--bg-secondary);
 }
 
 .feature-icon {
@@ -362,11 +358,10 @@ main section {
 .shipping-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--spacing-xl);
 }
 
 .shipping-option {
-    background: white;
+    background: var(--bg-secondary);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
     overflow: hidden;
@@ -377,18 +372,16 @@ main section {
 }
 
 .shipping-option:hover {
-    transform: translateY(-8px);
     box-shadow: var(--shadow-xl);
     border-color: var(--primary-color);
 }
 
 .shipping-header {
-    background: linear-gradient(135deg, var(--primary-color) 0%, #c71585 100%);
-    color: white;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
     padding: var(--spacing-lg);
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
     position: relative;
     overflow: hidden;
 }
@@ -400,7 +393,7 @@ main section {
     right: -50%;
     width: 200%;
     height: 200%;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-elevated);
     transform: rotate(45deg);
     transition: all 0.6s ease;
 }
@@ -459,7 +452,7 @@ main section {
 
 .rates-table table {
     width: 100%;
-    background: white;
+    background: var(--bg-secondary);
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-md);
@@ -468,7 +461,7 @@ main section {
 
 .rates-table thead {
     background: var(--primary-color);
-    color: white;
+    color: var(--text-primary);
 }
 
 .rates-table th {
@@ -510,12 +503,11 @@ main section {
 .process-timeline {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: var(--spacing-xl);
     position: relative;
 }
 
 .process-step {
-    background: white;
+    background: var(--bg-secondary);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
@@ -532,7 +524,7 @@ main section {
     right: -50%;
     width: 100%;
     height: 2px;
-    background: linear-gradient(90deg, var(--primary-color) 0%, transparent 100%);
+    background: var(--bg-secondary);
     z-index: -1;
 }
 
@@ -542,28 +534,27 @@ main section {
 
 .process-step:hover {
     border-color: var(--primary-color);
-    transform: translateY(-8px) scale(1.02);
     box-shadow: var(--shadow-xl);
 }
 
 .step-icon {
-    background: linear-gradient(135deg, var(--primary-color) 0%, #c71585 100%);
-    color: white;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
     width: 60px;
     height: 60px;
-    border-radius: 50%;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.75rem;
     margin: 0 auto var(--spacing-md);
-    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.3);
+    box-shadow: none;
     transition: all var(--transition-base);
 }
 
 .process-step:hover .step-icon {
     transform: scale(1.1) rotate(5deg);
-    box-shadow: 0 6px 16px rgba(233, 30, 99, 0.4);
+    box-shadow: none;
 }
 
 .step-content h3 {
@@ -588,11 +579,10 @@ main section {
 .info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--spacing-xl);
 }
 
 .info-card {
-    background: white;
+    background: var(--bg-secondary);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
@@ -612,7 +602,6 @@ main section {
     margin-bottom: var(--spacing-md);
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
 }
 
 .info-card h4 i {
@@ -629,7 +618,7 @@ main section {
 .shipping-contact,
 .warranty-contact,
 .returns-contact {
-    background: white;
+    background: var(--bg-secondary);
     padding: var(--spacing-2xl);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
@@ -640,13 +629,12 @@ main section {
 .contact-options {
     display: flex;
     justify-content: center;
-    gap: var(--spacing-lg);
     flex-wrap: wrap;
     margin-top: var(--spacing-xl);
 }
 
 .contact-method {
-    background: white;
+    background: var(--bg-secondary);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
@@ -678,11 +666,10 @@ main section {
 .coverage-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--spacing-xl);
 }
 
 .coverage-item {
-    background: white;
+    background: var(--bg-secondary);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
@@ -693,16 +680,15 @@ main section {
 
 .coverage-item:hover {
     border-color: var(--primary-color);
-    transform: translateY(-4px);
     box-shadow: var(--shadow-lg);
 }
 
 .coverage-icon {
     background: var(--primary-color);
-    color: white;
+    color: var(--text-primary);
     width: 70px;
     height: 70px;
-    border-radius: 50%;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -726,11 +712,10 @@ main section {
 .terms-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--spacing-xl);
 }
 
 .term-card {
-    background: white;
+    background: var(--bg-secondary);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
@@ -744,7 +729,6 @@ main section {
     margin-bottom: var(--spacing-lg);
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
 }
 
 .term-card h4 i {
@@ -780,11 +764,10 @@ main section {
 .process-steps {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: var(--spacing-xl);
 }
 
 .step {
-    background: white;
+    background: var(--bg-secondary);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
@@ -795,15 +778,14 @@ main section {
 
 .step:hover {
     border-color: var(--primary-color);
-    transform: translateY(-4px);
 }
 
 .step-number {
     background: var(--primary-color);
-    color: white;
+    color: var(--text-primary);
     width: 50px;
     height: 50px;
-    border-radius: 50%;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -819,11 +801,10 @@ main section {
 .exclusions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--spacing-xl);
 }
 
 .exclusion-item {
-    background: white;
+    background: var(--bg-secondary);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
@@ -857,11 +838,10 @@ main section {
 .extended-options {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: var(--spacing-xl);
 }
 
 .warranty-option {
-    background: white;
+    background: var(--bg-secondary);
     padding: var(--spacing-2xl);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
@@ -883,12 +863,11 @@ main section {
 .registration-info {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: var(--spacing-xl);
 }
 
 .registration-benefits,
 .registration-action {
-    background: white;
+    background: var(--bg-secondary);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
@@ -901,18 +880,16 @@ main section {
 .contact-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--spacing-xl);
 }
 
 /* ========== Returns Page Specific ========== */
 .conditions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: var(--spacing-xl);
 }
 
 .condition-card {
-    background: white;
+    background: var(--bg-secondary);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
@@ -923,16 +900,15 @@ main section {
 
 .condition-card:hover {
     border-color: var(--primary-color);
-    transform: translateY(-4px);
     box-shadow: var(--shadow-lg);
 }
 
 .condition-icon {
     background: var(--primary-color);
-    color: white;
+    color: var(--text-primary);
     width: 70px;
     height: 70px;
-    border-radius: 50%;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -960,14 +936,13 @@ main section {
 .category-tabs {
     display: flex;
     justify-content: center;
-    gap: var(--spacing-sm);
     margin-bottom: var(--spacing-xl);
     flex-wrap: wrap;
 }
 
 .tab-button {
     padding: var(--spacing-md) var(--spacing-lg);
-    background: white;
+    background: var(--bg-secondary);
     border: 2px solid var(--border-color);
     border-radius: var(--radius-lg);
     color: var(--text-secondary);
@@ -984,12 +959,12 @@ main section {
 .tab-button.active {
     background: var(--primary-color);
     border-color: var(--primary-color);
-    color: white;
+    color: var(--text-primary);
 }
 
 .tab-content {
     display: none;
-    background: white;
+    background: var(--bg-secondary);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
@@ -1036,11 +1011,10 @@ main section {
 .exchange-info {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: var(--spacing-xl);
 }
 
 .exchange-card {
-    background: white;
+    background: var(--bg-secondary);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
@@ -1052,7 +1026,7 @@ main section {
 }
 
 .non-returnable-list {
-    background: white;
+    background: var(--bg-secondary);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
@@ -1093,12 +1067,11 @@ main section {
 .refund-details {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: var(--spacing-xl);
 }
 
 .refund-method,
 .refund-amount {
-    background: white;
+    background: var(--bg-secondary);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
@@ -1126,13 +1099,11 @@ main section {
     .terms-grid,
     .conditions-grid {
         grid-template-columns: 1fr;
-        gap: var(--spacing-md);
     }
     
     .process-timeline,
     .process-steps {
         grid-template-columns: 1fr;
-        gap: var(--spacing-md);
     }
     
     .process-step::before {
@@ -1141,7 +1112,6 @@ main section {
     
     .contact-options {
         flex-direction: column;
-        gap: var(--spacing-md);
     }
     
     .category-tabs {

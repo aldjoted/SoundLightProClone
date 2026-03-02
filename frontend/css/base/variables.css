@@ -1,58 +1,54 @@
-/* --- Base: CSS Custom Properties (Design Tokens) --- */
+/* --- Base: CSS Custom Properties (Brutalist Design Tokens) --- */
 
 :root {
     /* ============================================= */
-    /* Colors                                        */
+    /* Colors — 5-level grayscale + accent           */
     /* ============================================= */
-    /* Modern Professional Palette */
-    --primary-color: #4f46e5; /* Indigo 600 - Deep, professional blue-violet */
-    --primary-dark: #3730a3;  /* Indigo 800 */
-    --primary-light: #818cf8; /* Indigo 400 */
-    
-    --secondary-color: #0ea5e9; /* Sky 500 - Vibrant accent */
-    --accent-color: #06b6d4;    /* Cyan 500 - Tech/Modern feel */
-    
-    --danger-color: #ef4444;
-    --success-color: #10b981;
-    --warning-color: #f59e0b;
+    --bg-primary: #060606;
+    --bg-secondary: #0c0c0c;
+    --bg-elevated: #131313;
+    --bg-modal: #1b1b1b;
+    --border-primary: #252525;
 
-    /* Grayscale - Cool Tones for Tech Feel */
-    --gray-50: #f8fafc;
-    --gray-100: #f1f5f9;
-    --gray-200: #e2e8f0;
-    --gray-300: #cbd5e1;
-    --gray-400: #94a3b8;
-    --gray-500: #64748b;
-    --gray-600: #475569;
-    --gray-700: #334155;
-    --gray-800: #1e293b;
-    --gray-900: #0f172a; /* Slate 900 - Deep blue-black */
+    --text-primary: #ede9e2;
+    --text-secondary: rgba(237, 233, 226, 0.7);
+    --text-light: rgba(237, 233, 226, 0.45);
+    --text-inverse: #060606;
+    --text-category: var(--accent-color);
 
-    /* Semantic Colors */
-    --bg-primary: #ffffff;
-    --bg-secondary: var(--gray-50);
-    --bg-dark: var(--gray-900);
-    --bg-card: #ffffff;
-    --text-primary: var(--gray-900);
-    --text-secondary: var(--gray-600);
-    --text-light: var(--gray-400);
-    --text-inverse: #ffffff;
-    --text-category: var(--primary-dark);
-    --border-color: var(--gray-200);
-    
-    /* RGB color values for modern color functions */
-    --primary-color-rgb: 79 70 229;
+    --accent-color: #d42b2b;
+    --primary-color: #d42b2b;
+    --primary-dark: #a82222;
+    --primary-light: #e04545;
 
-    /* ============================================= */
-    /* Dark Mode Colors (available globally)        */
-    /* ============================================= */
-    /* These variables are defined here for global access
-       and are applied in utilities.css dark mode media query */
-    --text-primary-dark: #f1f5f9;        /* slate-100 - contrast 15.4:1 */
-    --text-secondary-dark: #cbd5e1;      /* slate-300 - contrast 10.5:1 */
-    --text-muted-dark: #94a3b8;          /* slate-400 - contrast 6.2:1 */
-    --bg-dark-elevated: #1e293b;         /* slate-800 */
-    --border-dark: rgba(148, 163, 184, 0.2);
+    --secondary-color: #d42b2b;
+    --danger-color: #d42b2b;
+    --success-color: #ede9e2;
+    --warning-color: #ede9e2;
+
+    /* Legacy aliases — kept so existing class refs don't break */
+    --gray-50: #131313;
+    --gray-100: #131313;
+    --gray-200: #1b1b1b;
+    --gray-300: #252525;
+    --gray-400: rgba(237, 233, 226, 0.35);
+    --gray-500: rgba(237, 233, 226, 0.5);
+    --gray-600: rgba(237, 233, 226, 0.7);
+    --gray-700: #ede9e2;
+    --gray-800: #0c0c0c;
+    --gray-900: #060606;
+
+    --bg-dark: #060606;
+    --bg-card: #0c0c0c;
+    --bg-dark-elevated: #131313;
+    --border-color: var(--border-primary);
+    --border-dark: var(--border-primary);
+    --primary-color-rgb: 212 43 43;
+
+    /* Dark mode aliases (single theme — always dark) */
+    --text-primary-dark: var(--text-primary);
+    --text-secondary-dark: var(--text-secondary);
+    --text-muted-dark: var(--text-light);
 
     /* ============================================= */
     /* Breakpoints                                   */
@@ -65,58 +61,51 @@
     /* ============================================= */
     /* Spacing & Sizing                              */
     /* ============================================= */
-    --spacing-xs: 0.25rem;  /* 4px */
-    --spacing-sm: 0.5rem;   /* 8px */
-    --spacing-md: 1rem;     /* 16px */
-    --spacing-lg: 1.5rem;   /* 24px */
-    --spacing-xl: 2rem;     /* 32px */
-    --spacing-2xl: 3rem;    /* 48px */
-    --spacing-3xl: 4rem;    /* 64px */
-    --header-height: 80px;  /* For sticky calculations */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+    --spacing-3xl: 4rem;
+    --header-height: 80px;
 
     /* ============================================= */
     /* Typography                                    */
     /* ============================================= */
-    --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    
-    /**
-     * IMPORTANT: Always use rem for font-size to respect user preferences
-     * Never use px for font sizes - it prevents users from adjusting text size
-     */
+    --font-display: 'Barlow Condensed', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --font-primary: var(--font-display);
 
     /* ============================================= */
-    /* Borders & Shadows                             */
+    /* Borders — NO radius, NO shadows               */
     /* ============================================= */
-    --radius-sm: 0.25rem;
-    --radius-md: 0.5rem;    /* Increased for modern look */
-    --radius-lg: 0.75rem;
-    --radius-xl: 1rem;
-    --radius-full: 9999px;
-    
-    /* Refined Shadows - Smoother, more ambient */
-    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    --radius-sm: 0px;
+    --radius-md: 0px;
+    --radius-lg: 0px;
+    --radius-xl: 0px;
+    --radius-full: 0px;
+
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
+    --shadow-xl: none;
+    --shadow-2xl: none;
 
     /* ============================================= */
     /* Transitions & Z-Index                         */
     /* ============================================= */
     --transition-fast: 150ms ease;
-    --transition-base: 250ms ease;
-    --transition-slow: 350ms ease;
-    
-    /* Common transition combinations */
-    --transition-button: background-color var(--transition-base), 
-                         transform var(--transition-base), 
-                         box-shadow var(--transition-base),
-                         border-color var(--transition-base);
-    --transition-colors: background-color var(--transition-base), 
-                        color var(--transition-base), 
+    --transition-base: 200ms ease;
+    --transition-slow: 300ms ease;
+
+    --transition-button: background-color var(--transition-base),
+                         border-color var(--transition-base),
+                         color var(--transition-base);
+    --transition-colors: background-color var(--transition-base),
+                        color var(--transition-base),
                         border-color var(--transition-base);
 
-    /* Badge positioning */
     --badge-offset: -6px;
     --badge-border-width: 2px;
 
@@ -127,23 +116,8 @@
     --z-overlay: calc(var(--z-base) + 300);
     --z-modal: calc(var(--z-base) + 400);
     --z-toast: calc(var(--z-base) + 500);
-    --z-skip-link: calc(var(--z-base) + 600); /* Highest - for accessibility */
+    --z-skip-link: calc(var(--z-base) + 600);
 
-    /* Legacy z-index values for compatibility */
     --z-mobile-overlay: var(--z-overlay);
     --z-mobile-panel: calc(var(--z-overlay) + 10);
 }
-
-/* ============================================= */
-/* IMAGE PATHS (for reference)                  */
-/* Update these paths if directory structure    */
-/* changes                                       */
-/* ============================================= */
-/**
- * IMAGE PATHS (for reference - update if directory structure changes)
- * Logo: /images/logo/
- * Products: /images/products/
- * Hero: /images/hero/
- * Team: /images/team/
- * Brands: /media/brands/
- */

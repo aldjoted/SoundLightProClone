@@ -58,7 +58,6 @@
         display: flex !important;
         align-items: center !important;
         justify-content: flex-end !important;
-        gap: var(--spacing-sm) !important;
         flex-wrap: nowrap !important;
     }
     
@@ -226,7 +225,6 @@
     
     /* Header actions positioning */
     .header-actions {
-        gap: 6px !important;
     }
     
     /* Icônes header taille réduite pour très petits écrans */
@@ -301,7 +299,7 @@
     }
     
     .slide-overlay {
-        background: linear-gradient(135deg, rgba(17, 24, 39, 0.5) 0%, rgba(17, 24, 39, 0.1) 100%);
+        background: var(--bg-secondary);
     }
     
     .swiper-button-prev,
@@ -309,10 +307,8 @@
         width: 32px;
         height: 32px;
         font-size: 12px;
-        background: rgba(0, 0, 0, 0.6);
-        -webkit-backdrop-filter: blur(8px);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
     }
     
     .swiper-button-prev {
@@ -327,7 +323,7 @@
     .swiper-button-next::after {
         font-size: 14px;
         font-weight: bold;
-        color: white;
+        color: var(--text-primary);
     }
     
     .swiper-pagination {
@@ -340,13 +336,13 @@
         width: 6px;
         height: 6px;
         margin: 0 3px;
-        background: rgba(255, 255, 255, 0.6);
+        background: var(--bg-elevated);
     }
     
     .swiper-pagination-bullet-active {
-        background: white;
+        background: var(--bg-secondary);
         width: 20px;
-        border-radius: 3px;
+        border-radius: 0;
     }
 }
 
@@ -372,7 +368,6 @@
     }
     
     .featured-grid {
-        gap: var(--spacing-md);
         grid-template-columns: 1fr;
     }
 }
@@ -391,7 +386,6 @@
     
     .filter-controls {
         flex-direction: column;
-        gap: var(--spacing-xs);
         align-items: stretch;
     }
     
@@ -402,7 +396,6 @@
     }
     
     .product-grid {
-        gap: var(--spacing-md);
         grid-template-columns: 1fr;
     }
 }
@@ -415,7 +408,6 @@
     }
     
     .features-grid {
-        gap: var(--spacing-md);
         grid-template-columns: repeat(2, 1fr);
     }
     
@@ -486,7 +478,6 @@
     
     .newsletter-form {
         flex-direction: column;
-        gap: var(--spacing-sm);
     }
     
     .newsletter-form input,
@@ -509,7 +500,6 @@
     }
     
     .testimonials-grid {
-        gap: var(--spacing-md);
         padding-bottom: var(--spacing-sm);
     }
     
@@ -554,10 +544,8 @@
     .swiper-button-next {
         width: 38px;
         height: 38px;
-        background: rgba(0, 0, 0, 0.6);
-        -webkit-backdrop-filter: blur(8px);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
     }
     
     .swiper-button-prev {
@@ -571,7 +559,7 @@
     .swiper-button-prev::after,
     .swiper-button-next::after {
         font-size: 16px;
-        color: white;
+        color: var(--text-primary);
         font-weight: bold;
     }
     
@@ -583,18 +571,17 @@
         width: 8px;
         height: 8px;
         margin: 0 4px;
-        background: rgba(255, 255, 255, 0.6);
+        background: var(--bg-elevated);
     }
     
     .swiper-pagination-bullet-active {
-        background: white;
+        background: var(--bg-secondary);
         width: 24px;
-        border-radius: 4px;
+        border-radius: 0;
     }
     
     /* Header actions positioning */
     .header-actions {
-        gap: var(--spacing-sm) !important;
     }
     
     /* Icônes header taille standard */
@@ -618,17 +605,14 @@
     
     .featured-grid {
         grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
     }
     
     .product-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-lg);
     }
     
     .features-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-lg);
     }
     
     .filter-controls {
@@ -644,7 +628,6 @@
     
     .testimonials-grid {
         grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
     }
     
     /* Marges testimonials mobile large */
@@ -709,7 +692,7 @@
     
     .swiper-pagination-bullet-active {
         width: 30px;
-        border-radius: 5px;
+        border-radius: 0;
     }
     
     /* Header actions positioning tablette */
@@ -717,7 +700,6 @@
         display: flex !important;
         align-items: center !important;
         justify-content: flex-end !important;
-        gap: var(--spacing-md) !important;
     }
     
     .auth-menu-container,
@@ -763,21 +745,17 @@
     
     .featured-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-xl);
     }
     
     .product-grid {
         grid-template-columns: repeat(3, 1fr);
-        gap: var(--spacing-xl);
     }
     
     .features-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-xl);
     }
     
     .filter-controls {
-        gap: var(--spacing-md);
     }
     
     .filter-btn {
@@ -786,7 +764,6 @@
     
     .testimonials-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-xl);
     }
     
     /* Marges testimonials tablette */
@@ -840,7 +817,6 @@
         display: flex !important;
         align-items: center !important;
         justify-content: flex-end !important;
-        gap: var(--spacing-md) !important;
     }
     
     .auth-menu-container,
@@ -912,22 +888,18 @@
     
     .featured-grid {
         grid-template-columns: repeat(3, 1fr);
-        gap: var(--spacing-xl);
     }
     
     .product-grid {
         grid-template-columns: repeat(4, 1fr);
-        gap: var(--spacing-xl);
     }
     
     .features-grid {
         grid-template-columns: repeat(4, 1fr);
-        gap: var(--spacing-xl);
     }
     
     .testimonials-grid {
         grid-template-columns: repeat(3, 1fr);
-        gap: var(--spacing-xl);
     }
     
     .section-title .title-main {
@@ -956,7 +928,6 @@
     }
     
     .header-actions {
-        gap: var(--spacing-md) !important;
     }
     
     .logo {
@@ -988,12 +959,10 @@
     
     .featured-grid {
         grid-template-columns: repeat(3, 1fr);
-        gap: var(--spacing-2xl);
     }
     
     .product-grid {
         grid-template-columns: repeat(4, 1fr);
-        gap: var(--spacing-2xl);
     }
     
     /* Desktop - Larger icons */
@@ -1008,7 +977,6 @@
     
     .testimonials-grid {
         grid-template-columns: repeat(3, 1fr);
-        gap: var(--spacing-2xl);
     }
     
     .section-title .title-main {
@@ -1224,7 +1192,6 @@
     
     .product-grid {
         grid-template-columns: repeat(2, 1fr) !important;
-        gap: 1rem !important;
     }
     
     .featured-grid {

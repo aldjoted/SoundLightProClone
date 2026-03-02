@@ -1,6 +1,7 @@
 import os
 import html
 import stripe
+from pathlib import Path
 from dotenv import load_dotenv
 
 from django.db import transaction
@@ -1758,12 +1759,20 @@ class DownloadQuotePDFView(APIView):
                 return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
         
         # Prepare emitter (company) information
+        import base64
+        logo_path = Path(settings.BASE_DIR) / 'api' / 'static' / 'images' / 'slplogo.jpg'
+        logo_data_uri = ''
+        if logo_path.is_file():
+            logo_bytes = logo_path.read_bytes()
+            logo_b64 = base64.b64encode(logo_bytes).decode('ascii')
+            logo_data_uri = f'data:image/jpeg;base64,{logo_b64}'
+
         emitter = {
             'nom': 'SoundLightPro',
             'adresse': '1451, 63 Bd de la République\nDouala, Cameroon',
             'tva': 'CM-TVA-000000000',
             'contact': '+237 6 80 49 49 49 | info@soundlightpro.com',
-            'logo_url': None,  # Can be set to actual logo URL
+            'logo_data_uri': logo_data_uri,
         }
         
         # Prepare items for template

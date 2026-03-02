@@ -18,6 +18,7 @@ ENV/
 env/
 backend/venv/
 backend/.venv/
+node_modules/
 
 # Packaging / builds / caches
 pip-wheel-metadata/

@@ -6,27 +6,28 @@
 .btn {
     /* CSS Custom Properties for Component States */
     --btn-bg: var(--primary-color);
-    --btn-color: white;
+    --btn-color: var(--text-primary);
     --btn-border: var(--primary-color);
     --btn-hover-bg: var(--primary-dark);
-    --btn-hover-color: white;
+    --btn-hover-color: var(--text-primary);
     --btn-hover-border: var(--primary-dark);
 
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: var(--spacing-sm);
     padding: 0.75rem 1.5rem;
     font-size: 0.9rem;
-    font-weight: 500;
-    border-radius: var(--radius-full);
+    font-weight: 600;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-radius: 0;
     border: 1px solid var(--btn-border);
     background: var(--btn-bg);
     color: var(--btn-color);
     cursor: pointer;
     text-decoration: none;
     white-space: nowrap;
-    letter-spacing: -0.01em;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -37,21 +38,18 @@
         background: var(--btn-hover-bg);
         color: var(--btn-hover-color);
         border-color: var(--btn-hover-border);
-        transform: translateY(-1px);
         box-shadow: var(--shadow-lg);
     }
 }
 
 /* Focus State - Accessible keyboard navigation */
 .btn:focus-visible {
-    outline: 3px solid rgba(var(--primary-color-rgb), 0.5);
+    outline: 3px solid var(--accent-color);
     outline-offset: 2px;
-    box-shadow: var(--shadow-md);
 }
 
 /* Active/Pressed State - Tactile feedback */
 .btn:active {
-    transform: translateY(0) scale(0.98);
     box-shadow: var(--shadow-sm);
     transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
@@ -61,7 +59,7 @@
 /* ============================================= */
 .btn--primary {
     --btn-bg: var(--primary-color);
-    --btn-color: white;
+    --btn-color: var(--text-primary);
     --btn-border: var(--primary-color);
     --btn-hover-bg: var(--primary-dark);
     --btn-hover-border: var(--primary-dark);
@@ -69,13 +67,12 @@
 }
 
 .btn--secondary {
-    --btn-bg: white;
+    --btn-bg: var(--bg-secondary);
     --btn-color: var(--text-primary);
-    --btn-border: var(--gray-300);
-    --btn-hover-bg: var(--gray-50);
-    --btn-hover-color: var(--primary-color);
-    --btn-hover-border: var(--gray-400);
-    box-shadow: var(--shadow-sm);
+    --btn-border: var(--border-primary);
+    --btn-hover-bg: var(--bg-elevated);
+    --btn-hover-color: var(--accent-color);
+    --btn-hover-border: var(--accent-color);
 }
 
 .btn--full-width {
@@ -97,7 +94,7 @@
 .btn-primary {
     /* Alias to .btn--primary */
     --btn-bg: var(--primary-color);
-    --btn-color: white;
+    --btn-color: var(--text-primary);
     --btn-border: var(--primary-color);
     --btn-hover-bg: var(--primary-dark);
     --btn-hover-border: var(--primary-dark);
@@ -106,19 +103,18 @@
 
 .btn-secondary {
     /* Alias to .btn--secondary */
-    --btn-bg: white;
+    --btn-bg: var(--bg-secondary);
     --btn-color: var(--text-primary);
-    --btn-border: var(--gray-300);
-    --btn-hover-bg: var(--gray-50);
-    --btn-hover-color: var(--primary-color);
-    --btn-hover-border: var(--gray-400);
-    box-shadow: var(--shadow-sm);
+    --btn-border: var(--border-primary);
+    --btn-hover-bg: var(--bg-elevated);
+    --btn-hover-color: var(--accent-color);
+    --btn-hover-border: var(--accent-color);
 }
 
 /* Auth Form Submit Button */
 .auth-form button[type="submit"] {
     background: var(--primary-color);
-    color: white;
+    color: var(--text-primary);
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--primary-color);
     padding: 0.75rem 1.5rem;
@@ -130,7 +126,6 @@
     background: var(--primary-dark);
     border-color: var(--primary-dark);
     box-shadow: var(--shadow-lg);
-    transform: translateY(-1px);
 }
 .auth-links {
     display: flex;
@@ -154,13 +149,11 @@
 .user-actions {
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
 }
 
 /* Responsive Auth Buttons */
 @media (max-width: 1200px) {
     .auth-links {
-        gap: var(--spacing-sm);
     }
     .auth-links .btn {
         padding: 0.5rem 1rem;
@@ -180,7 +173,6 @@
 
 @media (max-width: 900px) {
     .auth-links {
-        gap: var(--spacing-xs);
     }
     .auth-links .btn {
         padding: 0.5rem 0.75rem;
@@ -218,37 +210,34 @@
     transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: none;
 }
 
 .filter-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    box-shadow: none;
     border-color: var(--primary-color);
     color: var(--primary-color);
 }
 
 .filter-btn.active {
     background: var(--primary-color);
-    color: white;
+    color: var(--text-primary);
     border-color: var(--primary-color);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-    transform: translateY(-2px);
+    box-shadow: none;
 }
 
 .filter-btn:focus-visible {
-    outline: 3px solid rgba(var(--primary-color-rgb), 0.5);
+    outline: 3px solid var(--accent-color);
     outline-offset: 2px;
 }
 
 .filter-btn:active {
-    transform: translateY(0) scale(0.98);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
 }
 
 .add-to-cart-btn.added {
     background-color: var(--success-color);
-    color: white;
+    color: var(--text-primary);
 }
 .add-to-cart-btn.added .fa-shopping-cart {
     display: none;
@@ -272,18 +261,13 @@
 }
 
 .training-cta .btn {
-    background: #fff;
-    color: var(--primary-dark);
-    border: none;
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
 }
 .training-cta .btn:hover {
-    background: var(--gray-100);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-    .training-cta .btn:hover {
-        transform: translateY(-2px);
-    }
+    background: var(--accent-color);
+    border-color: var(--accent-color);
 }
 
 /* ============================================= */
@@ -309,8 +293,8 @@
     top: 50%;
     left: 50%;
     margin: -9px 0 0 -9px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top-color: #ffffff;
+    border: 2px solid var(--border-primary);
+    border-top-color: var(--text-primary);
     border-radius: 50%;
     animation: btnSpinner 0.7s linear infinite;
 }
@@ -318,7 +302,7 @@
 /* Secondary button loading spinner */
 .btn--secondary.is-loading::after,
 .btn-secondary.is-loading::after {
-    border-color: rgba(79, 70, 229, 0.2);
+    border-color: var(--border-primary);
     border-top-color: var(--primary-color);
 }
 
@@ -338,7 +322,7 @@
 .btn.is-success {
     background: var(--success-color) !important;
     border-color: var(--success-color) !important;
-    color: white !important;
+    color: var(--text-primary) !important;
 }
 
 .btn.is-success::before {
@@ -352,7 +336,7 @@
 .btn.is-error {
     background: var(--danger-color) !important;
     border-color: var(--danger-color) !important;
-    color: white !important;
+    color: var(--text-primary) !important;
     animation: shake 0.4s ease;
 }
 

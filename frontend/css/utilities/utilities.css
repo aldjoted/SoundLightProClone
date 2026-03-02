@@ -40,7 +40,6 @@
 .grid-auto-fit-300 {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: var(--spacing-lg);
 }
 
 /* Helper Classes */
@@ -64,7 +63,7 @@
 
 /* Accessibility */
 :focus-visible {
-    outline: 3px solid rgba(99, 102, 241, .45);
+    outline: 3px solid var(--accent-color);
     outline-offset: 2px;
     border-radius: var(--radius-sm);
 }
@@ -111,7 +110,7 @@ body.no-scroll {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    background: var(--bg-secondary);
     /* PERFORMANCE: Use transform instead of left for better animation */
     transform: translateX(0);
 }
@@ -137,7 +136,7 @@ body.no-scroll {
     height: 48px;
     border: 4px solid var(--gray-200);
     border-top-color: var(--primary-color);
-    border-radius: 50%;
+    border-radius: 0;
 }
 @media (prefers-reduced-motion: no-preference) {
     .skeleton-shimmer {
@@ -162,15 +161,13 @@ body.no-scroll {
     z-index: var(--z-toast); /* CODE QUALITY: Sits above most UI elements */
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-md);
 }
 .toast {
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
     padding: var(--spacing-md) var(--spacing-lg);
     background: var(--bg-dark);
-    color: white;
+    color: var(--text-primary);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-xl);
     transform: translateX(120%);
@@ -191,9 +188,7 @@ body.no-scroll {
 .confirm-modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(17, 24, 39, 0.75);
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
+    background: var(--bg-primary);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -246,7 +241,7 @@ body.no-scroll {
 .confirm-modal-icon {
     width: 64px;
     height: 64px;
-    border-radius: 50%;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -255,17 +250,17 @@ body.no-scroll {
 }
 
 .confirm-modal-icon.warning {
-    background: rgba(245, 158, 11, 0.1);
+    background: var(--bg-elevated);
     color: var(--warning-color);
 }
 
 .confirm-modal-icon.danger {
-    background: rgba(239, 68, 68, 0.1);
+    background: var(--bg-elevated);
     color: var(--danger-color);
 }
 
 .confirm-modal-icon.info {
-    background: rgba(99, 102, 241, 0.1);
+    background: var(--bg-elevated);
     color: var(--primary-color);
 }
 
@@ -285,7 +280,6 @@ body.no-scroll {
 
 .confirm-modal-actions {
     display: flex;
-    gap: var(--spacing-md);
     margin-top: var(--spacing-xl);
     justify-content: center;
 }
@@ -299,10 +293,10 @@ body.no-scroll {
 /* Danger button variant for confirm modals */
 .btn--danger {
     --btn-bg: var(--danger-color);
-    --btn-color: white;
+    --btn-color: var(--text-primary);
     --btn-border: var(--danger-color);
-    --btn-hover-bg: #dc2626;
-    --btn-hover-border: #dc2626;
+    --btn-hover-bg: var(--primary-dark);
+    --btn-hover-border: var(--primary-dark);
 }
 
 /* Mobile adjustments */
@@ -331,9 +325,7 @@ body.no-scroll {
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(17, 24, 39, 0.8);
-    -webkit-backdrop-filter: blur(5px);
-    backdrop-filter: blur(5px);
+    background: var(--bg-primary);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -379,7 +371,7 @@ body.no-scroll {
 }
 
 /* Mini Cart Drawer */
-.mini-cart-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: var(--z-modal); opacity: 0; visibility: hidden; transition: opacity var(--transition-base), visibility var(--transition-base); }
+.mini-cart-overlay { position: fixed; inset: 0; background: var(--bg-primary); z-index: var(--z-modal); opacity: 0; visibility: hidden; transition: opacity var(--transition-base), visibility var(--transition-base); }
 .mini-cart-overlay.active { opacity: 1; visibility: visible; }
 .mini-cart-drawer { position: fixed; top: 0; right: 0; width: 380px; max-width: 90vw; height: 100vh; background: var(--bg-card); box-shadow: var(--shadow-2xl); z-index: calc(var(--z-modal) + 1); display: flex; flex-direction: column; transform: translateX(100%); }
 @media (prefers-reduced-motion: no-preference) {
@@ -437,7 +429,7 @@ body.no-scroll {
     width: 120px;
     height: 120px;
     margin-bottom: var(--spacing-xl);
-    background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%);
+    background: var(--bg-secondary);
     border-radius: var(--radius-full);
     display: flex;
     align-items: center;
@@ -475,7 +467,6 @@ body.no-scroll {
 .empty-state-action {
     display: inline-flex;
     align-items: center;
-    gap: var(--spacing-sm);
 }
 
 /* ============================================= */
@@ -484,14 +475,12 @@ body.no-scroll {
 .product-skeleton {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-2xl);
     padding: var(--spacing-2xl);
 }
 
 .product-skeleton-gallery {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-md);
 }
 
 .product-skeleton-main-image {
@@ -505,7 +494,6 @@ body.no-scroll {
 
 .product-skeleton-thumbnails {
     display: flex;
-    gap: var(--spacing-sm);
 }
 
 .product-skeleton-thumb {
@@ -520,7 +508,6 @@ body.no-scroll {
 .product-skeleton-info {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-md);
 }
 
 .product-skeleton-brand {
@@ -552,7 +539,6 @@ body.no-scroll {
 
 .product-skeleton-rating {
     display: flex;
-    gap: var(--spacing-xs);
 }
 
 .product-skeleton-star {
@@ -567,7 +553,6 @@ body.no-scroll {
 .product-skeleton-description {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-sm);
     margin-top: var(--spacing-md);
 }
 
@@ -594,7 +579,6 @@ body.no-scroll {
 
 .product-skeleton-actions {
     display: flex;
-    gap: var(--spacing-md);
     margin-top: var(--spacing-xl);
 }
 
@@ -623,7 +607,7 @@ body.no-scroll {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    background: var(--bg-secondary);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -676,9 +660,9 @@ body.no-scroll {
     right: 24px; 
     height: 60px; 
     width: 60px; 
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); 
-    color: white; 
-    border-radius: 50%; 
+    background: var(--bg-secondary); 
+    color: var(--text-primary); 
+    border-radius: 0; 
     border: none; 
     cursor: pointer; 
     display: flex; 
@@ -686,9 +670,7 @@ body.no-scroll {
     justify-content: center; 
     font-size: 1.6rem; 
     z-index: 1000; 
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08); 
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
+    box-shadow: none; 
 }
 
 .chatbot { 
@@ -697,12 +679,10 @@ body.no-scroll {
     bottom: 96px; 
     width: min(420px, calc(100vw - 48px)); 
     max-height: min(600px, calc(100vh - 120px));
-    background: rgba(255, 255, 255, 0.95); 
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 16px; 
-    box-shadow: 0 20px 64px rgba(0, 0, 0, 0.1), 0 8px 32px rgba(0, 0, 0, 0.06); 
+    background: var(--bg-elevated); 
+    border: 1px solid var(--border-primary);
+    border-radius: 0; 
+    box-shadow: none; 
     overflow: hidden; 
     opacity: 0; 
     pointer-events: none; 
@@ -717,11 +697,9 @@ body.no-scroll {
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .chatbot-toggler:hover {
-        transform: scale(1.05) translateY(-2px);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: none;
     }
     .chatbot-toggler:active {
-        transform: scale(0.95);
     }
     .chatbot-toggler i {
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -750,12 +728,12 @@ body.no-scroll {
 }
 
 .chatbot-header { 
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); 
-    color: white; 
+    background: var(--bg-secondary); 
+    color: var(--text-primary); 
     padding: 20px 24px; 
     text-align: center; 
     position: relative;
-    border-radius: 16px 16px 0 0;
+    border-radius: 0;
     flex-shrink: 0;
 }
 .chatbot-header h2 { 
@@ -769,22 +747,21 @@ body.no-scroll {
     right: 16px; 
     top: 50%; 
     transform: translateY(-50%); 
-    background: rgba(255, 255, 255, 0.1); 
+    background: var(--bg-elevated); 
     border: none; 
-    color: white; 
+    color: var(--text-primary); 
     cursor: pointer; 
     font-size: 1rem; 
     width: 32px;
     height: 32px;
-    border-radius: 8px;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
 }
 .chatbot-header .close-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-50%) scale(1.1);
+    background: var(--bg-elevated);
 }
 .chatbox { 
     flex: 1;
@@ -793,7 +770,6 @@ body.no-scroll {
     padding: 24px 20px; 
     display: flex; 
     flex-direction: column; 
-    gap: 16px; 
     scroll-behavior: smooth;
 }
 .chatbox::-webkit-scrollbar {
@@ -803,11 +779,11 @@ body.no-scroll {
     background: transparent;
 }
 .chatbox::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 2px;
+    background: var(--bg-primary);
+    border-radius: 0;
 }
 .chatbox::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--bg-primary);
 }
 
 .chat { 
@@ -829,12 +805,13 @@ body.no-scroll {
 .chat p { 
     margin: 0; 
     padding: 12px 16px; 
-    border-radius: 18px; 
-    background: rgba(248, 250, 252, 0.8); 
+    border-radius: 0; 
+    background: var(--bg-secondary); 
+    color: var(--text-primary);
     font-size: 0.95rem; 
     word-wrap: break-word; 
     line-height: 1.5;
-    border: 1px solid rgba(226, 232, 240, 0.5);
+    border: 1px solid var(--border-primary);
 }
 .chat p strong { color: var(--primary-dark); }
 .chat p li { margin-left: 1rem; }
@@ -843,23 +820,23 @@ body.no-scroll {
     margin-left: auto;
 }
 .chat.outgoing p { 
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); 
-    color: white; 
+    background: var(--bg-secondary); 
+    color: var(--text-primary); 
     border: none;
-    border-radius: 18px 18px 4px 18px;
+    border-radius: 0 18px 4px 18px;
 }
 .chat.incoming p {
-    border-radius: 18px 18px 18px 4px;
+    border-radius: 0 18px 18px 4px;
 }
 .chat.incoming .chat-icon { 
     font-size: 1.5rem; 
     color: var(--primary-color); 
     align-self: flex-start; 
     margin-right: 8px; 
-    background: rgba(99, 102, 241, 0.1);
+    background: var(--bg-elevated);
     width: 32px;
     height: 32px;
-    border-radius: 50%;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -868,7 +845,6 @@ body.no-scroll {
 .chat.typing { 
     display: flex; 
     align-items: center; 
-    gap: 12px; 
 }
 .chat.typing .chat-icon {
     margin-right: 0;
@@ -877,50 +853,47 @@ body.no-scroll {
     width: 6px; 
     height: 6px; 
     background: var(--primary-color); 
-    border-radius: 50%; 
+    border-radius: 0; 
     margin: 0 1px;
 }
 .chat-input { 
     display: flex; 
-    gap: 12px; 
     padding: 20px 20px 24px; 
-    border-top: 1px solid rgba(226, 232, 240, 0.5); 
-    background: rgba(248, 250, 252, 0.3);
+    border-top: 1px solid var(--border-primary); 
+    background: var(--bg-secondary);
     flex-shrink: 0;
 }
 .chat-input textarea { 
     flex-grow: 1; 
     resize: none; 
-    border-radius: 12px; 
-    border: 1px solid rgba(226, 232, 240, 0.8); 
+    border-radius: 0; 
+    border: 1px solid var(--border-primary); 
     padding: 12px 16px; 
     font-family: var(--font-primary); 
     font-size: 0.95rem;
     max-height: 120px; 
     outline: none; 
-    background: rgba(255, 255, 255, 0.8);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    color: var(--gray-800);
+    background: var(--bg-elevated);
+    color: var(--text-primary);
     transition: all 0.2s ease;
 }
 .chat-input textarea:focus { 
     border-color: var(--primary-color); 
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-    background: rgba(255, 255, 255, 0.95);
+    box-shadow: none;
+    background: var(--bg-elevated);
 }
 .chat-input textarea::placeholder {
-    color: rgba(100, 116, 139, 0.7);
+    color: var(--text-secondary);
 }
 .chat-input button { 
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); 
+    background: var(--bg-secondary); 
     border: none; 
     font-size: 1.2rem; 
-    color: white; 
+    color: var(--text-primary); 
     cursor: pointer; 
     width: 44px;
     height: 44px;
-    border-radius: 12px;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -928,11 +901,9 @@ body.no-scroll {
     flex-shrink: 0;
 }
 .chat-input button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    box-shadow: none;
 }
 .chat-input button:active {
-    transform: scale(0.95);
 }
 
 /* Mobile Responsiveness */
@@ -999,33 +970,33 @@ body.no-scroll {
 /* Add dark mode support */
 @media (prefers-color-scheme: dark) {
     .chatbot {
-        background: rgba(30, 41, 59, 0.95);
-        border: 1px solid rgba(51, 65, 85, 0.5);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
     }
     
     .chatbox::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.2);
+        background: var(--bg-elevated);
     }
     
     .chat p {
-        background: rgba(51, 65, 85, 0.8);
-        color: rgba(248, 250, 252, 0.9);
-        border: 1px solid rgba(71, 85, 105, 0.5);
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-primary);
     }
     
     .chat-input {
-        background: rgba(30, 41, 59, 0.5);
-        border-top: 1px solid rgba(71, 85, 105, 0.5);
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-primary);
     }
     
     .chat-input textarea {
-        background: rgba(255, 255, 255, 0.95);
-        color: var(--gray-800);
-        border: 1px solid rgba(71, 85, 105, 0.8);
+        background: var(--bg-elevated);
+        color: var(--text-primary);
+        border: 1px solid var(--border-primary);
     }
     
     .chat-input textarea::placeholder {
-        color: rgba(148, 163, 184, 0.7);
+        color: var(--text-secondary);
     }
 }
 
@@ -1081,7 +1052,7 @@ body.no-scroll {
     
     .btn-secondary:hover,
     .btn-outline:hover {
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: var(--bg-elevated);
     }
     
     /* Link contrast */
@@ -1091,7 +1062,6 @@ body.no-scroll {
     
     a:not(.btn):hover {
         color: var(--primary-light);
-        filter: brightness(1.2);
     }
     
     /* Navigation improvements */
@@ -1107,13 +1077,13 @@ body.no-scroll {
     /* Badge and tag contrast */
     .badge,
     .tag {
-        background-color: rgba(var(--primary-color-rgb), 0.3);
+        background-color: var(--bg-elevated);
         color: var(--primary-light);
     }
     
     /* Improve empty state in dark mode */
     .empty-state-icon {
-        background: linear-gradient(135deg, var(--gray-700) 0%, var(--bg-dark-elevated) 100%);
+        background: var(--bg-secondary);
     }
     
     .empty-state-icon i {
@@ -1144,7 +1114,7 @@ body.no-scroll {
     
     .skeleton-shimmer,
     [class*="product-skeleton-"]::after {
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+        background: var(--bg-secondary);
     }
     
     /* Info message contrast */
