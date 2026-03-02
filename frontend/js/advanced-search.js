@@ -171,7 +171,7 @@ class AdvancedSearch {
             GoogleAnalytics.trackSearch(this.query, products?.length || 0);
         } catch (err) {
             if (err?.name === 'AbortError') return;
-            this.container.innerHTML = '';
+            this.container.textContent = '';
             const noResults = document.createElement('div');
             noResults.className = 'search-no-results';
 
@@ -194,7 +194,7 @@ class AdvancedSearch {
     }
     hideSuggestions() {
         this.container.classList.add('hidden');
-        this.container.innerHTML = '';
+        this.container.textContent = '';
         this.items = [];
         this.highlightIndex = -1;
         this.input.removeAttribute('aria-activedescendant');

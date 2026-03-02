@@ -208,7 +208,7 @@ class MobileNavigation {
             const categories = await apiService.getCategories();
             const parentCategories = categories.filter(cat => !cat.parent);
 
-            container.innerHTML = ''; // Clear container
+            container.textContent = ''; // Clear container
 
             parentCategories.forEach(category => {
                 const itemDiv = document.createElement('div');
@@ -238,14 +238,14 @@ class MobileNavigation {
 
                 category.children.forEach(child => {
                     const a = document.createElement('a');
-                    a.href = `search-results.html?category=${child.slug}`;
+                    a.href = `search-results.html?category=${encodeURIComponent(child.slug)}`;
                     a.className = 'mobile-subcategory-link';
                     a.textContent = child.name;
                     subDiv.appendChild(a);
                 });
 
                 const viewAllLink = document.createElement('a');
-                viewAllLink.href = `search-results.html?category=${category.slug}`;
+                viewAllLink.href = `search-results.html?category=${encodeURIComponent(category.slug)}`;
                 viewAllLink.className = 'mobile-subcategory-link';
                 const strong = document.createElement('strong');
                 strong.textContent = `View all ${category.name}`;
@@ -259,7 +259,7 @@ class MobileNavigation {
 
         } catch (error) {
             console.error('Failed to load categories for mobile nav:', error);
-            container.innerHTML = '';
+            container.textContent = '';
             const p = document.createElement('p');
             p.className = 'mobile-nav-error';
             p.textContent = 'Could not load categories.';
@@ -312,7 +312,7 @@ class MobileNavigation {
         const desktopUser = document.querySelector('#user-info');
         if (!container) return;
 
-        container.innerHTML = ''; // Clear previous links
+        container.textContent = ''; // Clear previous links
         if (desktopAuth && !desktopAuth.classList.contains('hidden')) {
             container.appendChild(desktopAuth.cloneNode(true));
         } else if (desktopUser && !desktopUser.classList.contains('hidden')) {

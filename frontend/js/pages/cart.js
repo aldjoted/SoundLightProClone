@@ -2,7 +2,7 @@ import * as cart from '../cart.js';
 import * as ui from '../ui.js';
 import { ListenerManager } from '../utils.js';
 import { STRIPE_PUBLISHABLE_KEY } from '../config.js';
-import { createOrder, createQuote, getQuotePDFUrl, getDashboardProfile, getShippingAddresses, ensureAccessToken } from '../apiService.js';
+import { createOrder, createQuote, getQuotePDFUrl, downloadQuotePDF, getDashboardProfile, getShippingAddresses, ensureAccessToken } from '../apiService.js';
 
 export function initCartPage() {
     const container = document.getElementById('cart-container');
@@ -138,7 +138,11 @@ export function initCartPage() {
     function populateSavedAddresses(addresses) {
         if (!savedAddressSelect || !addresses?.length) return;
 
-        savedAddressSelect.innerHTML = '<option value="">-- Select a saved address --</option>';
+        savedAddressSelect.textContent = '';
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = '-- Select a saved address --';
+        savedAddressSelect.appendChild(defaultOption);
         
         addresses.forEach(addr => {
             const option = document.createElement('option');
@@ -315,7 +319,7 @@ export function initCartPage() {
      * Show success state after quote generation
      */
     function showQuoteSuccess(quoteNumber, accessToken = '') {
-        container.innerHTML = '';
+        container.textContent = '';
         
         const successDiv = document.createElement('div');
         successDiv.className = 'order-success quote-success';
@@ -347,18 +351,32 @@ export function initCartPage() {
         const actions = document.createElement('div');
         actions.style.cssText = 'display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;';
 
-        const pdfLink = document.createElement('a');
-        pdfLink.className = 'btn btn-primary';
-        pdfLink.style.cssText = 'display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.875rem 1.5rem;';
-        pdfLink.target = '_blank';
-        pdfLink.rel = 'noopener noreferrer';
-        // Avoid URL injection; quoteNumber is used as a path segment.
-        const safeQuoteNumber = encodeURIComponent(String(quoteNumber || ''));
-        pdfLink.href = getQuotePDFUrl(safeQuoteNumber, accessToken);
+        const pdfBtn = document.createElement('button');
+        pdfBtn.className = 'btn btn-primary';
+        pdfBtn.style.cssText = 'display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.875rem 1.5rem; cursor: pointer;';
         const downloadIcon = document.createElement('i');
         downloadIcon.className = 'fas fa-download';
-        pdfLink.appendChild(downloadIcon);
-        pdfLink.appendChild(document.createTextNode(' Download PDF Quote'));
+        pdfBtn.appendChild(downloadIcon);
+        pdfBtn.appendChild(document.createTextNode(' Download PDF Quote'));
+        pdfBtn.addEventListener('click', async () => {
+            pdfBtn.disabled = true;
+            pdfBtn.textContent = 'Downloading...';
+            try {
+                const safeQuoteNumber = String(quoteNumber || '');
+                const blobUrl = await downloadQuotePDF(safeQuoteNumber);
+                window.open(blobUrl, '_blank');
+            } catch (err) {
+                console.error('PDF download failed:', err);
+                ui.showToast('Failed to download quote PDF.', 'error');
+            } finally {
+                pdfBtn.disabled = false;
+                pdfBtn.textContent = '';
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-download';
+                pdfBtn.appendChild(icon);
+                pdfBtn.appendChild(document.createTextNode(' Download PDF Quote'));
+            }
+        });
 
         const continueLink = document.createElement('a');
         continueLink.className = 'btn btn-secondary';
@@ -366,7 +384,7 @@ export function initCartPage() {
         continueLink.href = 'index.html';
         continueLink.textContent = 'Continue Shopping';
 
-        actions.appendChild(pdfLink);
+        actions.appendChild(pdfBtn);
         actions.appendChild(continueLink);
 
         const info = document.createElement('p');
@@ -432,7 +450,7 @@ export function initCartPage() {
 
     const render = () => {
         const items = cart.getCart();
-        container.innerHTML = '';
+        container.textContent = '';
 
         if (items.length === 0) {
             container.appendChild(ui.createEmptyCartElement());
@@ -507,9 +525,18 @@ export function initCartPage() {
             }
 
             const submitBtn = document.getElementById('submit-payment-btn');
-            const originalBtnHTML = submitBtn.innerHTML;
+            const originalBtnText = submitBtn.textContent;
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            submitBtn.textContent = '';
+            const spinnerIcon = document.createElement('i');
+            spinnerIcon.className = 'fas fa-spinner fa-spin';
+            submitBtn.appendChild(spinnerIcon);
+            submitBtn.appendChild(document.createTextNode(' Processing...'));
+
+            function restoreSubmitBtn() {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
+            }
 
             try {
                 const { token, error } = await stripe.createToken(card);
@@ -517,8 +544,7 @@ export function initCartPage() {
                 if (error) {
                     const errorElement = document.getElementById('card-errors');
                     errorElement.textContent = error.message;
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnHTML;
+                    restoreSubmitBtn();
                     return;
                 }
 
@@ -548,26 +574,42 @@ export function initCartPage() {
                 cart.clearCart();
                 ui.showToast('Order placed successfully!', 'success');
 
-                container.innerHTML = '';
+                container.textContent = '';
                 const successDiv = document.createElement('div');
                 successDiv.className = 'order-success';
                 successDiv.style.cssText = 'text-align: center; padding: 3rem 2rem; background: #f8f9fa; border-radius: 12px;';
-                successDiv.innerHTML = `
-                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #28a745, #20c997); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
-                        <i class="fas fa-check" style="font-size: 2rem; color: white;"></i>
-                    </div>
-                    <h2 style="color: #28a745; margin-bottom: 0.5rem;">Thank you for your order!</h2>
-                    <p style="color: #666; margin-bottom: 1.5rem;">Your order has been placed successfully. You will receive a confirmation email shortly.</p>
-                    <a href="index.html" class="btn btn-primary">Continue Shopping</a>
-                `;
+
+                const iconWrapDiv = document.createElement('div');
+                iconWrapDiv.style.cssText = 'width: 80px; height: 80px; background: linear-gradient(135deg, #28a745, #20c997); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;';
+                const checkIcon = document.createElement('i');
+                checkIcon.className = 'fas fa-check';
+                checkIcon.style.cssText = 'font-size: 2rem; color: white;';
+                iconWrapDiv.appendChild(checkIcon);
+
+                const h2 = document.createElement('h2');
+                h2.style.cssText = 'color: #28a745; margin-bottom: 0.5rem;';
+                h2.textContent = 'Thank you for your order!';
+
+                const p = document.createElement('p');
+                p.style.cssText = 'color: #666; margin-bottom: 1.5rem;';
+                p.textContent = 'Your order has been placed successfully. You will receive a confirmation email shortly.';
+
+                const continueLink = document.createElement('a');
+                continueLink.href = 'index.html';
+                continueLink.className = 'btn btn-primary';
+                continueLink.textContent = 'Continue Shopping';
+
+                successDiv.appendChild(iconWrapDiv);
+                successDiv.appendChild(h2);
+                successDiv.appendChild(p);
+                successDiv.appendChild(continueLink);
                 container.appendChild(successDiv);
                 checkoutSection.classList.add('hidden');
 
             } catch (err) {
                 console.error('Order creation failed:', err);
                 ui.showToast(err.message || 'Failed to place order. Please try again.', 'error');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalBtnHTML;
+                restoreSubmitBtn();
             }
         });
     }
@@ -590,9 +632,13 @@ export function initCartPage() {
                 return;
             }
 
-            const originalBtnHTML = requestQuoteBtn.innerHTML;
+            const originalQuoteBtnText = requestQuoteBtn.textContent;
             requestQuoteBtn.disabled = true;
-            requestQuoteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Quote...';
+            requestQuoteBtn.textContent = '';
+            const quoteSpinner = document.createElement('i');
+            quoteSpinner.className = 'fas fa-spinner fa-spin';
+            requestQuoteBtn.appendChild(quoteSpinner);
+            requestQuoteBtn.appendChild(document.createTextNode(' Generating Quote...'));
 
             try {
                 const quoteData = getQuoteFormData();
@@ -609,7 +655,7 @@ export function initCartPage() {
                 console.error('Quote creation failed:', err);
                 ui.showToast(err.message || 'Failed to generate quote. Please try again.', 'error');
                 requestQuoteBtn.disabled = false;
-                requestQuoteBtn.innerHTML = originalBtnHTML;
+                requestQuoteBtn.textContent = originalQuoteBtnText;
             }
         });
     }

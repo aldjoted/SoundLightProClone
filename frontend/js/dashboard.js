@@ -20,6 +20,13 @@ import i18n from './i18n.js';
 
 const ACCESS_TOKEN_STORAGE_KEY = 'slp_access_token';
 
+function isSafeImageUrl(url) {
+    try {
+        const u = new URL(url, window.location.origin);
+        return ['http:', 'https:'].includes(u.protocol);
+    } catch { return false; }
+}
+
 // Dashboard state
 const dashboardState = {
     currentSection: 'overview',
@@ -294,7 +301,7 @@ function renderRecentOrders(orders) {
     const container = document.getElementById('recent-orders-list');
     if (!container) return;
 
-    container.innerHTML = ''; // Clear container
+    container.textContent = '';
 
     if (orders.length === 0) {
         const p = document.createElement('p');
@@ -416,8 +423,11 @@ async function loadOrders(filters = {}) {
         dashboardState.orders = orders;
         renderOrders(orders);
 
-        // Set up filters
-        setupOrderFilters();
+        // Set up filters only once
+        if (!loadOrders._filtersInitialized) {
+            setupOrderFilters();
+            loadOrders._filtersInitialized = true;
+        }
     } catch (error) {
         console.error('Failed to load orders:', error);
         showToast('Failed to load orders.', 'error');
@@ -456,7 +466,7 @@ function renderOrders(orders) {
     const container = document.getElementById('orders-container');
     if (!container) return;
 
-    container.innerHTML = ''; // Clear container
+    container.textContent = ''; // Clear container
 
     if (orders.length === 0) {
         const emptyState = document.createElement('div');
@@ -473,6 +483,8 @@ function renderOrders(orders) {
         container.appendChild(emptyState);
         return;
     }
+
+    const fragment = document.createDocumentFragment();
 
     orders.forEach(order => {
         const card = document.createElement('div');
@@ -514,7 +526,7 @@ function renderOrders(orders) {
             const itemMini = document.createElement('div');
             itemMini.className = 'order-item-mini';
 
-            if (item.product_image) {
+            if (item.product_image && isSafeImageUrl(item.product_image)) {
                 const img = document.createElement('img');
                 img.src = item.product_image;
                 img.alt = item.product_name;
@@ -595,8 +607,10 @@ function renderOrders(orders) {
         card.appendChild(body);
         card.appendChild(actionsDiv);
 
-        container.appendChild(card);
+        fragment.appendChild(card);
     });
+
+    container.appendChild(fragment);
 }
 
 /**
@@ -610,7 +624,7 @@ export async function viewOrderDetails(orderId) {
 
         if (!modal || !content) return;
 
-        content.innerHTML = ''; // Clear content
+        content.textContent = '';
 
         const detailsDiv = document.createElement('div');
         detailsDiv.className = 'order-details';
@@ -675,7 +689,7 @@ export async function viewOrderDetails(orderId) {
             const itemDetail = document.createElement('div');
             itemDetail.className = 'order-item-detail';
 
-            if (item.product_image) {
+            if (item.product_image && isSafeImageUrl(item.product_image)) {
                 const img = document.createElement('img');
                 img.src = item.product_image;
                 img.alt = item.product_name;
@@ -802,7 +816,7 @@ function renderReviews(reviews) {
     const container = document.getElementById('reviews-container');
     if (!container) return;
 
-    container.innerHTML = ''; // Clear container
+    container.textContent = '';
 
     if (reviews.length === 0) {
         const emptyState = document.createElement('div');
@@ -819,6 +833,8 @@ function renderReviews(reviews) {
         container.appendChild(emptyState);
         return;
     }
+
+    const fragment = document.createDocumentFragment();
 
     reviews.forEach(review => {
         const card = document.createElement('div');
@@ -903,8 +919,10 @@ function renderReviews(reviews) {
         card.appendChild(body);
         card.appendChild(actionsDiv);
 
-        container.appendChild(card);
+        fragment.appendChild(card);
     });
+
+    container.appendChild(fragment);
 }
 
 /**
@@ -1287,7 +1305,7 @@ async function loadWishlist() {
         const container = document.getElementById('wishlist-container');
         if (!container) return;
 
-        container.innerHTML = ''; // Clear container
+        container.textContent = '';
 
         const items = wishlistData?.items || [];
 
@@ -1306,6 +1324,8 @@ async function loadWishlist() {
             container.appendChild(emptyState);
             return;
         }
+
+        const fragment = document.createDocumentFragment();
 
         items.forEach(item => {
             const product = item.product;
@@ -1330,7 +1350,7 @@ async function loadWishlist() {
 
             card.appendChild(removeBtn);
 
-            if (image) {
+            if (image && isSafeImageUrl(image)) {
                 const img = document.createElement('img');
                 img.src = image;
                 img.alt = productName;
@@ -1358,8 +1378,10 @@ async function loadWishlist() {
 
             card.appendChild(moveBtn);
 
-            container.appendChild(card);
+            fragment.appendChild(card);
         });
+
+        container.appendChild(fragment);
 
         // Setup event listeners after rendering
         setupWishlistItemActions();
@@ -1430,7 +1452,7 @@ function renderAddresses(addresses) {
     const container = document.getElementById('addresses-container');
     if (!container) return;
 
-    container.innerHTML = ''; // Clear container
+    container.textContent = '';
 
     if (!addresses || addresses.length === 0) {
         const emptyState = document.createElement('div');
@@ -1447,6 +1469,8 @@ function renderAddresses(addresses) {
         container.appendChild(emptyState);
         return;
     }
+
+    const fragment = document.createDocumentFragment();
 
     addresses.forEach(address => {
         const card = document.createElement('div');
@@ -1551,8 +1575,10 @@ function renderAddresses(addresses) {
         card.appendChild(headerDiv);
         card.appendChild(detailsDiv);
         card.appendChild(actionsDiv);
-        container.appendChild(card);
+        fragment.appendChild(card);
     });
+
+    container.appendChild(fragment);
 }
 
 /**
@@ -1724,7 +1750,7 @@ function renderPaymentMethods(paymentMethods) {
     const container = document.getElementById('payment-methods-container');
     if (!container) return;
 
-    container.innerHTML = ''; // Clear container
+    container.textContent = '';
 
     if (!paymentMethods || paymentMethods.length === 0) {
         const emptyState = document.createElement('div');
@@ -1741,6 +1767,8 @@ function renderPaymentMethods(paymentMethods) {
         container.appendChild(emptyState);
         return;
     }
+
+    const fragment = document.createDocumentFragment();
 
     paymentMethods.forEach(pm => {
         const card = document.createElement('div');
@@ -1815,8 +1843,10 @@ function renderPaymentMethods(paymentMethods) {
 
         card.appendChild(cardInfo);
         card.appendChild(actionsDiv);
-        container.appendChild(card);
+        fragment.appendChild(card);
     });
+
+    container.appendChild(fragment);
 }
 
 /**
@@ -1980,8 +2010,7 @@ async function handleLogout(e) {
     });
     
     if (confirmed) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        await apiService.logoutUser();
         window.location.href = 'index.html';
     }
 }

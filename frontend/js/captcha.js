@@ -20,6 +20,7 @@
  */
 
 import { API_BASE_URL } from './config.js';
+import { apiFetch } from './apiService.js';
 
 /**
  * CAPTCHA configuration cache
@@ -81,17 +82,8 @@ async function fetchConfig() {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/captcha-config/`, {
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      console.warn('[CAPTCHA] Failed to fetch config, CAPTCHA disabled');
-      captchaConfig = { enabled: false };
-      return captchaConfig;
-    }
-
-    captchaConfig = await response.json();
+    const result = await apiFetch('/captcha-config/');
+    captchaConfig = result;
     return captchaConfig;
   } catch (error) {
     console.error('[CAPTCHA] Error fetching config:', error);
@@ -188,7 +180,7 @@ export const CaptchaManager = {
     }
 
     // Clear any existing widget
-    containerEl.innerHTML = '';
+    containerEl.textContent = '';
 
     const { site_key, provider } = captchaConfig;
 
@@ -226,7 +218,7 @@ export const CaptchaManager = {
         // Show a badge notice instead
         // v3 is invisible, no widget to render
         // Show a badge notice instead
-        containerEl.innerHTML = '';
+        containerEl.textContent = '';
         const noticeDiv = document.createElement('div');
         noticeDiv.className = 'recaptcha-v3-notice';
         const small = document.createElement('small');

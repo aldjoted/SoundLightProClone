@@ -101,7 +101,7 @@ export async function initBrandGallery({ signal } = {}) {
             ? response
             : (Array.isArray(response?.results) ? response.results : []);
 
-        gallery.innerHTML = '';
+        gallery.textContent = '';
 
         if (!brandList.length) {
             showStatus(gallery, FALLBACK_BRAND_MESSAGE);
@@ -131,7 +131,7 @@ export async function initBrandGallery({ signal } = {}) {
             return;
         }
         console.error('Unable to render brand gallery:', error);
-        gallery.innerHTML = '';
+        gallery.textContent = '';
         showStatus(gallery, 'Unable to load partner brands right now. Please try again later.', 'brand-gallery-status--error');
     }
 }

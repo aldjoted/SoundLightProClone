@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderProductGrid(products, grid);
         
         if (products.length === 0) {
-            grid.innerHTML = '';
+            grid.textContent = '';
             const p = document.createElement('p');
             p.className = 'info-message';
             
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } catch (err) {
         console.error('Search results error', err);
-        grid.innerHTML = '';
+        grid.textContent = '';
         const p = document.createElement('p');
         p.className = 'error-message';
         p.textContent = 'Failed to load results. Please retry.';

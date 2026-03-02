@@ -216,11 +216,9 @@ export class CSPManager {
   }
 
   static applyCSP() {
-    const explicitlyDisabled = typeof window !== 'undefined' && window.__DISABLE_CSP__ === true;
-
     // Client-side meta CSP is best-effort; enforce real CSP via HTTP headers.
     // To avoid breaking local development flows, only apply this meta CSP in production.
-    if (IS_PRODUCTION && !explicitlyDisabled) {
+    if (IS_PRODUCTION) {
       const cspString = this.generateCSPString();
       const meta = document.createElement('meta');
       meta.setAttribute('http-equiv', 'Content-Security-Policy');
@@ -228,10 +226,6 @@ export class CSPManager {
       document.head.appendChild(meta);
 
       console.log('[Security] Content Security Policy applied (production mode)');
-    } else {
-      if (explicitlyDisabled) {
-        console.warn('[Security] CSP explicitly disabled via window.__DISABLE_CSP__ - USE ONLY FOR DEBUGGING');
-      }
     }
   }
 }

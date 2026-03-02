@@ -76,7 +76,7 @@ class OfflineIndicator {
         this.banner.setAttribute('role', 'status');
         this.banner.setAttribute('aria-live', 'polite');
 
-        this.banner.innerHTML = '';
+        this.banner.textContent = '';
 
         const content = document.createElement('div');
         content.className = 'offline-banner__content';

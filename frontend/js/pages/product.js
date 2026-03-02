@@ -12,7 +12,7 @@ export async function initProductPage(signal) {
     const productId = urlParams.get('id');
 
     if (!productId) {
-        container.innerHTML = '';
+        container.textContent = '';
         const p = document.createElement('p');
         p.className = 'error-message';
         p.textContent = 'No product specified. ';
@@ -34,7 +34,7 @@ export async function initProductPage(signal) {
         await loadRelatedProducts(productId);
     } catch (error) {
         console.error('Error fetching product details:', error);
-        container.innerHTML = '';
+        container.textContent = '';
         const p = document.createElement('p');
         p.className = 'error-message';
         p.textContent = 'Could not load product. It may not exist. ';
@@ -78,7 +78,7 @@ async function loadProductReviews(productId) {
 
         const reviews = await reviewManager.loadReviews(productId);
         // Clear the loading spinner before rendering reviews
-        listContainer.innerHTML = '';
+        listContainer.textContent = '';
 
         if (reviews && reviews.length > 0) {
             reviews.forEach((review) => {
@@ -86,7 +86,7 @@ async function loadProductReviews(productId) {
                 listContainer.appendChild(reviewCard);
             });
         } else {
-            listContainer.innerHTML = '';
+            listContainer.textContent = '';
             const noReviewsDiv = document.createElement('div');
             noReviewsDiv.className = 'no-reviews';
 
@@ -111,7 +111,7 @@ async function loadProductReviews(productId) {
                 formContainer.classList.toggle('hidden');
                 if (!formContainer.classList.contains('hidden')) {
                     const reviewForm = ui.renderReviewForm(productId);
-                    formContainer.innerHTML = '';
+                    formContainer.textContent = '';
                     formContainer.appendChild(reviewForm);
 
                     const form = formContainer.querySelector('form');
@@ -128,7 +128,7 @@ async function loadProductReviews(productId) {
                                 ui.showToast(i18n.t('review_submitted'), 'success');
                                 formContainer.classList.add('hidden');
 
-                                listContainer.innerHTML = '';
+                                listContainer.textContent = '';
                                 const loadingDiv = document.createElement('div');
                                 loadingDiv.className = 'reviews-loading';
                                 const spinner = document.createElement('div');
@@ -136,7 +136,7 @@ async function loadProductReviews(productId) {
                                 loadingDiv.appendChild(spinner);
                                 listContainer.appendChild(loadingDiv);
                                 const updatedReviews = await reviewManager.loadReviews(productId);
-                                listContainer.innerHTML = '';
+                                listContainer.textContent = '';
                                 updatedReviews.forEach((review) => {
                                     const reviewCard = ui.renderReviewCard(review);
                                     listContainer.appendChild(reviewCard);
@@ -165,25 +165,34 @@ async function loadProductReviews(productId) {
         const sortSelect = document.getElementById('review-sort-select');
         if (sortSelect) {
             sortSelect.addEventListener('change', async (e) => {
-                listContainer.innerHTML = '';
+                listContainer.textContent = '';
                 const loadingDiv = document.createElement('div');
                 loadingDiv.className = 'reviews-loading';
                 const spinner = document.createElement('div');
                 spinner.className = 'spinner';
                 loadingDiv.appendChild(spinner);
                 listContainer.appendChild(loadingDiv);
-                const sortedReviews = await reviewManager.loadReviews(productId, e.target.value);
-                listContainer.innerHTML = '';
-                sortedReviews.forEach((review) => {
-                    const reviewCard = ui.renderReviewCard(review);
-                    listContainer.appendChild(reviewCard);
-                });
+                try {
+                    const sortedReviews = await reviewManager.loadReviews(productId, e.target.value);
+                    listContainer.textContent = '';
+                    sortedReviews.forEach((review) => {
+                        const reviewCard = ui.renderReviewCard(review);
+                        listContainer.appendChild(reviewCard);
+                    });
+                } catch (sortError) {
+                    console.error('Error sorting reviews:', sortError);
+                    listContainer.textContent = '';
+                    const p = document.createElement('p');
+                    p.className = 'error-message';
+                    p.textContent = i18n.t('error_loading_reviews', 'Failed to load reviews.');
+                    listContainer.appendChild(p);
+                }
             });
         }
     } catch (error) {
         console.error('Error loading product reviews:', error);
         if (listContainer) {
-            listContainer.innerHTML = '';
+            listContainer.textContent = '';
             const p = document.createElement('p');
             p.className = 'error-message';
             p.textContent = i18n.t('error_loading_reviews');
@@ -200,7 +209,7 @@ async function loadRelatedProducts(productId) {
     }
 
     try {
-        relatedSection.innerHTML = '';
+        relatedSection.textContent = '';
         const loadingDiv = document.createElement('div');
         loadingDiv.className = 'related-products-loading';
 
@@ -219,7 +228,7 @@ async function loadRelatedProducts(productId) {
         if (relatedProducts && relatedProducts.length > 0) {
             ui.renderRelatedProducts(relatedProducts, relatedSection);
         } else {
-            relatedSection.innerHTML = '';
+            relatedSection.textContent = '';
             const noRelatedDiv = document.createElement('div');
             noRelatedDiv.className = 'no-related-products';
 
@@ -239,7 +248,7 @@ async function loadRelatedProducts(productId) {
         }
     } catch (error) {
         console.error('Error loading related products:', error);
-        relatedSection.innerHTML = '';
+        relatedSection.textContent = '';
         const p = document.createElement('p');
         p.className = 'error-message';
         p.textContent = i18n.t('error_loading_related');
@@ -393,7 +402,7 @@ async function setupProductDetailPageEventListeners(product) {
                 if (inWishlist) {
                     wishlistBtn.classList.add('in-wishlist');
                     wishlistBtn.setAttribute('aria-pressed', 'true');
-                    wishlistBtn.innerHTML = '';
+                    wishlistBtn.textContent = '';
                     const icon = document.createElement('i');
                     icon.className = 'fas fa-heart';
                     const span = document.createElement('span');
@@ -405,7 +414,7 @@ async function setupProductDetailPageEventListeners(product) {
                 } else {
                     wishlistBtn.classList.remove('in-wishlist');
                     wishlistBtn.setAttribute('aria-pressed', 'false');
-                    wishlistBtn.innerHTML = '';
+                    wishlistBtn.textContent = '';
                     const icon = document.createElement('i');
                     icon.className = 'far fa-heart';
                     const span = document.createElement('span');

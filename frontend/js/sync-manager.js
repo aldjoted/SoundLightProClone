@@ -15,6 +15,7 @@
 
 import { cartStateManager } from './cart.js';
 import * as ui from './ui.js';
+import { apiFetch } from './apiService.js';
 
 function normalizeCartItemsShape(items) {
     if (!items) {
@@ -704,17 +705,14 @@ class SyncManager {
                     formData.append(key, value);
                 });
                 
-                const response = await fetch(item.endpoint, {
+                await apiFetch(item.endpoint, {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    skipContentType: true
                 });
-                
-                if (response.ok) {
-                    await this.removeFromQueue('forms', item.id);
-                    console.log('[SyncManager] Form submission synced:', item.formType);
-                } else {
-                    throw new Error(`HTTP ${response.status}`);
-                }
+
+                await this.removeFromQueue('forms', item.id);
+                console.log('[SyncManager] Form submission synced:', item.formType);
             } catch (error) {
                 console.error('[SyncManager] Failed to sync form submission:', error);
                 await this.updateQueueItemStatus('forms', item.id, 'failed');
@@ -731,20 +729,13 @@ class SyncManager {
         
         for (const item of queue) {
             try {
-                const response = await fetch(item.endpoint, {
+                await apiFetch(item.endpoint, {
                     method: item.method,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
                     body: item.data ? JSON.stringify(item.data) : undefined
                 });
-                
-                if (response.ok) {
-                    await this.removeFromQueue('api', item.id);
-                    console.log('[SyncManager] API request synced:', item.method, item.endpoint);
-                } else {
-                    throw new Error(`HTTP ${response.status}`);
-                }
+
+                await this.removeFromQueue('api', item.id);
+                console.log('[SyncManager] API request synced:', item.method, item.endpoint);
             } catch (error) {
                 console.error('[SyncManager] Failed to sync API request:', error);
                 await this.updateQueueItemStatus('api', item.id, 'failed');

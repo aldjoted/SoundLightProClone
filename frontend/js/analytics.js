@@ -5,6 +5,7 @@
  */
 
 import { IS_PRODUCTION, SERVICES, FEATURES } from './config.js';
+import { throttle } from './utils.js';
 
 /**
  * Google Analytics 4 Manager
@@ -135,14 +136,11 @@ export class ErrorTracking {
 
   static getCurrentUser() {
     try {
-      const accessToken = sessionStorage.getItem('slp_access_token');
-      const tokenToDecode = accessToken || localStorage.getItem('refreshToken');
-      if (tokenToDecode) {
-        const payload = JSON.parse(atob(tokenToDecode.split('.')[1]));
-        return {
-          id: payload.user_id,
-          email: payload.email
-        };
+      // Use stored user profile instead of JWT decoding for reliability and privacy
+      const raw = sessionStorage.getItem('slp_user_profile');
+      if (raw) {
+        const profile = JSON.parse(raw);
+        return profile ? { id: profile.id, email: profile.email } : null;
       }
     } catch (error) {
       // Ignore parsing errors
@@ -202,7 +200,7 @@ export class CustomEventTracker {
     const milestones = [25, 50, 75, 90];
     const tracked = new Set();
 
-    window.addEventListener('scroll', () => {
+    window.addEventListener('scroll', throttle(() => {
       const scrollPercent = Math.round(
         (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100
       );
@@ -220,7 +218,7 @@ export class CustomEventTracker {
           }
         });
       }
-    });
+    }, 250));
   }
 
   trackClicks() {

@@ -511,7 +511,7 @@ async function initWishlistPage(signal) {
 
     try {
         // Show loading state
-        container.innerHTML = ''; // Clear container
+        container.textContent = '';
         const spinnerDiv = document.createElement('div');
         spinnerDiv.className = 'loading-spinner';
 
@@ -535,7 +535,7 @@ async function initWishlistPage(signal) {
         const items = wishlist.getWishlist();
 
         if (items.length === 0) {
-            container.innerHTML = '';
+            container.textContent = '';
             const emptyDiv = document.createElement('div');
             emptyDiv.className = 'empty-wishlist';
 
@@ -568,7 +568,7 @@ async function initWishlistPage(signal) {
         }
 
         // Render wishlist items
-        container.innerHTML = '';
+        container.textContent = '';
         for (const item of items) {
             try {
                 // Fetch full product details
@@ -699,7 +699,7 @@ async function initWishlistPage(signal) {
 
     } catch (error) {
         console.error('Error initializing wishlist page:', error);
-        container.innerHTML = '';
+        container.textContent = '';
         const p = document.createElement('p');
         p.className = 'error-message';
         p.textContent = i18n.t('error_loading_wishlist') + ' ';

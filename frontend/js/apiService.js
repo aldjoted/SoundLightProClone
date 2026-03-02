@@ -1679,15 +1679,48 @@ export const getQuoteDetails = async (quoteNumber, accessToken = '') => {
  * @param {string} quoteNumber - The quote number.
  * @returns {string} The URL to download the quote PDF.
  */
+/**
+ * Downloads a quote PDF using fetch + Authorization header instead of
+ * leaking the JWT in a URL query parameter.
+ * Falls back to returning a plain URL when no token is available.
+ *
+ * @param {string} quoteNumber - The quote number.
+ * @param {string} accessToken - JWT access token (used via header, never URL).
+ * @returns {string} An object-URL pointing to the downloaded blob, or the bare endpoint URL.
+ */
 export const getQuotePDFUrl = (quoteNumber, accessToken = '') => {
-    const base = `${API_BASE_URL}/quotes/${quoteNumber}/pdf/`;
+    const base = `${API_BASE_URL}/quotes/${encodeURIComponent(quoteNumber)}/pdf/`;
     const token = String(accessToken || '').trim();
     if (!token) {
         return base;
     }
-    const url = new URL(base, window.location.origin);
-    url.searchParams.set('token', token);
-    return url.toString();
+    // Return plain URL — the caller should use downloadQuotePDF() for authenticated downloads
+    return base;
+};
+
+/**
+ * Downloads a quote PDF via fetch with Authorization header.
+ * Returns an object URL suitable for window.open() or <a> href.
+ * @param {string} quoteNumber - The quote number.
+ * @returns {Promise<string>} Object URL for the PDF blob.
+ */
+export const downloadQuotePDF = async (quoteNumber) => {
+    const url = `/quotes/${encodeURIComponent(quoteNumber)}/pdf/`;
+    const accessToken = tokenManager.getAccessToken();
+    const headers = { 'Accept': 'application/pdf' };
+    if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+    const res = await fetch(`${API_BASE_URL}${url}`, {
+        method: 'GET',
+        headers,
+        credentials: 'include',
+    });
+    if (!res.ok) {
+        throw new APIError('Failed to download quote PDF', res.status, 'PDF_DOWNLOAD_FAILED');
+    }
+    const blob = await res.blob();
+    return URL.createObjectURL(blob);
 };
 
 /**

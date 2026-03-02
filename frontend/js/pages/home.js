@@ -124,7 +124,7 @@ export function initHomePage(signal) {
         } catch (error) {
             if (error.name !== 'AbortError') {
                 console.error('Error initializing homepage:', error);
-                productGrid.innerHTML = '';
+                productGrid.textContent = '';
                 const p = document.createElement('p');
                 p.className = 'error-message';
                 p.textContent = 'Failed to load products. ';

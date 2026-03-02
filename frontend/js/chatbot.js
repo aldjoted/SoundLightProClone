@@ -186,7 +186,7 @@ const ChatbotModule = (() => {
                 panel.setAttribute('aria-label', 'Assistant');
             }
             if (!panel.querySelector(CONFIG.SELECTORS.chatbox)) {
-                panel.innerHTML = '';
+                panel.textContent = '';
                 panel.appendChild(createChatbotStructure());
             }
 
@@ -440,7 +440,7 @@ const ChatbotModule = (() => {
             });
 
             if (data?.reply) {
-                messageElement.innerHTML = '';
+                messageElement.textContent = '';
                 messageElement.appendChild(secureMarkdownToHtml(data.reply));
                 announceToScreenReader('Chatbot responded');
             } else {
@@ -469,7 +469,7 @@ const ChatbotModule = (() => {
                 userMessage = 'I apologize, but I\'m having trouble responding right now. Please try again.';
             }
 
-            messageElement.innerHTML = '';
+            messageElement.textContent = '';
             const errorP = document.createElement('p');
             errorP.textContent = userMessage;
             errorP.className = CONFIG.CLASSES.error;

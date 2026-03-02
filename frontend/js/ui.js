@@ -589,7 +589,7 @@ export function showConfirmModal({
 export function renderSearchSuggestions(products, container) {
     if (!container) return;
 
-    container.innerHTML = '';
+    container.textContent = '';
 
     if (!products || products.length === 0) {
         const noResults = document.createElement('div');
@@ -619,7 +619,7 @@ export function renderSearchSuggestions(products, container) {
 
         const link = document.createElement('a');
         link.className = 'result-link';
-        link.href = `product.html?id=${product.id}`;
+        link.href = `product.html?id=${parseInt(product.id, 10) || 0}`;
 
         const imgWrapper = document.createElement('div');
         imgWrapper.className = 'result-image';
@@ -669,7 +669,7 @@ export function showSkeletonLoader(container, count = 8) {
 
     if (!container) return;
 
-    container.innerHTML = ''; // Clear previous content
+    container.textContent = ''; // Clear previous content
 
     for (let i = 0; i < count; i++) {
 
@@ -776,7 +776,7 @@ export function renderHeroSlider(_unused = []) {
         }
     ];
 
-    swiperWrapper.innerHTML = '';
+    swiperWrapper.textContent = '';
     const frag = document.createDocumentFragment();
 
     slides.forEach((slideData, index) => {
@@ -812,7 +812,7 @@ export function renderHeroSlider(_unused = []) {
 
         const cta = document.createElement('a');
         cta.className = 'btn btn--primary slide-cta';
-        cta.href = slideData.ctaLink;
+        cta.href = isSafeUrl(slideData.ctaLink) ? slideData.ctaLink : '#';
         cta.textContent = slideData.cta;
         cta.setAttribute('data-aos', 'fade-up');
         cta.setAttribute('data-aos-delay', '300');
@@ -863,7 +863,7 @@ export function renderMegaMenu(categories) {
     // FIXED: Reset initialization flag when rebuilding
     megaMenuContainer._tabSwitchingInitialized = false;
 
-    megaMenuContainer.innerHTML = '';
+    megaMenuContainer.textContent = '';
 
     // Store signature of rendered categories
     megaMenuContainer._renderedCategories = JSON.stringify(categories.map(c => c.id));
@@ -1105,7 +1105,7 @@ export function renderFeaturedGrid(products) {
 
 
 
-    grid.innerHTML = '';
+    grid.textContent = '';
     const frag = document.createDocumentFragment();
 
     products.forEach(product => {
@@ -1154,7 +1154,7 @@ export function renderCategoryFilters(categories) {
 
     if (!filterContainer) return;
 
-    filterContainer.innerHTML = '';
+    filterContainer.textContent = '';
 
     const frag = document.createDocumentFragment();
 
@@ -1192,7 +1192,7 @@ export function renderProductGrid(products, container) {
 
     if (!container) return;
 
-    container.innerHTML = ''; // Clear existing content or skeletons
+    container.textContent = ''; // Clear existing content or skeletons
 
 
 
@@ -1423,7 +1423,7 @@ function setupQuickViewEventListeners(product) {
 
             addToCartBtn.disabled = true;
 
-            addToCartBtn.innerHTML = '';
+            addToCartBtn.textContent = '';
             addToCartBtn.appendChild(createElement('i', { class: 'fas fa-check' }));
             addToCartBtn.appendChild(document.createTextNode(' Added'));
 
@@ -1431,7 +1431,7 @@ function setupQuickViewEventListeners(product) {
 
                 addToCartBtn.disabled = false;
 
-                addToCartBtn.innerHTML = '';
+                addToCartBtn.textContent = '';
                 addToCartBtn.appendChild(createElement('i', { class: 'fas fa-shopping-cart' }));
                 addToCartBtn.appendChild(document.createTextNode(' Add to Cart'));
 
@@ -1700,7 +1700,7 @@ export function renderProductDetail(product, container) {
 
     layout.appendChild(info);
 
-    container.innerHTML = '';
+    container.textContent = '';
     container.appendChild(layout);
 
     // Remove existing sticky CTA if present
@@ -1713,7 +1713,7 @@ export function renderProductDetail(product, container) {
     const sticky = document.createElement('div');
     sticky.className = 'sticky-cta';
     sticky.id = 'sticky-cta';
-    sticky.innerHTML = '';
+    sticky.textContent = '';
 
     const priceP = createElement('p', { class: 'price' }, [priceLabel]);
 
@@ -1962,7 +1962,7 @@ export function updateUserAuthUI(user) {
             }
 
             if (userDropdownMenu) {
-                userDropdownMenu.innerHTML = '';
+                userDropdownMenu.textContent = '';
                 const dashboardLink = createElement('a', { href: 'dashboard.html', class: 'user-dropdown-link' });
                 dashboardLink.appendChild(createElement('i', { class: 'fas fa-tachometer-alt' }));
                 dashboardLink.appendChild(createElement('span', {}, ['Dashboard']));
@@ -1980,7 +1980,7 @@ export function updateUserAuthUI(user) {
             userInfo.classList.add('hidden');
 
             if (userDropdownMenu) {
-                userDropdownMenu.innerHTML = '';
+                userDropdownMenu.textContent = '';
                 const loginLink = createElement('a', { href: 'login.html', class: 'user-dropdown-link' });
                 loginLink.appendChild(createElement('i', { class: 'fas fa-sign-in-alt' }));
                 loginLink.appendChild(createElement('span', { 'data-i18n': 'nav_login' }, ['Login']));
@@ -2097,7 +2097,7 @@ export function renderReviewStats(stats, container) {
     if (!container) return;
 
     container.classList.add('review-stats-container');
-    container.innerHTML = '';
+    container.textContent = '';
 
     if (!stats || typeof stats !== 'object') {
         container.appendChild(createElement('p', { class: 'no-review-stats' }, [
@@ -2322,7 +2322,7 @@ export function renderRelatedProducts(products, container) {
     }
 
     container.classList.add('related-products-section');
-    container.innerHTML = '';
+    container.textContent = '';
 
     if (!Array.isArray(products) || products.length === 0) {
         container.appendChild(createElement('div', { class: 'no-related-products' }, [
